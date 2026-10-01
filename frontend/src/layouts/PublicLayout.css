@@ -1,0 +1,13 @@
+.public-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.public-layout__main {
+  flex: 1;
+}
+
+.public-layout__main:focus {
+  outline: none;
+}
