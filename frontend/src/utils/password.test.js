@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { generateSalt, hashPassword, passwordStrength, verifyPassword } from './password.js'
+import { createPasswordCredentials, generateSalt, hashPassword, passwordStrength, verifyPassword } from './password.js'
 
 describe('password', () => {
   it('genera sales aleatorias de 32 caracteres hexadecimales', () => {
@@ -16,6 +16,17 @@ describe('password', () => {
     const esperado = createHash('sha256').update(`${salt}Clave2026`).digest('hex')
 
     await expect(hashPassword('Clave2026', salt)).resolves.toBe(esperado)
+  })
+
+  it('crea credenciales con una sal nueva cada vez y el hash que la verifica', async () => {
+    const credenciales = await createPasswordCredentials('Clave2026')
+    const otras = await createPasswordCredentials('Clave2026')
+
+    expect(Object.keys(credenciales).sort()).toEqual(['passwordHash', 'passwordSalt'])
+    expect(credenciales.passwordSalt).toMatch(/^[0-9a-f]{32}$/)
+    expect(otras.passwordSalt).not.toBe(credenciales.passwordSalt)
+    expect(otras.passwordHash).not.toBe(credenciales.passwordHash)
+    await expect(verifyPassword('Clave2026', credenciales.passwordSalt, credenciales.passwordHash)).resolves.toBe(true)
   })
 
   it.each([

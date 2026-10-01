@@ -38,10 +38,10 @@ respuesta de Express.
 | --- | --- |
 | 400 | Datos inválidos (`VALIDATION_ERROR`). `fieldErrors` trae el mensaje de cada campo: `{ correo: 'Ingresa tu correo institucional.' }`. |
 | 401 | Credenciales incorrectas. |
-| 403 | Acción no permitida para el rol o cuenta bloqueada por el supervisor. |
-| 404 | El recurso no existe (invitación, enlace de recuperación, usuario `USER_NOT_FOUND`…). |
-| 409 | Conflicto con el estado actual (correo ya registrado `EMAIL_TAKEN`, invitación ya usada). |
-| 410 | Recurso vencido (invitación o enlace de recuperación). |
+| 403 | Acción no permitida para el rol (`FORBIDDEN`: solo un supervisor activo envía invitaciones) o cuenta bloqueada por el supervisor. |
+| 404 | El recurso no existe (invitación `INVITATION_NOT_FOUND`, enlace de recuperación, usuario `USER_NOT_FOUND`…). |
+| 409 | Conflicto con el estado actual: correo ya registrado (`EMAIL_TAKEN`), invitación ya aceptada, rechazada o revocada (`INVITATION_NOT_PENDING`, con `details.estado`) o correo con una invitación vigente (`INVITATION_PENDING`). |
+| 410 | Recurso vencido: invitación (`INVITATION_EXPIRED`, con `details.venceEn`) o enlace de recuperación. |
 | 423 | Cuenta bloqueada temporalmente tras cinco intentos fallidos. |
 | 500 | Error inesperado (`INTERNAL_ERROR`). |
 
@@ -80,12 +80,18 @@ Una cuenta creada desde el registro público (`/registro`) nace con `rol = usuar
 sin espacios y los nombres sin espacios repetidos. Las reglas de validación de cada campo están en
 `frontend/src/utils/validators.js` y el servicio las vuelve a aplicar antes de guardar.
 
+Una cuenta activada desde una invitación (`/invitacion/:token`) toma de la invitación `nombres`, `apellidos`, `correo`
+y `rol` (`tecnico` o `supervisor`). El invitado confirma su `telefono`, define su contraseña y elige de una a tres
+`especialidades` entre las categorías activas. Nace con `unidad = Dirección de Infraestructura y Servicios`,
+`vinculo = null`, `invitacionId` = id de la invitación, `aceptaTerminos = true` y los mismos valores iniciales de
+estado que el registro público.
+
 ### Invitación (`invitaciones`) · dueño: HU-1
 
 | Campo | Tipo | Valores admitidos / notas |
 | --- | --- | --- |
 | `id` | string | `inv-NNN`. |
-| `token` | string | Único; forma parte del enlace `/invitacion/:token`. |
+| `token` | string | Único; forma parte del enlace `/invitacion/:token`. Las invitaciones nuevas usan `INV-` + 24 caracteres hexadecimales aleatorios (96 bits, no se puede adivinar); las del seed tienen tokens legibles para la demostración. |
 | `nombres`, `apellidos` | string | Datos precargados del invitado (no editables al activar). |
 | `correo` | string | Correo institucional del invitado. |
 | `rol` | enum | `tecnico` · `supervisor`. |
@@ -94,9 +100,16 @@ sin espacios y los nombres sin espacios repetidos. Las reglas de validación de 
 | `estado` | enum | `pendiente` · `aceptada` · `rechazada` · `revocada`. |
 | `venceEn` | ISO | Las invitaciones nuevas vencen 7 días después de `creadaEn`. Las dos de demostración vigentes del seed (`INV-TEC-2026-DEMO`, `INV-SUP-2026-DEMO`) vencen el 31/12/2026 para que sigan disponibles durante el curso. |
 | `creadaEn` | ISO | |
-| `respondidaEn` | ISO \| null | Momento en que se aceptó o rechazó. |
+| `respondidaEn` | ISO \| null | Momento en que el invitado la aceptó o rechazó. Sigue en `null` si está pendiente o si el supervisor la revocó. |
 
 Estado derivado **vencida**: `estado = pendiente` y `venceEn` anterior a la fecha actual. No se guarda.
+
+Solo una invitación pendiente y vigente cambia de estado: a `aceptada` cuando el invitado activa su cuenta, a
+`rechazada` cuando la rechaza y a `revocada` cuando el supervisor la anula. No se puede invitar a un correo que ya
+tiene cuenta o una invitación pendiente vigente.
+
+Los servicios devuelven cada invitación con dos campos calculados que no se guardan: `estadoEfectivo` (`pendiente` ·
+`vencida` · `aceptada` · `rechazada` · `revocada`) e `invitadoPorNombre` (nombre completo de quien invitó).
 
 ### Token de recuperación (`tokensRecuperacion`) · dueño: HU-1
 

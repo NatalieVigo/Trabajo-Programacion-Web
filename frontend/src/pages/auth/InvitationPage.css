@@ -1,0 +1,9 @@
+.invitation-page {
+  display: grid;
+  justify-items: center;
+}
+
+.invitation-page__status {
+  width: 100%;
+  max-width: 480px;
+}

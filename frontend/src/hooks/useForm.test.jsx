@@ -27,6 +27,9 @@ function DemoForm({ onValid }) {
       </FormField>
       <Checkbox {...form.getFieldProps('acepta')} label="Acepto" error={form.errors.acepta} />
       <p>{form.isDirty ? 'Con cambios' : 'Sin cambios'}</p>
+      <button type="button" onClick={() => form.setFieldValue('nombre', 'Lucía')}>
+        Usar «Lucía»
+      </button>
       <button type="button" onClick={form.reset}>
         Restablecer
       </button>
@@ -125,6 +128,19 @@ describe('useForm', () => {
     expect(campo('Correo')).toHaveAccessibleDescription('Ya existe una cuenta con este correo.')
     await user.type(campo('Correo'), 'x')
     expect(campo('Correo')).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('setFieldValue cambia un valor sin evento nativo y descarta el error que devolvió el servicio', async () => {
+    const onValid = vi.fn().mockResolvedValue({ nombre: 'Ese nombre ya está en uso.' })
+    const { user } = setup(onValid)
+    await completar(user)
+    await user.click(screen.getByRole('button', { name: 'Enviar' }))
+    expect(campo('Nombre')).toHaveAccessibleDescription('Ese nombre ya está en uso.')
+
+    await user.click(screen.getByRole('button', { name: 'Usar «Lucía»' }))
+
+    expect(campo('Nombre')).toHaveValue('Lucía')
+    expect(campo('Nombre')).not.toHaveAttribute('aria-invalid')
   })
 
   it('isDirty compara con los valores iniciales y reset los restaura', async () => {

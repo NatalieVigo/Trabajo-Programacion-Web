@@ -40,11 +40,16 @@ export function useForm({ initialValues, validate }) {
   }, [serverErrors, validationErrors, touched])
   const isDirty = Object.keys(initial).some((name) => !Object.is(values[name], initial[name]))
 
-  function handleChange(event) {
-    const { name, type, value, checked } = event.target
-    setValues((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }))
+  /** Cambia el valor de un campo. Sirve también para controles sin eventos nativos, como ChipToggleGroup. */
+  function setFieldValue(name, value) {
+    setValues((current) => ({ ...current, [name]: value }))
     // El error que devolvió el servicio ya no aplica al valor nuevo.
     setServerErrors((current) => omit(current, name))
+  }
+
+  function handleChange(event) {
+    const { name, type, value, checked } = event.target
+    setFieldValue(name, type === 'checkbox' ? checked : value)
   }
 
   function handleBlur(event) {
@@ -105,6 +110,7 @@ export function useForm({ initialValues, validate }) {
     touched,
     isDirty,
     isSubmitting,
+    setFieldValue,
     handleChange,
     handleBlur,
     getFieldProps,
