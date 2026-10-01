@@ -34,6 +34,9 @@ function DemoForm({ onValid }) {
       <button type="button" onClick={form.reset}>
         Restablecer
       </button>
+      <button type="button" onClick={() => form.resetTo(form.values)}>
+        Fijar como iniciales
+      </button>
       <button type="submit" disabled={form.isSubmitting}>
         Enviar
       </button>
@@ -213,5 +216,25 @@ describe('useForm', () => {
     expect(screen.getByText('Sin cambios')).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'Acepto' })).not.toBeChecked()
     expect(campo('Nombre')).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('resetTo toma los valores dados como los nuevos iniciales, como tras guardar', async () => {
+    const { user } = setup()
+    await user.type(campo('Nombre'), 'Ana')
+    await user.click(campo('Correo'))
+    await user.tab()
+    expect(campo('Correo')).toHaveAttribute('aria-invalid', 'true')
+
+    await user.click(screen.getByRole('button', { name: 'Fijar como iniciales' }))
+
+    expect(screen.getByText('Sin cambios')).toBeInTheDocument()
+    expect(campo('Nombre')).toHaveValue('Ana')
+    expect(campo('Correo')).not.toHaveAttribute('aria-invalid')
+
+    await user.type(campo('Nombre'), 'lía')
+    expect(screen.getByText('Con cambios')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Restablecer' }))
+    expect(campo('Nombre')).toHaveValue('Ana')
+    expect(screen.getByText('Sin cambios')).toBeInTheDocument()
   })
 })

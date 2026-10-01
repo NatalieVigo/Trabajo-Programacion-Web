@@ -12,6 +12,7 @@ import {
   validateActivacion,
   validateInvitacion,
 } from '../utils/validators.js'
+import { estadoEfectivo } from './estadoInvitacion.js'
 import { simulateRequest } from './request.js'
 import { ServiceError, validationError } from './ServiceError.js'
 import { emailTakenError, insertarCuenta } from './usuarios.service.js'
@@ -25,12 +26,6 @@ const NO_PENDIENTE = {
   aceptada: 'Esta invitación ya fue aceptada.',
   rechazada: 'Esta invitación fue rechazada.',
   revocada: 'Esta invitación fue revocada por el supervisor.',
-}
-
-/** Una invitación pendiente cuyo plazo ya pasó está «vencida». Es un estado derivado: no se guarda. */
-function estadoEfectivo(invitacion, ahora = Date.now()) {
-  const vencida = invitacion.estado === 'pendiente' && Date.parse(invitacion.venceEn) < ahora
-  return vencida ? 'vencida' : invitacion.estado
 }
 
 /** Invitaciones tal como las devuelve la API: con su estado efectivo y el nombre de quien invitó. */

@@ -4,7 +4,6 @@ import { DEMO, renderApp } from '../../test/test-utils.jsx'
 
 const PILDORA = { usuario: 'Mis tickets abiertos', tecnico: 'Asignados a mí', supervisor: 'Cola sin asignar' }
 const deOtroIntegrante = (historia) => `Esta sección corresponde a la ${historia} y la implementa otro integrante del equipo.`
-const deUnaEtapaPosterior = (historia) => `Esta sección corresponde a la ${historia} y estará disponible en una próxima etapa.`
 
 async function renderSeccion(ruta, rol) {
   const view = renderApp(ruta, { usuario: DEMO[rol] })
@@ -24,9 +23,6 @@ describe('PlaceholderPage', () => {
     ['/supervisor/ambientes', 'supervisor', 'Sedes y ambientes', deOtroIntegrante('HU-2 (Catálogo de servicios)')],
     ['/supervisor/tecnicos', 'supervisor', 'Técnicos por categoría', deOtroIntegrante('HU-2 (Catálogo de servicios)')],
     ['/supervisor/usuarios', 'supervisor', 'Usuarios', deOtroIntegrante('HU-7 (Métricas y usuarios)')],
-    ['/supervisor/invitaciones', 'supervisor', 'Invitaciones', deUnaEtapaPosterior('HU-1.4 (Gestión de invitaciones)')],
-    ['/mi-cuenta', 'usuario', 'Mi cuenta', deUnaEtapaPosterior('HU-1.5 (Consulta y edición de la cuenta)')],
-    ['/acceso-denegado', 'tecnico', 'Acceso denegado', deUnaEtapaPosterior('HU-1.4 (Protección de rutas por rol)')],
   ])('%s indica que la sección pendiente corresponde a su historia', async (ruta, rol, titulo, descripcion) => {
     await renderSeccion(ruta, rol)
 
@@ -38,7 +34,7 @@ describe('PlaceholderPage', () => {
   })
 
   it('ofrece volver a la vista principal del rol', async () => {
-    const { user } = await renderSeccion('/mi-cuenta', 'supervisor')
+    const { user } = await renderSeccion('/supervisor/cola', 'supervisor')
 
     await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Ir a Tablero' }))
 
