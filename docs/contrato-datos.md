@@ -36,11 +36,11 @@ respuesta de Express.
 
 | Estado | Uso |
 | --- | --- |
-| 400 | Datos inválidos. `fieldErrors` trae el mensaje de cada campo: `{ correo: 'Ingresa tu correo institucional.' }`. |
+| 400 | Datos inválidos (`VALIDATION_ERROR`). `fieldErrors` trae el mensaje de cada campo: `{ correo: 'Ingresa tu correo institucional.' }`. |
 | 401 | Credenciales incorrectas. |
 | 403 | Acción no permitida para el rol o cuenta bloqueada por el supervisor. |
-| 404 | El recurso no existe (invitación, enlace de recuperación, usuario…). |
-| 409 | Conflicto con el estado actual (correo ya registrado, invitación ya usada). |
+| 404 | El recurso no existe (invitación, enlace de recuperación, usuario `USER_NOT_FOUND`…). |
+| 409 | Conflicto con el estado actual (correo ya registrado `EMAIL_TAKEN`, invitación ya usada). |
 | 410 | Recurso vencido (invitación o enlace de recuperación). |
 | 423 | Cuenta bloqueada temporalmente tras cinco intentos fallidos. |
 | 500 | Error inesperado (`INTERNAL_ERROR`). |
@@ -73,6 +73,12 @@ respuesta de Express.
 | `actualizadoEn` | ISO | Última modificación. |
 
 Los servicios nunca devuelven `passwordHash` ni `passwordSalt` a la interfaz.
+
+Una cuenta creada desde el registro público (`/registro`) nace con `rol = usuario`, `estado = activo`,
+`especialidades = []`, `ambienteHabitualId = null`, `intentosFallidos = 0`, `bloqueadoHasta = null`,
+`motivoBloqueo = null`, `invitacionId = null` y `aceptaTerminos = true`. El correo se guarda en minúsculas, el teléfono
+sin espacios y los nombres sin espacios repetidos. Las reglas de validación de cada campo están en
+`frontend/src/utils/validators.js` y el servicio las vuelve a aplicar antes de guardar.
 
 ### Invitación (`invitaciones`) · dueño: HU-1
 

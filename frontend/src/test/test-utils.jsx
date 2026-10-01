@@ -6,7 +6,8 @@ import AppRoutes from '../routes/AppRoutes.jsx'
 
 /** Renderiza `ui` con el router en memoria y los proveedores globales. Devuelve también `user` (userEvent). */
 export function renderWithProviders(ui, { route = '/' } = {}) {
-  const user = userEvent.setup()
+  // Sin pausa entre teclas: cada setTimeout(0) de userEvent cuesta ~15 ms en Windows y alarga las pruebas de formularios.
+  const user = userEvent.setup({ delay: null })
   const result = render(
     <MemoryRouter initialEntries={[route]}>
       <AppProviders>{ui}</AppProviders>

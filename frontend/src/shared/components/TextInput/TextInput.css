@@ -59,6 +59,10 @@
   padding-right: 80px;
 }
 
+.control--checked .control__input {
+  padding-right: var(--space-10);
+}
+
 .control__adornment {
   position: absolute;
   right: var(--space-3);
