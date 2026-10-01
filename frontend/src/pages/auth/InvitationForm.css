@@ -1,0 +1,30 @@
+.invitation-form {
+  width: 100%;
+  max-width: 832px;
+  padding: var(--space-8);
+}
+
+.invitation-form__badge {
+  display: flex;
+  width: fit-content;
+  margin-bottom: var(--space-3);
+}
+
+.especialidades-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Mismo corte que .form-grid (layout.css): con el formulario en una columna, las acciones también se apilan. */
+@media (max-width: 767px) {
+  .invitation-form__actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .invitation-form {
+    padding: var(--space-5) var(--space-4);
+  }
+}

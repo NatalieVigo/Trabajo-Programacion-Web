@@ -50,6 +50,14 @@ async function esperarLanding() {
   expect(await screen.findByRole('heading', { level: 3, name: 'Audiovisuales' })).toBeInTheDocument()
 }
 
+/** Con la cuenta creada se llega a «Iniciar sesión» con el correo precargado y el foco en la contraseña. */
+async function esperarInicioDeSesion() {
+  expect(await screen.findByRole('heading', { level: 1, name: 'Iniciar sesión' })).toBeInTheDocument()
+  expect(campo('Correo institucional')).toHaveValue(DATOS.correo)
+  expect(campo('Contraseña')).toHaveValue('')
+  expect(campo('Contraseña')).toHaveFocus()
+}
+
 describe('RegisterPage', () => {
   it('muestra el formulario del mockup con el aviso «Antes de registrarte»', async () => {
     await renderRegistro()
@@ -119,7 +127,7 @@ describe('RegisterPage', () => {
     expect(campo('Confirmar contraseña')).not.toHaveAttribute('aria-invalid')
   })
 
-  it('con datos válidos crea la cuenta, lo notifica y vuelve al inicio', async () => {
+  it('con datos válidos crea la cuenta, lo notifica y lleva a iniciar sesión con el correo precargado', async () => {
     const { user } = await renderRegistro()
 
     await completarFormulario(user)
@@ -127,7 +135,7 @@ describe('RegisterPage', () => {
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
 
     expect(await screen.findByText('Tu cuenta fue creada. Ya puedes iniciar sesión.')).toBeInTheDocument()
-    await esperarLanding()
+    await esperarInicioDeSesion()
     const creado = usuariosRepository.findByCorreo(DATOS.correo)
     expect(creado).toMatchObject({
       nombres: 'Valeria Sofía',
@@ -161,7 +169,7 @@ describe('RegisterPage', () => {
 
     await act(async () => liberar())
     expect(await screen.findByText('Tu cuenta fue creada. Ya puedes iniciar sesión.')).toBeInTheDocument()
-    await esperarLanding()
+    await esperarInicioDeSesion()
   })
 
   it('al salir del correo avisa si ya tiene una cuenta o si está disponible', async () => {

@@ -1,0 +1,36 @@
+.message-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 480px;
+}
+
+.message-card__code {
+  color: var(--color-primary);
+  font-size: 44px;
+  line-height: 52px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.message-card__title {
+  font-size: var(--font-size-section);
+  line-height: var(--line-height-section);
+  font-weight: var(--font-weight-semibold);
+}
+
+.message-card__title:focus {
+  outline: none;
+}
+
+.message-card__description {
+  color: var(--color-text-muted);
+}
+
+.message-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
