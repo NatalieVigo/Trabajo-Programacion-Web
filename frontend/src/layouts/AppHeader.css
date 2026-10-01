@@ -1,0 +1,147 @@
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--app-header-height);
+  padding-inline: var(--space-4);
+  background: var(--color-primary);
+  color: var(--color-on-dark);
+}
+
+.app-header :focus-visible {
+  outline-color: var(--color-on-dark);
+}
+
+.app-header__menu {
+  display: none;
+}
+
+/* La marca ocupa el ancho del menú lateral para que el buscador empiece donde empieza el contenido (p10). */
+.app-brand {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  width: calc(var(--sidebar-width) - 2 * var(--space-4));
+  color: var(--color-on-dark);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-brand:hover {
+  color: var(--color-on-dark);
+}
+
+.app-brand__mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: var(--color-surface);
+}
+
+.app-header__end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-left: auto;
+}
+
+.app-header__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 0.12);
+  white-space: nowrap;
+}
+
+.app-header__pill-label {
+  color: var(--color-primary-soft);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.app-header__pill strong {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.app-header__user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.app-header__name {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: var(--font-weight-medium);
+}
+
+.app-header__role {
+  color: var(--color-on-dark-muted);
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+@media (max-width: 1023px) {
+  .app-header {
+    gap: var(--space-3);
+  }
+
+  .app-header__menu {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--control-height-sm);
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid rgb(255 255 255 / 0.35);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--color-on-dark);
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+  }
+
+  .app-header__menu:hover {
+    border-color: var(--color-on-dark);
+  }
+
+  .app-brand {
+    width: auto;
+  }
+}
+
+/* En pantallas angostas el nombre queda solo para lectores de pantalla; se ve el avatar con las iniciales. */
+@media (max-width: 767px) {
+  .app-header__user {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 519px) {
+  .app-header__pill {
+    display: none;
+  }
+}

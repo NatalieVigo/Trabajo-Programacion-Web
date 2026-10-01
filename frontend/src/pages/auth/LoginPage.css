@@ -1,0 +1,100 @@
+.login-page {
+  display: grid;
+  grid-template-columns: minmax(0, 440px) minmax(0, 340px);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-12);
+  padding-block: var(--space-16);
+}
+
+.login-page__card {
+  padding: var(--space-8);
+}
+
+.login-page__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.login-page__aside-title {
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-subtitle);
+}
+
+.login-page__aside-text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: 20px;
+}
+
+.login-page__note {
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: var(--font-size-aux);
+  line-height: 20px;
+}
+
+/* Formulario */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.login-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.login-form__options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.login-form__forgot,
+.login-form__signup {
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.login-form__signup {
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* El aviso recibe el foco por programa para guiar al teclado; no es un control y no necesita el anillo de foco. */
+.login-alert:focus {
+  outline: none;
+}
+
+.login-alert__support {
+  flex-basis: 100%;
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.login-alert__support a {
+  color: inherit;
+  font-weight: var(--font-weight-medium);
+}
+
+@media (max-width: 899px) {
+  .login-page {
+    grid-template-columns: minmax(0, 440px);
+    gap: var(--space-8);
+    padding-block: var(--space-8) var(--space-12);
+  }
+}
+
+@media (max-width: 640px) {
+  .login-page__card {
+    padding: var(--space-5) var(--space-4);
+  }
+}

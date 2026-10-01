@@ -1,0 +1,44 @@
+.ticket-search {
+  position: relative;
+  display: flex;
+  flex: 0 1 420px;
+  align-items: center;
+  min-width: 0;
+}
+
+.ticket-search__icon {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--color-on-dark-muted);
+  pointer-events: none;
+}
+
+.ticket-search__input {
+  width: 100%;
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-8);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: var(--radius);
+  background: rgb(0 0 0 / 0.16);
+  color: var(--color-on-dark);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.ticket-search__input::placeholder {
+  color: var(--color-on-dark-muted);
+  opacity: 1;
+}
+
+.ticket-search__input:focus-visible {
+  border-color: var(--color-on-dark);
+  outline: 2px solid var(--color-on-dark);
+  outline-offset: 1px;
+}
+
+@media (max-width: 639px) {
+  .ticket-search {
+    display: none;
+  }
+}

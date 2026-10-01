@@ -47,9 +47,9 @@ export default function InvitationForm({ invitacion, onInvitacionCambiada }) {
 
   async function activarCuenta(values) {
     try {
-      await aceptar(invitacion.token, values)
+      const usuario = await aceptar(invitacion.token, values)
       toast.success(`Tu cuenta de ${rol} está activa. Ya puedes iniciar sesión.`)
-      navigate(ROUTES.home, { replace: true })
+      navigate(ROUTES.iniciarSesion, { replace: true, state: { correo: usuario.correo } })
     } catch (error) {
       // El correo viene de la invitación y no se puede editar: además del mensaje junto al campo, se indica qué hacer.
       if (error.code === 'EMAIL_TAKEN') {

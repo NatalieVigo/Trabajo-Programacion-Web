@@ -3,7 +3,7 @@
 Este documento define la estructura de las entidades que comparten las historias funcionales: sus campos, tipos
 y valores admitidos. Es la interfaz entre las historias; **cambiarlo requiere acuerdo del grupo**.
 
-- Fuente de verdad de los datos de prueba: [`frontend/src/data/seed.json`](../frontend/src/data/seed.json) (versión **1**).
+- Fuente de verdad de los datos de prueba: [`frontend/src/data/seed.json`](../frontend/src/data/seed.json) (versión **2**).
 - Entrega 1: el frontend guarda una copia del seed en `localStorage` bajo la clave `mesa-ayuda:db`
   (`frontend/src/repositories/db.js`). Entrega 2: el mismo conjunto se carga en PostgreSQL.
 - Las entidades de HU-1 (Cuenta y acceso) son de su responsable. Las demás son una **propuesta para acordar con el
@@ -37,12 +37,12 @@ respuesta de Express.
 | Estado | Uso |
 | --- | --- |
 | 400 | Datos inválidos (`VALIDATION_ERROR`). `fieldErrors` trae el mensaje de cada campo: `{ correo: 'Ingresa tu correo institucional.' }`. |
-| 401 | Credenciales incorrectas. |
-| 403 | Acción no permitida para el rol (`FORBIDDEN`: solo un supervisor activo envía invitaciones) o cuenta bloqueada por el supervisor. |
+| 401 | Credenciales incorrectas al iniciar sesión (`INVALID_CREDENTIALS`, con `details.intentosRestantes`); también si el correo no tiene cuenta, para no revelar qué correos existen. Sin sesión al pedir los contadores (`UNAUTHENTICATED`). |
+| 403 | Acción no permitida para el rol (`FORBIDDEN`: solo un supervisor activo envía invitaciones) o cuenta bloqueada por el supervisor (`ACCOUNT_BLOCKED`, con `details.motivo`; solo se informa si la contraseña es correcta). |
 | 404 | El recurso no existe (invitación `INVITATION_NOT_FOUND`, enlace de recuperación, usuario `USER_NOT_FOUND`…). |
 | 409 | Conflicto con el estado actual: correo ya registrado (`EMAIL_TAKEN`), invitación ya aceptada, rechazada o revocada (`INVITATION_NOT_PENDING`, con `details.estado`) o correo con una invitación vigente (`INVITATION_PENDING`). |
 | 410 | Recurso vencido: invitación (`INVITATION_EXPIRED`, con `details.venceEn`) o enlace de recuperación. |
-| 423 | Cuenta bloqueada temporalmente tras cinco intentos fallidos. |
+| 423 | Cuenta bloqueada temporalmente tras cinco intentos fallidos (`ACCOUNT_LOCKED`, con `details.bloqueadoHasta`). |
 | 500 | Error inesperado (`INTERNAL_ERROR`). |
 
 ## Entidades de HU-1 · Cuenta y acceso
@@ -65,8 +65,8 @@ respuesta de Express.
 | `motivoBloqueo` | string \| null | Obligatorio cuando `estado = bloqueado`. |
 | `passwordHash` | string | 64 caracteres hexadecimales. |
 | `passwordSalt` | string | 32 caracteres hexadecimales. |
-| `intentosFallidos` | number | De 0 a 5; vuelve a 0 al iniciar sesión o al restablecer la contraseña. |
-| `bloqueadoHasta` | ISO \| null | Bloqueo temporal de 15 minutos tras cinco intentos fallidos. |
+| `intentosFallidos` | number | Intentos fallidos seguidos, de 0 a 5; vuelve a 0 al iniciar sesión o al restablecer la contraseña. Tras un bloqueo ya vencido se cuenta otra vez desde el primero. |
+| `bloqueadoHasta` | ISO \| null | Bloqueo temporal de 15 minutos tras el quinto intento fallido: mientras dure se rechaza todo inicio de sesión, aun con la contraseña correcta. No cierra las sesiones ya iniciadas. |
 | `aceptaTerminos` | boolean | `true`: aceptó los términos al registrarse o al activar su invitación. |
 | `invitacionId` | string \| null | Invitación con la que se activó la cuenta (técnicos y supervisores). |
 | `creadoEn` | ISO | Fecha de creación de la cuenta. |
@@ -130,6 +130,27 @@ Los servicios devuelven cada invitación con dos campos calculados que no se gua
 | `usuarioId` | string | Quien pide el acceso desde la vista 403. |
 | `recurso` | string | Lo que intentó ver, por ejemplo «la cola de atención». |
 | `creadaEn` | ISO | |
+
+### Intento de acceso sin cuenta (`intentosAcceso`) · dueño: HU-1
+
+Intentos fallidos de inicio de sesión con un correo que no tiene cuenta. Se cuentan y bloquean igual que los de una
+cuenta (`intentosFallidos` y `bloqueadoHasta` de `usuarios`), para que la respuesta no revele qué correos están
+registrados.
+
+| Campo | Tipo | Valores admitidos / notas |
+| --- | --- | --- |
+| `id` | string | `int-NNN`. |
+| `correo` | string | Correo con que se intentó ingresar, en minúsculas. Un registro por correo. |
+| `intentosFallidos` | number | Igual que en `usuarios`. |
+| `bloqueadoHasta` | ISO \| null | Igual que en `usuarios`. |
+
+### Sesión (no es una tabla) · dueño: HU-1
+
+Al iniciar sesión el navegador guarda `{ usuarioId, iniciadaEn }` (ISO) bajo la clave `mesa-ayuda:sesion`: en
+`localStorage` si se marcó «Recordarme en este equipo», o en `sessionStorage` si no (dura lo que la pestaña). Solo la
+lee y escribe `frontend/src/repositories/session.repository.js`. Al abrir la aplicación, `auth.service#obtenerSesion`
+la valida: si la cuenta ya no existe o el supervisor la bloqueó, la descarta. Cerrar sesión la borra de ambos
+almacenamientos. En la entrega 2 se guardará aquí el token que emita la API.
 
 ## Entidades de otras historias (HU-1 solo las lee)
 
@@ -198,6 +219,19 @@ Mínimo que necesita HU-1 para los contadores de la cabecera, el menú lateral y
 
 **Encuesta pendiente**: ticket `cerrado` del usuario, sin encuesta, cuyo `cerradoEn` + 7 días aún no pasó.
 
+### Contadores de la cabecera y del menú lateral (`resumen.service#obtenerContadores`)
+
+HU-1 los calcula leyendo `tickets` y `encuestas`, sin modificarlos:
+
+| Rol | Contador | Regla |
+| --- | --- | --- |
+| Usuario | `ticketsAbiertos` (píldora «Mis tickets abiertos») | Tickets que reportó en estado `abierto`, `en_atencion`, `en_espera` o `reabierto`. |
+| Usuario | `ticketsReportados` (insignia de «Mis tickets») | Todos los tickets que reportó. |
+| Usuario | `encuestasPendientes` (insignia de «Encuesta pendiente») | Ver «Encuesta pendiente». |
+| Usuario | `encuestasRespondidas` (insignia de «Mis encuestas») | Encuestas que respondió. |
+| Técnico | `asignados` (píldora «Asignados a mí» e insignia de «Mi bandeja») | Tickets con `asignadoA` = su id, en cualquier estado. |
+| Supervisor | `colaSinAsignar` (píldora «Cola sin asignar») | Tickets `abierto` o `reabierto` con `asignadoA = null`. |
+
 ## Contenido del seed
 
 | Tabla | Filas | Escenarios que cubre |
@@ -206,6 +240,7 @@ Mínimo que necesita HU-1 para los contadores de la cabecera, el menú lateral y
 | `invitaciones` | 4 | `INV-TEC-2026-DEMO` y `INV-SUP-2026-DEMO` vigentes hasta el 31/12/2026; `INV-TEC-2026-VENCIDA` (venció el 12/09/2026); `INV-TEC-2026-USADA` (aceptada por Julio Paredes). |
 | `tokensRecuperacion` | 0 | Se crean al pedir la recuperación de contraseña. |
 | `solicitudesAcceso` | 0 | Se crean desde la vista 403. |
+| `intentosAcceso` | 0 | Se crean al fallar el inicio de sesión con un correo que no tiene cuenta. |
 | `categorias` | 7 | Las siete categorías activas de los mockups. |
 | `ambientes` | 11 | Campus Monterrico, con todos los tipos (la oficina C-102 no tiene tickets). |
 | `unidades` | 15 | Carreras y unidades administrativas. |

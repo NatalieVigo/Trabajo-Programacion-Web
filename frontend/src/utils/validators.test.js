@@ -12,6 +12,7 @@ import {
   validateCorreo,
   validateEspecialidades,
   validateInvitacion,
+  validateLogin,
   validateNombres,
   validatePassword,
   validateRegistro,
@@ -243,6 +244,23 @@ describe('validators', () => {
         rol: 'Selecciona el rol: técnico o supervisor.',
         telefono: 'Ingresa un número de contacto.',
       })
+    })
+  })
+
+  describe('validateLogin', () => {
+    it('exige el correo institucional y la contraseña', () => {
+      expect(validateLogin({ correo: 'camila.quispe@aloe.ulima.edu.pe', password: 'Camila2026' })).toEqual({})
+      expect(validateLogin({})).toEqual({
+        correo: 'Ingresa tu correo institucional.',
+        password: 'Ingresa una contraseña.',
+      })
+      expect(validateLogin({ correo: 'camila@gmail.com', password: 'x' })).toEqual({
+        correo: 'Usa tu correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
+      })
+    })
+
+    it('no exige las reglas de una contraseña nueva', () => {
+      expect(validateLogin({ correo: 'jparedes@ulima.edu.pe', password: 'corta' })).toEqual({})
     })
   })
 
