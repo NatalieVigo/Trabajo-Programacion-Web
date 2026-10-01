@@ -1,0 +1,16 @@
+.control__select {
+  padding-right: var(--space-10);
+  appearance: none;
+  cursor: pointer;
+}
+
+.control__select:disabled {
+  cursor: not-allowed;
+}
+
+.control__chevron {
+  position: absolute;
+  right: var(--space-3);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}

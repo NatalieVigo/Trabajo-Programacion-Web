@@ -1,0 +1,19 @@
+.demo-reset {
+  padding: var(--space-1) var(--space-2);
+  border: 1px dashed var(--color-on-dark-subtle);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-on-dark-muted);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.demo-reset:not(:disabled):hover {
+  border-color: var(--color-on-dark);
+  color: var(--color-on-dark);
+}
+
+.demo-reset:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}

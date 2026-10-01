@@ -1,0 +1,36 @@
+.avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  border-radius: var(--radius);
+  color: var(--color-on-dark);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.avatar--accent {
+  background: var(--color-accent);
+}
+
+.avatar--primary {
+  background: var(--color-primary);
+}
+
+.avatar--sm {
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+}
+
+.avatar--md {
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+}
+
+.avatar--lg {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
