@@ -373,9 +373,9 @@ describe('invitaciones.service · crear', () => {
       status: 400,
       code: 'VALIDATION_ERROR',
       fieldErrors: {
-        nombres: 'Ingresa tus nombres.',
-        apellidos: 'Ingresa tus apellidos.',
-        correo: 'Ingresa tu correo institucional.',
+        nombres: 'Ingresa los nombres de la persona invitada.',
+        apellidos: 'Ingresa los apellidos de la persona invitada.',
+        correo: 'Ingresa el correo institucional de la persona invitada.',
         rol: 'Selecciona el rol: técnico o supervisor.',
         telefono: 'Ingresa un número de contacto.',
       },

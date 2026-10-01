@@ -30,6 +30,7 @@ export {
   ClockIcon,
   CloseIcon,
   InfoIcon,
+  MailIcon,
   MenuIcon,
   SearchIcon,
 } from './icons.jsx'

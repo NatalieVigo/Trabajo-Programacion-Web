@@ -24,9 +24,7 @@ describe('PlaceholderPage', () => {
     ['/supervisor/ambientes', 'supervisor', 'Sedes y ambientes', deOtroIntegrante('HU-2 (Catálogo de servicios)')],
     ['/supervisor/tecnicos', 'supervisor', 'Técnicos por categoría', deOtroIntegrante('HU-2 (Catálogo de servicios)')],
     ['/supervisor/usuarios', 'supervisor', 'Usuarios', deOtroIntegrante('HU-7 (Métricas y usuarios)')],
-    ['/supervisor/invitaciones', 'supervisor', 'Invitaciones', deUnaEtapaPosterior('HU-1.4 (Gestión de invitaciones)')],
     ['/mi-cuenta', 'usuario', 'Mi cuenta', deUnaEtapaPosterior('HU-1.5 (Consulta y edición de la cuenta)')],
-    ['/acceso-denegado', 'tecnico', 'Acceso denegado', deUnaEtapaPosterior('HU-1.4 (Protección de rutas por rol)')],
   ])('%s indica que la sección pendiente corresponde a su historia', async (ruta, rol, titulo, descripcion) => {
     await renderSeccion(ruta, rol)
 
