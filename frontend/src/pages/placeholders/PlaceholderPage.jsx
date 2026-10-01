@@ -7,8 +7,8 @@ import SearchedCodeNotice from './SearchedCodeNotice.jsx'
 import './PlaceholderPage.css'
 
 /**
- * Sección privada que otra historia (o una etapa posterior de HU-1) implementará: título, el código buscado en la
- * cabecera si lo hay y PendingFeature con un enlace a la vista principal del rol (salvo si ya se está en ella).
+ * Sección privada que implementará otra historia: título, el código buscado en la cabecera si lo hay y PendingFeature
+ * con un enlace a la vista principal del rol (salvo si ya se está en ella).
  */
 export default function PlaceholderPage({ title, subtitle, pendiente }) {
   const { usuario } = useAuth()

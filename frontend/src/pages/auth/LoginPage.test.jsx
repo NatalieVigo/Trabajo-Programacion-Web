@@ -186,12 +186,20 @@ describe('LoginPage', () => {
     expect(restablecer).toHaveAttribute('href', '/recuperar-contrasena?correo=camila.quispe%40aloe.ulima.edu.pe')
     await user.click(restablecer)
     expect(await screen.findByRole('heading', { level: 1, name: 'Recuperar mi contraseña' })).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'Esta sección corresponde a la HU-1.6 (Cambio de contraseña y recuperación) y estará disponible en una próxima etapa.',
-      ),
-    ).toBeInTheDocument()
+    expect(campo('Correo institucional')).toHaveValue('camila.quispe@aloe.ulima.edu.pe')
     expect(screen.getByRole('link', { name: 'Volver a iniciar sesión' })).toHaveAttribute('href', '/iniciar-sesion')
+  })
+
+  it('«¿Olvidaste tu contraseña?» lleva a recuperarla con el correo que se escribió', async () => {
+    const { user } = renderApp('/iniciar-sesion')
+
+    await user.type(campo('Correo institucional'), ' JParedes@ulima.edu.pe')
+    const olvido = screen.getByRole('link', { name: '¿Olvidaste tu contraseña?' })
+    expect(olvido).toHaveAttribute('href', '/recuperar-contrasena?correo=jparedes%40ulima.edu.pe')
+    await user.click(olvido)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Recuperar mi contraseña' })).toBeInTheDocument()
+    expect(campo('Correo institucional')).toHaveValue('jparedes@ulima.edu.pe')
   })
 
   it('una cuenta bloqueada por el supervisor muestra el motivo y a quién escribir', async () => {

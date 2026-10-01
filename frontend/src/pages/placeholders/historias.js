@@ -1,7 +1,4 @@
-/**
- * Historias dueñas de las secciones que aún no existen (enunciado §5), para PendingFeature. Las de HU-1 marcadas como
- * `propia` llegan en una etapa posterior de esta misma historia.
- */
+/** Historias dueñas de las secciones que aún no existen (enunciado §5), para PendingFeature. */
 export const HISTORIAS = Object.freeze({
   catalogo: { historia: 'HU-2', nombre: 'Catálogo de servicios' },
   tickets: { historia: 'HU-3', nombre: 'Registro de tickets' },
@@ -9,5 +6,4 @@ export const HISTORIAS = Object.freeze({
   atencion: { historia: 'HU-5', nombre: 'Atención y cierre' },
   encuestas: { historia: 'HU-6', nombre: 'Encuesta de satisfacción' },
   metricas: { historia: 'HU-7', nombre: 'Métricas y usuarios' },
-  recuperacion: { historia: 'HU-1.6', nombre: 'Cambio de contraseña y recuperación', propia: true },
 })

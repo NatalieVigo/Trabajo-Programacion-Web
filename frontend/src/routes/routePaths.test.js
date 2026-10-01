@@ -24,5 +24,6 @@ describe('routePaths', () => {
       pathname: '/recuperar-contrasena',
       search: '?correo=camila.quispe%40aloe.ulima.edu.pe',
     })
+    expect(recuperarContrasenaPath('')).toEqual({ pathname: '/recuperar-contrasena', search: '' })
   })
 })
