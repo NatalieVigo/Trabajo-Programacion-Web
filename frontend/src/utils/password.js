@@ -26,6 +26,12 @@ export async function verifyPassword(password, salt, expectedHash) {
   return (await hashPassword(password, salt)) === expectedHash
 }
 
+/** Lo que se guarda de una contraseña nueva: { passwordHash, passwordSalt }, con una sal recién generada. */
+export async function createPasswordCredentials(password) {
+  const passwordSalt = generateSalt()
+  return { passwordHash: await hashPassword(password, passwordSalt), passwordSalt }
+}
+
 function strengthScore(password) {
   if (!password) return 0
   // Lo que el validador rechaza (regla mínima o más de 64 caracteres) nunca pasa de «Débil».

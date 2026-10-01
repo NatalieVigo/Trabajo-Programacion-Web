@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout.jsx'
+import InvitationPage from '../pages/auth/InvitationPage.jsx'
 import RegisterPage from '../pages/auth/RegisterPage.jsx'
 import NotFoundPage from '../pages/errors/NotFoundPage.jsx'
 import LandingPage from '../pages/public/LandingPage.jsx'
@@ -12,6 +13,7 @@ export default function AppRoutes() {
       <Route element={<PublicLayout />}>
         <Route path={ROUTES.home} element={<LandingPage />} />
         <Route path={ROUTES.registro} element={<RegisterPage />} />
+        <Route path={ROUTES.invitacion} element={<InvitationPage />} />
         <Route path={ROUTES.notFound} element={<NotFoundPage />} />
       </Route>
     </Routes>
