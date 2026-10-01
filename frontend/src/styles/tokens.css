@@ -1,0 +1,108 @@
+:root {
+  /* Colores base (mockups p01–p02) */
+  --color-primary: #1f4e79;
+  --color-primary-dark: #163a5a;
+  --color-primary-soft: #e7eff6;
+  --color-accent: #d2601a;
+  --color-bg: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-border: #d6dee5;
+  --color-text: #141c24;
+  --color-text-muted: #5f6c78;
+  --color-success: #1e7f4d;
+  --color-warning: #b7791f;
+  --color-danger: #b4322b;
+  --color-info: #3b6fa8;
+
+  /* Fondos suaves de mensajes (p05, p35) */
+  --color-success-soft: #e8f3ec;
+  --color-warning-soft: #fbf3e4;
+  --color-danger-soft: #fbeaea;
+  --color-info-soft: #e7eff6;
+  --color-accent-soft: #fcf0e8;
+
+  /* Variantes para texto pequeño sobre fondos suaves (contraste AA ≥ 4.5:1) */
+  --color-success-text: #1a7045;
+  --color-warning-text: #8f5e14;
+  --color-info-text: #33639a;
+  --color-accent-text: #a84d14;
+  --color-danger-text: #b4322b;
+
+  --color-danger-hover: #962a24;
+  --color-disabled-bg: #eef1f4;
+  --color-overlay: rgb(20 28 36 / 0.45);
+  --color-on-dark: #ffffff;
+  --color-on-dark-muted: #c5d3e0;
+  --color-on-dark-subtle: #a9bccf;
+
+  /* Prioridad y estados del ticket */
+  --color-priority-critica: #b4322b;
+  --color-priority-alta: #d2601a;
+  --color-priority-media: #b7791f;
+  --color-priority-baja: #3b6fa8;
+  --color-status-abierto: #3b6fa8;
+  --color-status-en-atencion: #b7791f;
+  --color-status-en-espera: #5f6c78;
+  --color-status-resuelto: #1e7f4d;
+  --color-status-cerrado: #1e7f4d;
+  --color-status-reabierto: #b4322b;
+
+  /* Tipografía */
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-size-title: 28px;
+  --line-height-title: 32px;
+  --font-size-section: 20px;
+  --line-height-section: 28px;
+  --font-size-subtitle: 16px;
+  --line-height-subtitle: 24px;
+  --font-size-body: 15px;
+  --line-height-body: 22px;
+  --font-size-aux: 13px;
+  --line-height-aux: 18px;
+  --font-size-label: 12px;
+  --line-height-label: 16px;
+  --letter-spacing-label: 0.06em;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* Espaciado (múltiplos de 4 px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Forma y elevación: radio de 4 px en todo, sombras solo en modales y desplegables */
+  --radius: 4px;
+  --shadow-overlay: 0 12px 32px rgb(20 28 36 / 0.16);
+  --focus-ring: 2px solid var(--color-primary);
+  --focus-offset: 2px;
+
+  /* Medidas de layout */
+  --content-max-width: 1200px;
+  --page-gutter: var(--space-6);
+  --public-header-height: 64px;
+  --app-header-height: 60px;
+  --sidebar-width: 236px;
+  --footer-height: 44px;
+  --control-height: 40px;
+  --control-height-sm: 32px;
+  --table-row-height: 44px;
+
+  --z-header: 100;
+  --z-modal: 1000;
+  --z-toast: 1100;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --page-gutter: var(--space-4);
+  }
+}

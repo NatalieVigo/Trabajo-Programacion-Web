@@ -1,0 +1,54 @@
+import { describe, expect, it } from 'vitest'
+import {
+  formatDate,
+  formatDateTime,
+  formatPrioridad,
+  formatRol,
+  formatTelefono,
+  formatTime,
+  getDisplayName,
+  getFirstName,
+  getFullName,
+  getInitials,
+} from './format.js'
+
+describe('format', () => {
+  it('formatea fechas y horas en hora de Lima', () => {
+    const registro = '2026-09-30T13:12:00.000Z'
+
+    expect(formatDate(registro)).toBe('30/09/2026')
+    expect(formatTime(registro)).toBe('08:12')
+    expect(formatDateTime(registro)).toBe('30/09/2026 08:12')
+    expect(formatDate('2026-03-01T03:00:00.000Z')).toBe('28/02/2026')
+  })
+
+  it('devuelve un texto vacío para fechas ausentes o inválidas', () => {
+    expect(formatDate(null)).toBe('')
+    expect(formatTime('')).toBe('')
+    expect(formatDateTime('no es fecha')).toBe('')
+  })
+
+  it('agrupa el celular de 9 dígitos de tres en tres', () => {
+    expect(formatTelefono('987654321')).toBe('987 654 321')
+    expect(formatTelefono('987 654 321')).toBe('987 654 321')
+    expect(formatTelefono('12345')).toBe('12345')
+    expect(formatTelefono(null)).toBe('')
+  })
+
+  it('arma nombres e iniciales como en la cabecera', () => {
+    const camila = { nombres: 'Camila Alejandra', apellidos: 'Quispe Ramos' }
+
+    expect(getFirstName(camila.nombres)).toBe('Camila')
+    expect(getInitials(camila.nombres, camila.apellidos)).toBe('CQ')
+    expect(getInitials('lucía', 'mendoza ríos')).toBe('LM')
+    expect(getFullName(camila)).toBe('Camila Alejandra Quispe Ramos')
+    expect(getDisplayName(camila)).toBe('Camila Quispe Ramos')
+  })
+
+  it('traduce prioridades y roles a sus etiquetas', () => {
+    expect(formatPrioridad('critica')).toBe('Crítica')
+    expect(formatPrioridad('baja')).toBe('Baja')
+    expect(formatRol('tecnico')).toBe('Técnico')
+    expect(formatRol('desconocido')).toBe('desconocido')
+  })
+})
