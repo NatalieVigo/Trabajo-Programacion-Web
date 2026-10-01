@@ -1,0 +1,36 @@
+/* Centrada en el área de contenido (p11): el alto visible menos la cabecera, el pie y el relleno del contenido. */
+.forbidden-page {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - var(--app-header-height) - var(--footer-height) - var(--space-6) - var(--space-12));
+  padding-block: var(--space-6);
+}
+
+.forbidden-page__card {
+  max-width: 720px;
+  padding: var(--space-8);
+}
+
+/* Código en un recuadro de peligro (p11), a diferencia del 404, que lo muestra grande (p09). */
+.forbidden-page__code {
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius);
+  background: var(--color-danger-soft);
+  color: var(--color-danger-text);
+  font-size: var(--font-size-section);
+  line-height: var(--line-height-section);
+  font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 640px) {
+  .forbidden-page {
+    min-height: 0;
+    padding-block: var(--space-4);
+  }
+
+  .forbidden-page__card {
+    padding: var(--space-5) var(--space-4);
+  }
+}

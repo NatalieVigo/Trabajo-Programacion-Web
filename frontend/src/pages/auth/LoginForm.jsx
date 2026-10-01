@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useForm } from '../../hooks/useForm.js'
 import { getRoleHome } from '../../routes/roleHome.js'
+import { canAccess } from '../../routes/routeAccess.js'
 import { ROUTES } from '../../routes/routePaths.js'
 import { obtenerContadores } from '../../services/resumen.service.js'
 import { Button, Checkbox, FormField, PasswordInput, TextInput, TextLink, useToast } from '../../shared/components'
@@ -14,9 +15,12 @@ const VERIFICA_TUS_DATOS = 'Verifica tus datos e inténtalo otra vez.'
 // Errores que se explican con un aviso sobre el formulario (p05); los inesperados se notifican con un toast.
 const ERRORES_CON_AVISO = new Set(['INVALID_CREDENTIALS', 'ACCOUNT_LOCKED', 'ACCOUNT_BLOCKED'])
 
-/** Tras ingresar: la página privada que se pidió sin sesión (RequireAuth la deja en state.from) o la del rol. */
+/**
+ * Tras ingresar: la página privada que se pidió sin sesión (RequireAuth la deja en state.from) si el rol puede verla;
+ * si no, la vista del rol en lugar de un 403.
+ */
 function destinoTrasIngresar(from, rol) {
-  return typeof from?.pathname === 'string' ? from : getRoleHome(rol).path
+  return typeof from?.pathname === 'string' && canAccess(rol, from.pathname) ? from : getRoleHome(rol).path
 }
 
 async function mensajeDeBienvenida(usuario) {

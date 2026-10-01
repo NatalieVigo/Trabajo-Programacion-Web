@@ -33,6 +33,10 @@ export const VALIDATION_MESSAGES = Object.freeze({
   especialidadesRange: 'Elige entre una y tres categorías.',
   especialidadesNoDisponible: 'Una de las categorías elegidas ya no está disponible. Actualiza la página y elige otra.',
   rolInvitacionRequired: 'Selecciona el rol: técnico o supervisor.',
+  invitadoNombresRequired: 'Ingresa los nombres de la persona invitada.',
+  invitadoApellidosRequired: 'Ingresa los apellidos de la persona invitada.',
+  invitadoCorreoRequired: 'Ingresa el correo institucional de la persona invitada.',
+  invitadoCorreoInstitucional: 'Usa un correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
 })
 
 // Grupos de letras (con tildes y ñ) separados por espacios, apóstrofos o guiones: «María José», «O'Connor», «Ruiz-Tagle».
@@ -79,10 +83,13 @@ export function validateApellidos(value) {
   return validateName(value, VALIDATION_MESSAGES.apellidosRequired)
 }
 
-export function validateCorreo(value) {
+export function validateCorreo(
+  value,
+  { required = VALIDATION_MESSAGES.correoRequired, format = VALIDATION_MESSAGES.correoInstitucional } = {},
+) {
   const correo = normalizeCorreo(value)
-  if (!correo) return VALIDATION_MESSAGES.correoRequired
-  return CORREO_PATTERN.test(correo) ? null : VALIDATION_MESSAGES.correoInstitucional
+  if (!correo) return required
+  return CORREO_PATTERN.test(correo) ? null : format
 }
 
 export function validateTelefono(value) {
@@ -178,12 +185,18 @@ export function validateActivacion(values, { categorias } = {}) {
   })
 }
 
-/** Valida los datos con los que un supervisor invita a un técnico o a otro supervisor. */
+/**
+ * Valida los datos con los que un supervisor invita a un técnico o a otro supervisor. Los mensajes hablan de la persona
+ * invitada, porque quien llena el formulario es el supervisor.
+ */
 export function validateInvitacion(values) {
   return collectErrors({
-    nombres: validateNombres(values.nombres),
-    apellidos: validateApellidos(values.apellidos),
-    correo: validateCorreo(values.correo),
+    nombres: validateName(values.nombres, VALIDATION_MESSAGES.invitadoNombresRequired),
+    apellidos: validateName(values.apellidos, VALIDATION_MESSAGES.invitadoApellidosRequired),
+    correo: validateCorreo(values.correo, {
+      required: VALIDATION_MESSAGES.invitadoCorreoRequired,
+      format: VALIDATION_MESSAGES.invitadoCorreoInstitucional,
+    }),
     rol: validateRolInvitacion(values.rol),
     telefono: validateTelefono(values.telefono),
   })

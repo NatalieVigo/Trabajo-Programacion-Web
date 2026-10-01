@@ -45,13 +45,7 @@ function ModalDialog({
     const dialog = dialogRef.current
     const initialTarget = initialFocusRef?.current ?? getFocusable(dialog)[0] ?? dialog
     initialTarget.focus()
-
-    const { overflow } = document.body.style
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = overflow
-      previouslyFocused?.focus?.()
-    }
+    return () => previouslyFocused?.focus?.()
   }, [initialFocusRef])
 
   function handleKeyDown(event) {

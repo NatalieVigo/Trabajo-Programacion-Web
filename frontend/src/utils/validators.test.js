@@ -227,7 +227,7 @@ describe('validators', () => {
   })
 
   describe('validateInvitacion', () => {
-    it('valida los datos con los que el supervisor invita', () => {
+    it('valida los datos con los que el supervisor invita, con mensajes sobre la persona invitada', () => {
       expect(
         validateInvitacion({
           nombres: 'Rosa Elena',
@@ -238,12 +238,13 @@ describe('validators', () => {
         }),
       ).toEqual({})
       expect(validateInvitacion({ correo: 'rosa@gmail.com', rol: 'usuario' })).toEqual({
-        nombres: 'Ingresa tus nombres.',
-        apellidos: 'Ingresa tus apellidos.',
-        correo: 'Usa tu correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
+        nombres: 'Ingresa los nombres de la persona invitada.',
+        apellidos: 'Ingresa los apellidos de la persona invitada.',
+        correo: 'Usa un correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
         rol: 'Selecciona el rol: técnico o supervisor.',
         telefono: 'Ingresa un número de contacto.',
       })
+      expect(validateInvitacion({}).correo).toBe('Ingresa el correo institucional de la persona invitada.')
     })
   })
 

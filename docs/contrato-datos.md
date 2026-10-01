@@ -37,10 +37,10 @@ respuesta de Express.
 | Estado | Uso |
 | --- | --- |
 | 400 | Datos inválidos (`VALIDATION_ERROR`). `fieldErrors` trae el mensaje de cada campo: `{ correo: 'Ingresa tu correo institucional.' }`. |
-| 401 | Credenciales incorrectas al iniciar sesión (`INVALID_CREDENTIALS`, con `details.intentosRestantes`); también si el correo no tiene cuenta, para no revelar qué correos existen. Sin sesión al pedir los contadores (`UNAUTHENTICATED`). |
+| 401 | Credenciales incorrectas al iniciar sesión (`INVALID_CREDENTIALS`, con `details.intentosRestantes`); también si el correo no tiene cuenta, para no revelar qué correos existen. Sin sesión válida al pedir los contadores o al solicitar acceso (`UNAUTHENTICATED`). |
 | 403 | Acción no permitida para el rol (`FORBIDDEN`: solo un supervisor activo envía invitaciones) o cuenta bloqueada por el supervisor (`ACCOUNT_BLOCKED`, con `details.motivo`; solo se informa si la contraseña es correcta). |
 | 404 | El recurso no existe (invitación `INVITATION_NOT_FOUND`, enlace de recuperación, usuario `USER_NOT_FOUND`…). |
-| 409 | Conflicto con el estado actual: correo ya registrado (`EMAIL_TAKEN`), invitación ya aceptada, rechazada o revocada (`INVITATION_NOT_PENDING`, con `details.estado`) o correo con una invitación vigente (`INVITATION_PENDING`). |
+| 409 | Conflicto con el estado actual: correo ya registrado (`EMAIL_TAKEN`), invitación ya aceptada, rechazada o revocada (`INVITATION_NOT_PENDING`, con `details.estado`), correo con una invitación vigente (`INVITATION_PENDING`) o solicitud de acceso repetida (`ACCESS_REQUEST_EXISTS`). |
 | 410 | Recurso vencido: invitación (`INVITATION_EXPIRED`, con `details.venceEn`) o enlace de recuperación. |
 | 423 | Cuenta bloqueada temporalmente tras cinco intentos fallidos (`ACCOUNT_LOCKED`, con `details.bloqueadoHasta`). |
 | 500 | Error inesperado (`INTERNAL_ERROR`). |
@@ -127,9 +127,12 @@ Los servicios devuelven cada invitación con dos campos calculados que no se gua
 | Campo | Tipo | Valores admitidos / notas |
 | --- | --- | --- |
 | `id` | string | `sol-NNN`. |
-| `usuarioId` | string | Quien pide el acceso desde la vista 403. |
-| `recurso` | string | Lo que intentó ver, por ejemplo «la cola de atención». |
+| `usuarioId` | string | Quien pide el acceso desde la vista 403 (una cuenta activa). |
+| `recurso` | string | Lo que intentó ver, tal como lo nombra la vista 403: «la cola de atención». De 1 a 120 caracteres. |
 | `creadaEn` | ISO | |
+
+Una cuenta no repite la misma solicitud: si ya pidió acceso a ese `recurso`, `solicitudesAcceso.service#solicitar`
+responde 409 `ACCESS_REQUEST_EXISTS`. Infraestructura y Servicios revisa las solicitudes fuera de la aplicación.
 
 ### Intento de acceso sin cuenta (`intentosAcceso`) · dueño: HU-1
 
