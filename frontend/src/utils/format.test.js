@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatCountdown,
   formatDate,
   formatDateTime,
   formatPrioridad,
@@ -27,6 +28,13 @@ describe('format', () => {
     expect(formatDate(null)).toBe('')
     expect(formatTime('')).toBe('')
     expect(formatDateTime('no es fecha')).toBe('')
+  })
+
+  it('muestra una cuenta regresiva en minutos y segundos', () => {
+    expect(formatCountdown(45)).toBe('0:45')
+    expect(formatCountdown(5)).toBe('0:05')
+    expect(formatCountdown(90)).toBe('1:30')
+    expect(formatCountdown(0)).toBe('0:00')
   })
 
   it('agrupa el celular de 9 dígitos de tres en tres', () => {

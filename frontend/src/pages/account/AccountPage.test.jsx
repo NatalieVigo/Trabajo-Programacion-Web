@@ -1,16 +1,25 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ambientesRepository } from '../../repositories/catalogo.repository.js'
 import { readTable, writeTable } from '../../repositories/db.js'
 import { ticketsRepository } from '../../repositories/tickets.repository.js'
 import { usuariosRepository } from '../../repositories/usuarios.repository.js'
 import { DEMO, renderApp } from '../../test/test-utils.jsx'
+import { verifyPassword } from '../../utils/password.js'
 
 const PILDORA = { usuario: 'Mis tickets abiertos', tecnico: 'Asignados a mí', supervisor: 'Cola sin asignar' }
+const NUEVA = 'Campus2027!'
 
 const formulario = () => screen.getByRole('form', { name: 'Datos personales' })
 const campo = (etiqueta) => within(formulario()).getByLabelText(etiqueta)
 const botonGuardar = () => screen.getByRole('button', { name: 'Guardar cambios' })
+const formularioContrasena = () => screen.getByRole('form', { name: 'Cambiar contraseña' })
+const campoContrasena = (etiqueta) => within(formularioContrasena()).getByLabelText(etiqueta)
+const botonActualizar = () => screen.getByRole('button', { name: 'Actualizar contraseña' })
+const tieneLaContrasena = (usuarioId, password) => {
+  const { passwordSalt, passwordHash } = usuariosRepository.findById(usuarioId)
+  return verifyPassword(password, passwordSalt, passwordHash)
+}
 const resumen = () => screen.getByRole('complementary', { name: 'Resumen de tu cuenta' })
 const filasDelResumen = () =>
   within(resumen())
@@ -29,6 +38,12 @@ async function abrirMiCuenta(cuenta = DEMO.usuario, rol = 'usuario') {
 async function reemplazar(user, etiqueta, texto) {
   await user.clear(campo(etiqueta))
   await user.type(campo(etiqueta), texto)
+}
+
+async function completarCambio(user, { actual, nueva, confirmacion = nueva }) {
+  await user.type(campoContrasena('Actual'), actual)
+  await user.type(campoContrasena('Nueva'), nueva)
+  await user.type(campoContrasena('Confirmar'), confirmacion)
 }
 
 beforeEach(() => {
@@ -254,6 +269,94 @@ describe('AccountPage · edición', () => {
     expect(campo('Nombres')).toHaveValue('Valeria')
     expect(botonGuardar()).toBeEnabled()
     expect(within(screen.getByRole('banner')).getByText('Camila Quispe Ramos')).toBeInTheDocument()
+  })
+})
+
+describe('AccountPage · cambiar contraseña', () => {
+  it('muestra la sección debajo de los datos personales, con la actual, la nueva y su confirmación (p10)', async () => {
+    await abrirMiCuenta()
+
+    const seccion = screen.getByRole('region', { name: 'Cambiar contraseña' })
+    expect(within(seccion).getByRole('heading', { level: 2, name: 'Cambiar contraseña' })).toBeInTheDocument()
+    expect(campoContrasena('Actual')).toHaveAttribute('type', 'password')
+    expect(campoContrasena('Actual')).toHaveAttribute('autocomplete', 'current-password')
+    expect(campoContrasena('Nueva')).toHaveAttribute('autocomplete', 'new-password')
+    expect(campoContrasena('Nueva')).toHaveAccessibleDescription('Mínimo 8 caracteres, con una mayúscula y un número.')
+    expect(campoContrasena('Confirmar')).toHaveAttribute('type', 'password')
+    expect(botonActualizar()).toHaveAttribute('type', 'submit')
+    expect(
+      screen.getByRole('region', { name: 'Datos personales' }).compareDocumentPosition(seccion) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('si la contraseña actual no es la correcta lo indica junto a ella y no cambia nada', async () => {
+    const { user } = await abrirMiCuenta()
+    await completarCambio(user, { actual: 'Camila2025', nueva: NUEVA })
+
+    await user.click(botonActualizar())
+
+    await waitFor(() => expect(campoContrasena('Actual')).toHaveFocus())
+    expect(campoContrasena('Actual')).toHaveAttribute('aria-invalid', 'true')
+    expect(campoContrasena('Actual')).toHaveAccessibleDescription('La contraseña actual no es correcta.')
+    expect(campoContrasena('Nueva')).toHaveValue(NUEVA)
+    expect(screen.queryByText('Tu contraseña se actualizó correctamente.')).not.toBeInTheDocument()
+    await expect(tieneLaContrasena(DEMO.usuario, 'Camila2026')).resolves.toBe(true)
+
+    await user.type(campoContrasena('Actual'), 'x')
+    expect(campoContrasena('Actual')).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('actualiza la contraseña, lo notifica y deja los campos vacíos', async () => {
+    const { user } = await abrirMiCuenta()
+    await completarCambio(user, { actual: 'Camila2026', nueva: NUEVA })
+    expect(within(formularioContrasena()).getByText('Segura')).toBeInTheDocument()
+
+    await user.click(botonActualizar())
+
+    expect(await screen.findByText('Tu contraseña se actualizó correctamente.')).toBeInTheDocument()
+    expect(campoContrasena('Actual')).toHaveValue('')
+    expect(campoContrasena('Nueva')).toHaveValue('')
+    expect(campoContrasena('Confirmar')).toHaveValue('')
+    expect(campoContrasena('Actual')).not.toHaveAttribute('aria-invalid')
+    expect(within(formularioContrasena()).queryByText('Segura')).not.toBeInTheDocument()
+    await expect(tieneLaContrasena(DEMO.usuario, NUEVA)).resolves.toBe(true)
+  })
+
+  it('pide una nueva contraseña distinta de la actual y bien confirmada antes de enviar', async () => {
+    const { user } = await abrirMiCuenta()
+    await completarCambio(user, { actual: 'Camila2026', nueva: 'Camila2026', confirmacion: 'Camila2027' })
+
+    await user.click(botonActualizar())
+
+    expect(campoContrasena('Nueva')).toHaveFocus()
+    expect(campoContrasena('Nueva')).toHaveAccessibleDescription('La nueva contraseña debe ser distinta de la actual.')
+    expect(campoContrasena('Confirmar')).toHaveAccessibleDescription('Las contraseñas no coinciden.')
+    await expect(tieneLaContrasena(DEMO.usuario, 'Camila2026')).resolves.toBe(true)
+  })
+
+  it('el técnico también cambia su contraseña desde Mi cuenta', async () => {
+    const { user } = await abrirMiCuenta(DEMO.tecnico, 'tecnico')
+    await completarCambio(user, { actual: 'Tecnico2026', nueva: NUEVA })
+
+    await user.click(botonActualizar())
+
+    expect(await screen.findByText('Tu contraseña se actualizó correctamente.')).toBeInTheDocument()
+    await expect(tieneLaContrasena(DEMO.tecnico, NUEVA)).resolves.toBe(true)
+  })
+
+  it('si el cambio falla de forma inesperada lo notifica y conserva lo escrito', async () => {
+    const { user } = await abrirMiCuenta()
+    vi.spyOn(usuariosRepository, 'update').mockImplementation(() => {
+      throw new Error('Sin conexión')
+    })
+    await completarCambio(user, { actual: 'Camila2026', nueva: NUEVA })
+
+    await user.click(botonActualizar())
+
+    expect(await screen.findByText('Ocurrió un error inesperado. Inténtalo otra vez.')).toBeInTheDocument()
+    expect(campoContrasena('Nueva')).toHaveValue(NUEVA)
+    expect(botonActualizar()).toBeEnabled()
   })
 })
 

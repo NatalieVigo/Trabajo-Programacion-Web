@@ -36,12 +36,12 @@ respuesta de Express.
 
 | Estado | Uso |
 | --- | --- |
-| 400 | Datos inválidos (`VALIDATION_ERROR`). `fieldErrors` trae el mensaje de cada campo: `{ correo: 'Ingresa tu correo institucional.' }`. |
-| 401 | Credenciales incorrectas al iniciar sesión (`INVALID_CREDENTIALS`, con `details.intentosRestantes`); también si el correo no tiene cuenta, para no revelar qué correos existen. Sin sesión válida al pedir los contadores o al solicitar acceso (`UNAUTHENTICATED`). |
+| 400 | Datos inválidos (`VALIDATION_ERROR`). `fieldErrors` trae el mensaje de cada campo: `{ correo: 'Ingresa tu correo institucional.' }`. Al cambiar la contraseña, también si la actual no es la correcta (`fieldErrors.actual`). |
+| 401 | Credenciales incorrectas al iniciar sesión (`INVALID_CREDENTIALS`, con `details.intentosRestantes`); también si el correo no tiene cuenta, para no revelar qué correos existen. Sin sesión válida al pedir los contadores, al solicitar acceso o al cambiar la contraseña (`UNAUTHENTICATED`). |
 | 403 | Acción no permitida para el rol (`FORBIDDEN`: solo un supervisor activo envía invitaciones) o cuenta bloqueada por el supervisor (`ACCOUNT_BLOCKED`, con `details.motivo`; solo se informa si la contraseña es correcta). |
-| 404 | El recurso no existe (invitación `INVITATION_NOT_FOUND`, enlace de recuperación, usuario `USER_NOT_FOUND`…). |
+| 404 | El recurso no existe (invitación `INVITATION_NOT_FOUND`, enlace de recuperación `RESET_TOKEN_NOT_FOUND`, usuario `USER_NOT_FOUND`…). |
 | 409 | Conflicto con el estado actual: correo ya registrado (`EMAIL_TAKEN`), invitación ya aceptada, rechazada o revocada (`INVITATION_NOT_PENDING`, con `details.estado`), correo con una invitación vigente (`INVITATION_PENDING`) o solicitud de acceso repetida (`ACCESS_REQUEST_EXISTS`). |
-| 410 | Recurso vencido: invitación (`INVITATION_EXPIRED`, con `details.venceEn`) o enlace de recuperación. |
+| 410 | Recurso que ya no está disponible: invitación vencida (`INVITATION_EXPIRED`, con `details.venceEn`) o enlace de recuperación vencido (`RESET_TOKEN_EXPIRED`) o ya usado (`RESET_TOKEN_USED`). |
 | 423 | Cuenta bloqueada temporalmente tras cinco intentos fallidos (`ACCOUNT_LOCKED`, con `details.bloqueadoHasta`). |
 | 500 | Error inesperado (`INTERNAL_ERROR`). |
 
@@ -66,7 +66,7 @@ respuesta de Express.
 | `passwordHash` | string | 64 caracteres hexadecimales. |
 | `passwordSalt` | string | 32 caracteres hexadecimales. |
 | `intentosFallidos` | number | Intentos fallidos seguidos, de 0 a 5; vuelve a 0 al iniciar sesión o al restablecer la contraseña. Tras un bloqueo ya vencido se cuenta otra vez desde el primero. |
-| `bloqueadoHasta` | ISO \| null | Bloqueo temporal de 15 minutos tras el quinto intento fallido: mientras dure se rechaza todo inicio de sesión, aun con la contraseña correcta. No cierra las sesiones ya iniciadas. |
+| `bloqueadoHasta` | ISO \| null | Bloqueo temporal de 15 minutos tras el quinto intento fallido: mientras dure se rechaza todo inicio de sesión, aun con la contraseña correcta. No cierra las sesiones ya iniciadas. Restablecer la contraseña lo quita. |
 | `aceptaTerminos` | boolean | `true`: aceptó los términos al registrarse o al activar su invitación. |
 | `invitacionId` | string \| null | Invitación con la que se activó la cuenta (técnicos y supervisores). |
 | `creadoEn` | ISO | Fecha de creación de la cuenta. |
@@ -90,6 +90,12 @@ Desde «Mi cuenta» (`/mi-cuenta`) cualquier rol puede cambiar solo `nombres`, `
 `ambienteHabitualId` (que admite `null`, «sin ambiente habitual»); los demás campos que se envíen se ignoran. Se validan
 y normalizan como en el registro, `unidad` debe ser de `unidades`, `ambienteHabitualId` debe existir en `ambientes` y
 cada cambio actualiza `actualizadoEn`.
+
+La contraseña se cambia desde «Mi cuenta» indicando la actual (`auth.service#cambiarPassword`) o, si se olvidó, con un
+enlace de recuperación (`auth.service#restablecerPassword`). En ambos casos la nueva cumple la regla de
+`validators.js`, se guarda con una sal nueva y actualiza `actualizadoEn`; desde «Mi cuenta» además debe ser distinta de
+la actual. Restablecerla con un enlace pone `intentosFallidos = 0` y `bloqueadoHasta = null`, pero no cambia `estado`:
+una cuenta bloqueada por un supervisor sigue bloqueada.
 
 ### Invitación (`invitaciones`) · dueño: HU-1
 
@@ -121,11 +127,20 @@ Los servicios devuelven cada invitación con dos campos calculados que no se gua
 | Campo | Tipo | Valores admitidos / notas |
 | --- | --- | --- |
 | `id` | string | `rec-NNN`. |
-| `token` | string | Aleatorio; forma parte del enlace `/restablecer-contrasena/:token`. |
+| `token` | string | Único; forma parte del enlace `/restablecer-contrasena/:token`. `REC-` + 32 caracteres hexadecimales aleatorios (128 bits): no se puede adivinar. |
 | `usuarioId` | string | Id de `usuarios`. |
 | `creadoEn` | ISO | |
 | `venceEn` | ISO | `creadoEn` + 30 minutos. |
-| `usadoEn` | ISO \| null | Un solo uso. |
+| `usadoEn` | ISO \| null | Momento en que se restableció la contraseña con el enlace. Un enlace sirve una sola vez. |
+
+Se crea al pedir la recuperación de contraseña (`auth.service#solicitarRecuperacion`) con el correo de una cuenta,
+aunque esté bloqueada. Solo vale el último enlace de cada cuenta: al pedir otro se eliminan los anteriores que no se
+usaron, cuyo token pasa a responder 404 (`RESET_TOKEN_NOT_FOUND`). Un enlace sirve mientras `usadoEn = null` y `venceEn`
+sea posterior a la fecha actual; si no, responde 410 (`RESET_TOKEN_USED` o `RESET_TOKEN_EXPIRED`).
+
+`solicitarRecuperacion` responde lo mismo exista o no la cuenta (`{ enviado: true, correo }`), para no revelar qué
+correos están registrados. Como la entrega 1 no envía correos, si la cuenta existe la respuesta trae además `tokenDemo`,
+que solo usa la «bandeja simulada» de la vista; en la entrega 2 el token llegará únicamente por correo.
 
 ### Solicitud de acceso (`solicitudesAcceso`) · dueño: HU-1
 

@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth.js'
 import { useForm } from '../../hooks/useForm.js'
 import { getRoleHome } from '../../routes/roleHome.js'
 import { canAccess } from '../../routes/routeAccess.js'
-import { ROUTES } from '../../routes/routePaths.js'
+import { ROUTES, recuperarContrasenaPath } from '../../routes/routePaths.js'
 import { obtenerContadores } from '../../services/resumen.service.js'
 import { Button, Checkbox, FormField, PasswordInput, TextInput, TextLink, useToast } from '../../shared/components'
 import { normalizeCorreo, validateLogin } from '../../utils/validators.js'
@@ -33,7 +33,8 @@ async function mensajeDeBienvenida(usuario) {
 
 /**
  * Formulario de acceso (p04, p05). Mientras se valida la sesión muestra «Ingresando…» con los campos y enlaces
- * deshabilitados. El correo llega precargado desde el registro o la invitación (state.correo).
+ * deshabilitados. El correo llega precargado desde el registro, la invitación o la recuperación de contraseña
+ * (state.correo) y «¿Olvidaste tu contraseña?» lo lleva a la recuperación.
  */
 export default function LoginForm() {
   const location = useLocation()
@@ -94,7 +95,11 @@ export default function LoginForm() {
         </FormField>
         <div className="login-form__options">
           <Checkbox {...form.getFieldProps('recordar')} label="Recordarme en este equipo" />
-          <TextLink to={ROUTES.recuperarContrasena} disabled={enviando} className="login-form__forgot">
+          <TextLink
+            to={recuperarContrasenaPath(normalizeCorreo(form.values.correo))}
+            disabled={enviando}
+            className="login-form__forgot"
+          >
             ¿Olvidaste tu contraseña?
           </TextLink>
         </div>

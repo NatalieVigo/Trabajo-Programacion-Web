@@ -1,0 +1,84 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepper__step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+/* La línea que une cada paso con el siguiente ocupa el espacio libre. */
+.stepper__step:not(:last-child) {
+  flex: 1;
+}
+
+.stepper__step:not(:last-child)::after {
+  content: '';
+  flex: 1;
+  min-width: var(--space-4);
+  height: 1px;
+  margin-left: var(--space-1);
+  background: var(--color-border);
+}
+
+.stepper__marker {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.stepper__label {
+  white-space: nowrap;
+}
+
+.stepper__step--done {
+  color: var(--color-text);
+}
+
+.stepper__step--done .stepper__marker {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.stepper__step--current {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.stepper__step--current .stepper__marker {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-dark);
+}
+
+/* En pantallas angostas los otros pasos muestran solo su número; el nombre queda para los lectores de pantalla. */
+@media (max-width: 479px) {
+  .stepper__step:not(.stepper__step--current) .stepper__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    border: 0;
+  }
+}

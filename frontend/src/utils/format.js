@@ -51,6 +51,11 @@ export function formatDateTime(value) {
   return date ? `${formatDate(date)} ${formatTime(date)}` : ''
 }
 
+/** Segundos de una cuenta regresiva como minutos y segundos: 45 → «0:45», 90 → «1:30». */
+export function formatCountdown(seconds) {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+}
+
 /** "987654321" → "987 654 321"; cualquier otro valor se devuelve sin cambios. */
 export function formatTelefono(telefono) {
   const digits = String(telefono ?? '').replace(/\s+/g, '')

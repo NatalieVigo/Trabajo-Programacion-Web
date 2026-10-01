@@ -2,14 +2,15 @@ import { Route, Routes } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout.jsx'
 import PublicLayout from '../layouts/PublicLayout.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage.jsx'
 import InvitationPage from '../pages/auth/InvitationPage.jsx'
 import LoginPage from '../pages/auth/LoginPage.jsx'
 import RegisterPage from '../pages/auth/RegisterPage.jsx'
+import ResetPasswordPage from '../pages/auth/ResetPasswordPage.jsx'
 import ForbiddenPage from '../pages/errors/ForbiddenPage.jsx'
 import NotFoundPage from '../pages/errors/NotFoundPage.jsx'
 import { HISTORIAS } from '../pages/placeholders/historias.js'
 import PlaceholderPage from '../pages/placeholders/PlaceholderPage.jsx'
-import PublicPlaceholderPage from '../pages/placeholders/PublicPlaceholderPage.jsx'
 import LandingPage from '../pages/public/LandingPage.jsx'
 import InvitationsPage from '../pages/supervisor/InvitationsPage.jsx'
 import SupervisorHomePage from '../pages/supervisor/SupervisorHomePage.jsx'
@@ -22,7 +23,6 @@ import { PRIVATE_ROUTES } from './routeAccess.js'
 import { ROUTES } from './routePaths.js'
 
 const pendiente = (title, historia) => <PlaceholderPage title={title} pendiente={historia} />
-const recuperacionPendiente = (title) => <PublicPlaceholderPage title={title} pendiente={HISTORIAS.recuperacion} />
 
 /** Página de cada ruta privada. Quién puede verla lo define la tabla de routeAccess.js. */
 const PRIVATE_PAGES = {
@@ -60,8 +60,8 @@ export default function AppRoutes() {
         <Route element={<GuestOnly />}>
           <Route path={ROUTES.registro} element={<RegisterPage />} />
           <Route path={ROUTES.iniciarSesion} element={<LoginPage />} />
-          <Route path={ROUTES.recuperarContrasena} element={recuperacionPendiente('Recuperar mi contraseña')} />
-          <Route path={ROUTES.restablecerContrasena} element={recuperacionPendiente('Nueva contraseña')} />
+          <Route path={ROUTES.recuperarContrasena} element={<ForgotPasswordPage />} />
+          <Route path={ROUTES.restablecerContrasena} element={<ResetPasswordPage />} />
         </Route>
         <Route path={ROUTES.notFound} element={<NotFoundPage />} />
       </Route>

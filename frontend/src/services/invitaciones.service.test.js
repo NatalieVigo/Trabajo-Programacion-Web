@@ -244,7 +244,7 @@ describe('invitaciones.service · aceptar', () => {
     expect(invitacion(TECNICO).estado).toBe('pendiente')
   })
 
-  it('si la invitación cambia mientras se cifra la contraseña, no crea la cuenta', async () => {
+  it('si la invitación cambia mientras se calcula el hash de la contraseña, no crea la cuenta', async () => {
     const digest = crypto.subtle.digest.bind(crypto.subtle)
     vi.spyOn(crypto.subtle, 'digest').mockImplementation((...args) => {
       cambiarInvitacion(TECNICO, { estado: 'revocada' })
