@@ -188,3 +188,11 @@ export function validateInvitacion(values) {
     telefono: validateTelefono(values.telefono),
   })
 }
+
+/** Valida el inicio de sesión: correo institucional y contraseña presente (no se exponen las reglas de la contraseña). */
+export function validateLogin(values) {
+  return collectErrors({
+    correo: validateCorreo(values.correo),
+    password: asText(values.password) ? null : VALIDATION_MESSAGES.passwordRequired,
+  })
+}

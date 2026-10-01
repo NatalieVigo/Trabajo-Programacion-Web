@@ -1,0 +1,16 @@
+.text-link {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+
+.text-link:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
+.text-link[aria-disabled='true'] {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  cursor: not-allowed;
+}

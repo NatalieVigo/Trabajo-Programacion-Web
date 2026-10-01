@@ -67,3 +67,21 @@ export function AlertIcon(props) {
     </Icon>
   )
 }
+
+export function SearchIcon(props) {
+  return (
+    <Icon {...props}>
+      <circle cx="7" cy="7" r="4.5" />
+      <path d="m10.5 10.5 3 3" />
+    </Icon>
+  )
+}
+
+export function ClockIcon(props) {
+  return (
+    <Icon {...props}>
+      <circle cx="8" cy="8" r="6.25" />
+      <path d="M8 4.75V8l2.25 1.5" />
+    </Icon>
+  )
+}

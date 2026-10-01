@@ -18,6 +18,16 @@ function focusFirstInvalid(form, errors) {
 }
 
 /**
+ * Mientras se envía, el formulario deshabilita sus controles y el navegador puede soltar el foco (queda en <body>).
+ * Si nadie lo tomó después, vuelve al botón que envió el formulario para que el teclado siga donde estaba.
+ */
+function restoreLostFocus(submitter) {
+  const { activeElement } = document
+  if (activeElement && activeElement !== document.body) return
+  if (submitter?.isConnected) submitter.focus()
+}
+
+/**
  * Estado de un formulario controlado (SPEC §7). `validate(values)` devuelve { campo: mensaje } solo con los campos
  * inválidos. Un campo se valida al salir de él y, desde entonces, en cada cambio; al enviar se valida todo y se
  * enfoca el primer campo inválido. `errors` reúne lo que se debe mostrar junto a cada campo.
@@ -67,13 +77,14 @@ export function useForm({ initialValues, validate }) {
   /**
    * Devuelve el manejador de onSubmit. Solo llama a `onValid(values)` si no hay errores; mientras espera,
    * `isSubmitting` es true. Si `onValid` devuelve errores por campo (los `fieldErrors` de un servicio),
-   * se muestran junto a cada campo y se enfoca el primero.
+   * se muestran junto a cada campo y se enfoca el primero; si no, el foco que se perdió vuelve al botón de envío.
    */
   function handleSubmit(onValid) {
     return async (event) => {
       event.preventDefault()
       if (submittingRef.current) return
       const form = event.currentTarget
+      const submitter = event.nativeEvent?.submitter ?? form.querySelector('[type="submit"]')
       const clientErrors = validate(values)
       // Los mensajes se pintan antes de mover el foco para que el lector de pantalla anuncie el del campo.
       flushSync(() => setTouched(touchAll(values)))
@@ -91,10 +102,12 @@ export function useForm({ initialValues, validate }) {
         submittingRef.current = false
         flushSync(() => {
           setIsSubmitting(false)
-          if (hasErrors(fieldErrors)) setServerErrors(fieldErrors)
+          // Solo valen los errores del último envío: los de un envío anterior ya no describen la respuesta actual.
+          setServerErrors(hasErrors(fieldErrors) ? fieldErrors : {})
         })
       }
       if (hasErrors(fieldErrors)) focusFirstInvalid(form, fieldErrors)
+      else restoreLostFocus(submitter)
     }
   }
 

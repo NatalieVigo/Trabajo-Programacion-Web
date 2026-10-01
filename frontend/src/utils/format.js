@@ -76,6 +76,11 @@ export function getDisplayName({ nombres = '', apellidos = '' } = {}) {
   return `${getFirstName(nombres)} ${apellidos}`.trim()
 }
 
+/** Cantidad con el sustantivo en singular o plural: «1 ticket abierto», «3 tickets abiertos». */
+export function pluralize(count, singular, plural) {
+  return `${count} ${count === 1 ? singular : plural}`
+}
+
 export function formatPrioridad(prioridad) {
   return PRIORIDAD_LABELS[prioridad] ?? prioridad
 }

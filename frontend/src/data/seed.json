@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "usuarios": [
     {
       "id": "usr-001",
@@ -297,6 +297,7 @@
   ],
   "tokensRecuperacion": [],
   "solicitudesAcceso": [],
+  "intentosAcceso": [],
   "categorias": [
     {
       "id": "cat-01",

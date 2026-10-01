@@ -10,6 +10,7 @@ import {
   getFirstName,
   getFullName,
   getInitials,
+  pluralize,
 } from './format.js'
 
 describe('format', () => {
@@ -43,6 +44,12 @@ describe('format', () => {
     expect(getInitials('lucía', 'mendoza ríos')).toBe('LM')
     expect(getFullName(camila)).toBe('Camila Alejandra Quispe Ramos')
     expect(getDisplayName(camila)).toBe('Camila Quispe Ramos')
+  })
+
+  it('usa el singular solo para una unidad', () => {
+    expect(pluralize(1, 'ticket abierto', 'tickets abiertos')).toBe('1 ticket abierto')
+    expect(pluralize(3, 'ticket abierto', 'tickets abiertos')).toBe('3 tickets abiertos')
+    expect(pluralize(0, 'encuesta pendiente', 'encuestas pendientes')).toBe('0 encuestas pendientes')
   })
 
   it('traduce prioridades y roles a sus etiquetas', () => {

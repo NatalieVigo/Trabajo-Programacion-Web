@@ -56,9 +56,9 @@ export default function RegisterForm() {
 
   async function crearCuenta(values) {
     try {
-      await registrar(values)
+      const usuario = await registrar(values)
       toast.success('Tu cuenta fue creada. Ya puedes iniciar sesión.')
-      navigate(ROUTES.home, { replace: true })
+      navigate(ROUTES.iniciarSesion, { replace: true, state: { correo: usuario.correo } })
     } catch (error) {
       if (error.code === 'EMAIL_TAKEN') emailAvailability.markTaken(values.correo)
       // 400 y 409 traen el mensaje de cada campo: el formulario los muestra junto a ellos.

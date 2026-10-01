@@ -1,0 +1,9 @@
+.public-placeholder {
+  display: grid;
+  justify-items: center;
+}
+
+.public-placeholder__card {
+  width: 100%;
+  max-width: 560px;
+}

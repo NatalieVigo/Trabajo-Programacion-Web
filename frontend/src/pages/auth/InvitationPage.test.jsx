@@ -50,6 +50,13 @@ async function esperarLanding() {
   expect(await screen.findByRole('heading', { level: 3, name: 'Audiovisuales' })).toBeInTheDocument()
 }
 
+/** Con la cuenta activa se llega a «Iniciar sesión» con el correo de la invitación precargado. */
+async function esperarInicioDeSesion(correo) {
+  expect(await screen.findByRole('heading', { level: 1, name: 'Iniciar sesión' })).toBeInTheDocument()
+  expect(campo('Correo institucional')).toHaveValue(correo)
+  expect(campo('Contraseña')).toHaveFocus()
+}
+
 describe('InvitationPage · invitación vigente', () => {
   it('muestra los datos precargados de la invitación (p07)', async () => {
     renderApp('/invitacion/INV-TEC-2026-DEMO')
@@ -91,7 +98,7 @@ describe('InvitationPage · invitación vigente', () => {
     expect(document.title).toBe('Invitación · Mesa de Ayuda')
   })
 
-  it('con datos válidos crea la cuenta de técnico con sus especialidades y vuelve al inicio', async () => {
+  it('con datos válidos crea la cuenta de técnico con sus especialidades y lleva a iniciar sesión', async () => {
     const { user } = await renderInvitacion()
 
     await completarFormulario(user)
@@ -99,7 +106,7 @@ describe('InvitationPage · invitación vigente', () => {
     await user.click(screen.getByRole('button', { name: 'Activar mi cuenta' }))
 
     expect(await screen.findByText('Tu cuenta de técnico está activa. Ya puedes iniciar sesión.')).toBeInTheDocument()
-    await esperarLanding()
+    await esperarInicioDeSesion('rhuaman@ulima.edu.pe')
     const creado = usuariosRepository.findByCorreo('rhuaman@ulima.edu.pe')
     expect(creado).toMatchObject({
       nombres: 'Rosa Elena',
@@ -125,7 +132,7 @@ describe('InvitationPage · invitación vigente', () => {
     await user.click(screen.getByRole('button', { name: 'Activar mi cuenta' }))
 
     expect(await screen.findByText('Tu cuenta de supervisor está activa. Ya puedes iniciar sesión.')).toBeInTheDocument()
-    await esperarLanding()
+    await esperarInicioDeSesion('mcardenas@ulima.edu.pe')
     expect(usuariosRepository.findByCorreo('mcardenas@ulima.edu.pe')).toMatchObject({ rol: 'supervisor' })
   })
 
@@ -186,7 +193,7 @@ describe('InvitationPage · invitación vigente', () => {
 
     await act(async () => liberar())
     expect(await screen.findByText('Tu cuenta de técnico está activa. Ya puedes iniciar sesión.')).toBeInTheDocument()
-    await esperarLanding()
+    await esperarInicioDeSesion('rhuaman@ulima.edu.pe')
   })
 
   it('si el correo ya tiene una cuenta lo indica junto al correo y dice qué hacer', async () => {
