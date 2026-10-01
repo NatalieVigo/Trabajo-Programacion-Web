@@ -35,6 +35,27 @@ describe('useAsyncData', () => {
     expect(loader).toHaveBeenCalledTimes(2)
   })
 
+  it('updateData cambia los datos cargados sin volver a llamar al loader', async () => {
+    const loader = vi.fn().mockResolvedValue(['inv-001'])
+    const { result } = renderHook(() => useAsyncData(loader))
+    await waitFor(() => expect(result.current.status).toBe('success'))
+
+    act(() => result.current.updateData((ids) => ['inv-005', ...ids]))
+
+    expect(result.current).toMatchObject({ status: 'success', data: ['inv-005', 'inv-001'] })
+    expect(loader).toHaveBeenCalledOnce()
+  })
+
+  it('updateData no inventa datos si la carga falló', async () => {
+    const loader = vi.fn().mockRejectedValue(new Error('Sin conexión'))
+    const { result } = renderHook(() => useAsyncData(loader))
+    await waitFor(() => expect(result.current.status).toBe('error'))
+
+    act(() => result.current.updateData(() => ['inv-005']))
+
+    expect(result.current).toMatchObject({ status: 'error', data: undefined })
+  })
+
   it('al cambiar de loader vuelve a loading sin mostrar los datos anteriores', async () => {
     const pendiente = deferred()
     const cargarA = () => Promise.resolve('Invitación A')

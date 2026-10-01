@@ -1,0 +1,178 @@
+.invitations-table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.invitations-table__scroll {
+  overflow-x: auto;
+}
+
+.invitations-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.invitations-table thead th {
+  height: 36px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Sin cortes dentro de una celda: si la tabla no cabe, su contenedor se desplaza en horizontal. */
+.invitations-table tbody th,
+.invitations-table tbody td {
+  height: var(--table-row-height);
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.invitations-table tbody tr {
+  background: var(--color-surface);
+}
+
+.invitations-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.invitations-table tbody tr:hover {
+  background: var(--color-bg);
+}
+
+.invitations-table tbody tr:focus {
+  outline: none;
+}
+
+.invitations-table tbody tr:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.invitations-table .invitations-table__name {
+  font-weight: var(--font-weight-medium);
+}
+
+.invitations-table .invitations-table__correo {
+  color: var(--color-text-muted);
+}
+
+/* Las acciones quedan fijas a la derecha cuando el resto de la tabla se desplaza. */
+.invitations-table .invitations-table__actions,
+.invitations-table thead th:last-child {
+  position: sticky;
+  right: 0;
+  background: inherit;
+}
+
+.invitations-table thead tr {
+  background: var(--color-surface);
+}
+
+.invitations-table .invitations-table__actions {
+  text-align: right;
+}
+
+/* Por debajo de 768 px cada fila es una tarjeta: el nombre como título y cada dato con su etiqueta. */
+@media (max-width: 767px) {
+  .invitations-table {
+    border: 0;
+    background: none;
+  }
+
+  .invitations-table__scroll {
+    overflow: visible;
+  }
+
+  .invitations-table table,
+  .invitations-table tbody,
+  .invitations-table tbody tr,
+  .invitations-table tbody th,
+  .invitations-table tbody td {
+    display: block;
+  }
+
+  .invitations-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .invitations-table tbody tr {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+  }
+
+  .invitations-table tbody tr + tr {
+    margin-top: var(--space-3);
+  }
+
+  .invitations-table tbody tr:hover {
+    background: var(--color-surface);
+  }
+
+  .invitations-table tbody th,
+  .invitations-table tbody td {
+    height: auto;
+    padding: var(--space-1) 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .invitations-table .invitations-table__name {
+    padding-bottom: var(--space-2);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+  }
+
+  .invitations-table td[data-label] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+
+  .invitations-table td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--color-text-muted);
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+  }
+
+  .invitations-table .invitations-table__actions {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .invitations-table .invitations-table__actions:empty {
+    display: none;
+  }
+}

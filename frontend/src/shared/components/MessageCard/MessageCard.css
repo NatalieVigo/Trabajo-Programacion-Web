@@ -34,3 +34,12 @@
   gap: var(--space-3);
   margin-top: var(--space-3);
 }
+
+.message-card--centered {
+  align-items: center;
+  text-align: center;
+}
+
+.message-card--centered .message-card__actions {
+  justify-content: center;
+}

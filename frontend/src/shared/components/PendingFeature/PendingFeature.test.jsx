@@ -14,11 +14,11 @@ describe('PendingFeature', () => {
   })
 
   it('una etapa posterior de HU-1 se anuncia para una próxima etapa', () => {
-    render(<PendingFeature historia="HU-1.5" nombre="Consulta y edición de la cuenta" propia />)
+    render(<PendingFeature historia="HU-1.6" nombre="Cambio de contraseña y recuperación" propia />)
 
     expect(
       screen.getByText(
-        'Esta sección corresponde a la HU-1.5 (Consulta y edición de la cuenta) y estará disponible en una próxima etapa.',
+        'Esta sección corresponde a la HU-1.6 (Cambio de contraseña y recuperación) y estará disponible en una próxima etapa.',
       ),
     ).toBeInTheDocument()
   })

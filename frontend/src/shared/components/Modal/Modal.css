@@ -1,3 +1,8 @@
+/* La página no se desplaza mientras haya un modal abierto, aunque se abra otro encima (una confirmación). */
+body:has(.modal-overlay) {
+  overflow: hidden;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;

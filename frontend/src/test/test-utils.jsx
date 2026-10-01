@@ -1,6 +1,6 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import AppProviders from '../AppProviders.jsx'
 import { sessionRepository } from '../repositories/session.repository.js'
 import AppRoutes from '../routes/AppRoutes.jsx'
@@ -36,7 +36,28 @@ export function renderWithProviders(ui, { route = '/', usuario } = {}) {
   return { user, ...result }
 }
 
+/** Ruta actual del router, oculta, para que las pruebas comprueben la URL con ubicacionActual(). */
+function UbicacionActual() {
+  const { pathname, search } = useLocation()
+  return (
+    <p data-testid="ubicacion-actual" hidden>
+      {pathname + search}
+    </p>
+  )
+}
+
 /** Renderiza la aplicación completa (tabla de rutas incluida) en la ruta indicada, con sesión si se pasa `usuario`. */
 export function renderApp(route = '/', options) {
-  return renderWithProviders(<AppRoutes />, { route, ...options })
+  return renderWithProviders(
+    <>
+      <AppRoutes />
+      <UbicacionActual />
+    </>,
+    { route, ...options },
+  )
+}
+
+/** URL (ruta y búsqueda) en la que está la aplicación renderizada con renderApp: «/supervisor/cola». */
+export function ubicacionActual() {
+  return screen.getByTestId('ubicacion-actual').textContent
 }

@@ -29,10 +29,15 @@ export const VALIDATION_MESSAGES = Object.freeze({
   confirmacionMismatch: 'Las contraseñas no coinciden.',
   unidadRequired: 'Selecciona tu unidad o carrera.',
   vinculoRequired: 'Selecciona tu vínculo con la universidad.',
+  ambienteHabitualUnknown: 'Selecciona un ambiente de la lista.',
   terminosRequired: 'Debes aceptar los términos para continuar.',
   especialidadesRange: 'Elige entre una y tres categorías.',
   especialidadesNoDisponible: 'Una de las categorías elegidas ya no está disponible. Actualiza la página y elige otra.',
   rolInvitacionRequired: 'Selecciona el rol: técnico o supervisor.',
+  invitadoNombresRequired: 'Ingresa los nombres de la persona invitada.',
+  invitadoApellidosRequired: 'Ingresa los apellidos de la persona invitada.',
+  invitadoCorreoRequired: 'Ingresa el correo institucional de la persona invitada.',
+  invitadoCorreoInstitucional: 'Usa un correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
 })
 
 // Grupos de letras (con tildes y ñ) separados por espacios, apóstrofos o guiones: «María José», «O'Connor», «Ruiz-Tagle».
@@ -79,10 +84,13 @@ export function validateApellidos(value) {
   return validateName(value, VALIDATION_MESSAGES.apellidosRequired)
 }
 
-export function validateCorreo(value) {
+export function validateCorreo(
+  value,
+  { required = VALIDATION_MESSAGES.correoRequired, format = VALIDATION_MESSAGES.correoInstitucional } = {},
+) {
   const correo = normalizeCorreo(value)
-  if (!correo) return VALIDATION_MESSAGES.correoRequired
-  return CORREO_PATTERN.test(correo) ? null : VALIDATION_MESSAGES.correoInstitucional
+  if (!correo) return required
+  return CORREO_PATTERN.test(correo) ? null : format
 }
 
 export function validateTelefono(value) {
@@ -121,6 +129,13 @@ export function validateUnidad(value, unidades) {
 
 export function validateVinculo(value, vinculos) {
   return validateOption(value, vinculos, VALIDATION_MESSAGES.vinculoRequired)
+}
+
+/** Opcional: vacío es «sin ambiente habitual». Si se pasan los `ambientes` válidos (ids), debe ser uno de ellos. */
+export function validateAmbienteHabitual(value, ambientes) {
+  if (value === null || value === undefined || value === '') return null
+  const isUnknown = Array.isArray(ambientes) && !ambientes.includes(value)
+  return isUnknown ? VALIDATION_MESSAGES.ambienteHabitualUnknown : null
 }
 
 export function validateAceptaTerminos(value) {
@@ -166,6 +181,20 @@ export function validateRegistro(values, { unidades, vinculos } = {}) {
 }
 
 /**
+ * Valida los datos personales que se editan en «Mi cuenta» (p10). `catalogos` ({ unidades, ambientes }, estos como ids)
+ * es opcional: el servicio lo pasa para exigir valores del catálogo.
+ */
+export function validatePerfil(values, { unidades, ambientes } = {}) {
+  return collectErrors({
+    nombres: validateNombres(values.nombres),
+    apellidos: validateApellidos(values.apellidos),
+    telefono: validateTelefono(values.telefono),
+    unidad: validateUnidad(values.unidad, unidades),
+    ambienteHabitualId: validateAmbienteHabitual(values.ambienteHabitualId, ambientes),
+  })
+}
+
+/**
  * Valida la activación de una cuenta por invitación (p07): lo que completa el invitado. `categorias` (ids de las
  * categorías activas) es opcional: el servicio la pasa para exigir especialidades del catálogo.
  */
@@ -178,12 +207,18 @@ export function validateActivacion(values, { categorias } = {}) {
   })
 }
 
-/** Valida los datos con los que un supervisor invita a un técnico o a otro supervisor. */
+/**
+ * Valida los datos con los que un supervisor invita a un técnico o a otro supervisor. Los mensajes hablan de la persona
+ * invitada, porque quien llena el formulario es el supervisor.
+ */
 export function validateInvitacion(values) {
   return collectErrors({
-    nombres: validateNombres(values.nombres),
-    apellidos: validateApellidos(values.apellidos),
-    correo: validateCorreo(values.correo),
+    nombres: validateName(values.nombres, VALIDATION_MESSAGES.invitadoNombresRequired),
+    apellidos: validateName(values.apellidos, VALIDATION_MESSAGES.invitadoApellidosRequired),
+    correo: validateCorreo(values.correo, {
+      required: VALIDATION_MESSAGES.invitadoCorreoRequired,
+      format: VALIDATION_MESSAGES.invitadoCorreoInstitucional,
+    }),
     rol: validateRolInvitacion(values.rol),
     telefono: validateTelefono(values.telefono),
   })

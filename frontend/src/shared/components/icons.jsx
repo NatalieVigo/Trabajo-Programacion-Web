@@ -77,6 +77,15 @@ export function SearchIcon(props) {
   )
 }
 
+export function MailIcon(props) {
+  return (
+    <Icon {...props}>
+      <rect x="2" y="3.5" width="12" height="9" rx="1" />
+      <path d="m2.5 4.5 5.5 4 5.5-4" />
+    </Icon>
+  )
+}
+
 export function ClockIcon(props) {
   return (
     <Icon {...props}>

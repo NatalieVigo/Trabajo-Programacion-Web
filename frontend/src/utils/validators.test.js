@@ -7,6 +7,7 @@ import {
   normalizeTelefono,
   validateAceptaTerminos,
   validateActivacion,
+  validateAmbienteHabitual,
   validateApellidos,
   validateConfirmacion,
   validateCorreo,
@@ -15,6 +16,7 @@ import {
   validateLogin,
   validateNombres,
   validatePassword,
+  validatePerfil,
   validateRegistro,
   validateRolInvitacion,
   validateTelefono,
@@ -226,8 +228,44 @@ describe('validators', () => {
     })
   })
 
+  describe('validatePerfil (Mi cuenta)', () => {
+    const perfilValido = {
+      nombres: 'Camila Alejandra',
+      apellidos: 'Quispe Ramos',
+      telefono: '987 654 321',
+      unidad: 'Ingeniería de Sistemas',
+      ambienteHabitualId: 'amb-01',
+    }
+
+    it('devuelve un objeto vacío si todo es válido; el ambiente habitual es opcional', () => {
+      expect(validatePerfil(perfilValido)).toEqual({})
+      expect(validatePerfil({ ...perfilValido, ambienteHabitualId: null })).toEqual({})
+      expect(validatePerfil({ ...perfilValido, ambienteHabitualId: '' })).toEqual({})
+    })
+
+    it('devuelve el mensaje de cada dato personal inválido', () => {
+      expect(validatePerfil({ nombres: 'C4mila', telefono: '812345678' })).toEqual({
+        nombres: 'Usa solo letras y espacios.',
+        apellidos: 'Ingresa tus apellidos.',
+        telefono: 'Ingresa un celular de 9 dígitos que empiece con 9.',
+        unidad: 'Selecciona tu unidad o carrera.',
+      })
+    })
+
+    it('con el catálogo exige una unidad y un ambiente que existan', () => {
+      const catalogos = { unidades: ['Derecho'], ambientes: ['amb-02'] }
+
+      expect(validatePerfil(perfilValido, catalogos)).toEqual({
+        unidad: 'Selecciona tu unidad o carrera.',
+        ambienteHabitualId: 'Selecciona un ambiente de la lista.',
+      })
+      expect(validateAmbienteHabitual(null, catalogos.ambientes)).toBeNull()
+      expect(validateAmbienteHabitual('amb-02', catalogos.ambientes)).toBeNull()
+    })
+  })
+
   describe('validateInvitacion', () => {
-    it('valida los datos con los que el supervisor invita', () => {
+    it('valida los datos con los que el supervisor invita, con mensajes sobre la persona invitada', () => {
       expect(
         validateInvitacion({
           nombres: 'Rosa Elena',
@@ -238,12 +276,13 @@ describe('validators', () => {
         }),
       ).toEqual({})
       expect(validateInvitacion({ correo: 'rosa@gmail.com', rol: 'usuario' })).toEqual({
-        nombres: 'Ingresa tus nombres.',
-        apellidos: 'Ingresa tus apellidos.',
-        correo: 'Usa tu correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
+        nombres: 'Ingresa los nombres de la persona invitada.',
+        apellidos: 'Ingresa los apellidos de la persona invitada.',
+        correo: 'Usa un correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
         rol: 'Selecciona el rol: técnico o supervisor.',
         telefono: 'Ingresa un número de contacto.',
       })
+      expect(validateInvitacion({}).correo).toBe('Ingresa el correo institucional de la persona invitada.')
     })
   })
 
