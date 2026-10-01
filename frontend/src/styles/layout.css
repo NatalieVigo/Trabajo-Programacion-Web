@@ -1,0 +1,18 @@
+/* Contenido centrado a 1200 px (p02) con margen lateral responsivo. */
+.container {
+  width: 100%;
+  max-width: calc(var(--content-max-width) + 2 * var(--page-gutter));
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
+}
+
+/* Separación vertical estándar del contenido de una página. */
+.page {
+  padding-block: var(--space-8) var(--space-16);
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-block: var(--space-5) var(--space-12);
+  }
+}

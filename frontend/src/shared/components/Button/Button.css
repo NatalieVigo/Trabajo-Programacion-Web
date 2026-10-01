@@ -1,0 +1,100 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-dark);
+}
+
+.btn--primary:not(:disabled, [aria-disabled='true']):hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: var(--color-on-dark);
+}
+
+.btn--secondary {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn--secondary:not(:disabled, [aria-disabled='true']):hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.btn--tertiary {
+  padding-inline: var(--space-2);
+  color: var(--color-primary);
+}
+
+.btn--tertiary:not(:disabled, [aria-disabled='true']):hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
+.btn--destructive {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-on-dark);
+}
+
+.btn--destructive:not(:disabled, [aria-disabled='true']):hover {
+  background: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
+  color: var(--color-on-dark);
+}
+
+.btn--sm {
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-3);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.btn--block {
+  display: flex;
+  width: 100%;
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.btn.is-loading {
+  cursor: progress;
+  opacity: 1;
+}
+
+.btn--primary.is-loading {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
