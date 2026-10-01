@@ -12,14 +12,4 @@ describe('PendingFeature', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ir a Inicio' })).toBeInTheDocument()
   })
-
-  it('una etapa posterior de HU-1 se anuncia para una próxima etapa', () => {
-    render(<PendingFeature historia="HU-1.6" nombre="Cambio de contraseña y recuperación" propia />)
-
-    expect(
-      screen.getByText(
-        'Esta sección corresponde a la HU-1.6 (Cambio de contraseña y recuperación) y estará disponible en una próxima etapa.',
-      ),
-    ).toBeInTheDocument()
-  })
 })

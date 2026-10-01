@@ -9,6 +9,7 @@ import {
   validateActivacion,
   validateAmbienteHabitual,
   validateApellidos,
+  validateCambioPassword,
   validateConfirmacion,
   validateCorreo,
   validateEspecialidades,
@@ -17,7 +18,9 @@ import {
   validateNombres,
   validatePassword,
   validatePerfil,
+  validateRecuperacion,
   validateRegistro,
+  validateRestablecimiento,
   validateRolInvitacion,
   validateTelefono,
   validateUnidad,
@@ -57,6 +60,8 @@ describe('validators', () => {
       especialidadesRange: 'Elige entre una y tres categorías.',
       especialidadesNoDisponible: 'Una de las categorías elegidas ya no está disponible. Actualiza la página y elige otra.',
       rolInvitacionRequired: 'Selecciona el rol: técnico o supervisor.',
+      passwordActualIncorrect: 'La contraseña actual no es correcta.',
+      passwordSameAsActual: 'La nueva contraseña debe ser distinta de la actual.',
     })
   })
 
@@ -300,6 +305,54 @@ describe('validators', () => {
 
     it('no exige las reglas de una contraseña nueva', () => {
       expect(validateLogin({ correo: 'jparedes@ulima.edu.pe', password: 'corta' })).toEqual({})
+    })
+  })
+
+  describe('validateRecuperacion y validateRestablecimiento (recuperar la contraseña)', () => {
+    it('el pedido del enlace exige un correo institucional', () => {
+      expect(validateRecuperacion({ correo: 'camila.quispe@aloe.ulima.edu.pe' })).toEqual({})
+      expect(validateRecuperacion({})).toEqual({ correo: 'Ingresa tu correo institucional.' })
+      expect(validateRecuperacion({ correo: 'camila@gmail.com' })).toEqual({
+        correo: 'Usa tu correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
+      })
+    })
+
+    it('la contraseña nueva cumple la regla y se confirma', () => {
+      expect(validateRestablecimiento({ password: 'Campus2027', confirmacion: 'Campus2027' })).toEqual({})
+      expect(validateRestablecimiento({})).toEqual({
+        password: 'Ingresa una contraseña.',
+        confirmacion: 'Confirma tu contraseña.',
+      })
+      expect(validateRestablecimiento({ password: 'campus', confirmacion: 'Campus2027' })).toEqual({
+        password: 'Mínimo 8 caracteres, con una mayúscula y un número.',
+        confirmacion: 'Las contraseñas no coinciden.',
+      })
+    })
+  })
+
+  describe('validateCambioPassword (Mi cuenta)', () => {
+    const cambioValido = { actual: 'Camila2026', nueva: 'Campus2027', confirmacion: 'Campus2027' }
+
+    it('devuelve un objeto vacío si todo es válido', () => {
+      expect(validateCambioPassword(cambioValido)).toEqual({})
+    })
+
+    it('exige la contraseña actual, una nueva que cumpla la regla y su confirmación', () => {
+      expect(validateCambioPassword({})).toEqual({
+        actual: 'Ingresa tu contraseña actual.',
+        nueva: 'Ingresa una contraseña.',
+        confirmacion: 'Confirma tu contraseña.',
+      })
+      expect(validateCambioPassword({ actual: 'x', nueva: 'corta', confirmacion: 'otra' })).toEqual({
+        nueva: 'Mínimo 8 caracteres, con una mayúscula y un número.',
+        confirmacion: 'Las contraseñas no coinciden.',
+      })
+    })
+
+    it('la nueva contraseña debe ser distinta de la actual', () => {
+      expect(validateCambioPassword({ ...cambioValido, nueva: 'Camila2026', confirmacion: 'Camila2026' })).toEqual({
+        nueva: 'La nueva contraseña debe ser distinta de la actual.',
+      })
     })
   })
 
