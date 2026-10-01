@@ -9,6 +9,5 @@ export const HISTORIAS = Object.freeze({
   atencion: { historia: 'HU-5', nombre: 'Atención y cierre' },
   encuestas: { historia: 'HU-6', nombre: 'Encuesta de satisfacción' },
   metricas: { historia: 'HU-7', nombre: 'Métricas y usuarios' },
-  miCuenta: { historia: 'HU-1.5', nombre: 'Consulta y edición de la cuenta', propia: true },
   recuperacion: { historia: 'HU-1.6', nombre: 'Cambio de contraseña y recuperación', propia: true },
 })

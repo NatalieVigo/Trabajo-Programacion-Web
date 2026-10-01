@@ -7,6 +7,7 @@ import {
   normalizeTelefono,
   validateAceptaTerminos,
   validateActivacion,
+  validateAmbienteHabitual,
   validateApellidos,
   validateConfirmacion,
   validateCorreo,
@@ -15,6 +16,7 @@ import {
   validateLogin,
   validateNombres,
   validatePassword,
+  validatePerfil,
   validateRegistro,
   validateRolInvitacion,
   validateTelefono,
@@ -223,6 +225,42 @@ describe('validators', () => {
       expect(validateActivacion(activacionValida, { categorias: ['cat-01'] })).toEqual({
         especialidades: 'Una de las categorías elegidas ya no está disponible. Actualiza la página y elige otra.',
       })
+    })
+  })
+
+  describe('validatePerfil (Mi cuenta)', () => {
+    const perfilValido = {
+      nombres: 'Camila Alejandra',
+      apellidos: 'Quispe Ramos',
+      telefono: '987 654 321',
+      unidad: 'Ingeniería de Sistemas',
+      ambienteHabitualId: 'amb-01',
+    }
+
+    it('devuelve un objeto vacío si todo es válido; el ambiente habitual es opcional', () => {
+      expect(validatePerfil(perfilValido)).toEqual({})
+      expect(validatePerfil({ ...perfilValido, ambienteHabitualId: null })).toEqual({})
+      expect(validatePerfil({ ...perfilValido, ambienteHabitualId: '' })).toEqual({})
+    })
+
+    it('devuelve el mensaje de cada dato personal inválido', () => {
+      expect(validatePerfil({ nombres: 'C4mila', telefono: '812345678' })).toEqual({
+        nombres: 'Usa solo letras y espacios.',
+        apellidos: 'Ingresa tus apellidos.',
+        telefono: 'Ingresa un celular de 9 dígitos que empiece con 9.',
+        unidad: 'Selecciona tu unidad o carrera.',
+      })
+    })
+
+    it('con el catálogo exige una unidad y un ambiente que existan', () => {
+      const catalogos = { unidades: ['Derecho'], ambientes: ['amb-02'] }
+
+      expect(validatePerfil(perfilValido, catalogos)).toEqual({
+        unidad: 'Selecciona tu unidad o carrera.',
+        ambienteHabitualId: 'Selecciona un ambiente de la lista.',
+      })
+      expect(validateAmbienteHabitual(null, catalogos.ambientes)).toBeNull()
+      expect(validateAmbienteHabitual('amb-02', catalogos.ambientes)).toBeNull()
     })
   })
 

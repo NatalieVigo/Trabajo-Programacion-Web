@@ -29,6 +29,7 @@ export const VALIDATION_MESSAGES = Object.freeze({
   confirmacionMismatch: 'Las contraseñas no coinciden.',
   unidadRequired: 'Selecciona tu unidad o carrera.',
   vinculoRequired: 'Selecciona tu vínculo con la universidad.',
+  ambienteHabitualUnknown: 'Selecciona un ambiente de la lista.',
   terminosRequired: 'Debes aceptar los términos para continuar.',
   especialidadesRange: 'Elige entre una y tres categorías.',
   especialidadesNoDisponible: 'Una de las categorías elegidas ya no está disponible. Actualiza la página y elige otra.',
@@ -130,6 +131,13 @@ export function validateVinculo(value, vinculos) {
   return validateOption(value, vinculos, VALIDATION_MESSAGES.vinculoRequired)
 }
 
+/** Opcional: vacío es «sin ambiente habitual». Si se pasan los `ambientes` válidos (ids), debe ser uno de ellos. */
+export function validateAmbienteHabitual(value, ambientes) {
+  if (value === null || value === undefined || value === '') return null
+  const isUnknown = Array.isArray(ambientes) && !ambientes.includes(value)
+  return isUnknown ? VALIDATION_MESSAGES.ambienteHabitualUnknown : null
+}
+
 export function validateAceptaTerminos(value) {
   return value === true ? null : VALIDATION_MESSAGES.terminosRequired
 }
@@ -169,6 +177,20 @@ export function validateRegistro(values, { unidades, vinculos } = {}) {
     unidad: validateUnidad(values.unidad, unidades),
     vinculo: validateVinculo(values.vinculo, vinculos),
     aceptaTerminos: validateAceptaTerminos(values.aceptaTerminos),
+  })
+}
+
+/**
+ * Valida los datos personales que se editan en «Mi cuenta» (p10). `catalogos` ({ unidades, ambientes }, estos como ids)
+ * es opcional: el servicio lo pasa para exigir valores del catálogo.
+ */
+export function validatePerfil(values, { unidades, ambientes } = {}) {
+  return collectErrors({
+    nombres: validateNombres(values.nombres),
+    apellidos: validateApellidos(values.apellidos),
+    telefono: validateTelefono(values.telefono),
+    unidad: validateUnidad(values.unidad, unidades),
+    ambienteHabitualId: validateAmbienteHabitual(values.ambienteHabitualId, ambientes),
   })
 }
 

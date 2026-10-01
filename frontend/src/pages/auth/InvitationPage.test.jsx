@@ -289,7 +289,7 @@ describe('InvitationPage · rechazar', () => {
 
     expect(await screen.findByText('Rechazaste la invitación.')).toBeInTheDocument()
     const titulo = await screen.findByRole('heading', { level: 1, name: 'Esta invitación fue rechazada' })
-    expect(titulo).toHaveFocus()
+    await waitFor(() => expect(titulo).toHaveFocus())
     expect(screen.getByText('Si fue un error, pide al supervisor que te envíe una nueva invitación.')).toBeInTheDocument()
     expect(invitacionesRepository.findById('inv-001')).toMatchObject({
       estado: 'rechazada',
@@ -333,7 +333,7 @@ describe('InvitationPage · enlaces que ya no sirven', () => {
     renderApp('/invitacion/INV-TEC-2026-VENCIDA')
 
     const titulo = await screen.findByRole('heading', { level: 1, name: 'Esta invitación venció el 12/09/2026' })
-    expect(titulo).toHaveFocus()
+    await waitFor(() => expect(titulo).toHaveFocus())
     expect(screen.getByText('Invitación vencida')).toBeInTheDocument()
     expect(
       screen.getByText('Pide al supervisor que te envíe una nueva invitación para activar tu cuenta.'),

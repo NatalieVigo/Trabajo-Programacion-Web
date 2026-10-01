@@ -86,6 +86,11 @@ y `rol` (`tecnico` o `supervisor`). El invitado confirma su `telefono`, define s
 `vinculo = null`, `invitacionId` = id de la invitación, `aceptaTerminos = true` y los mismos valores iniciales de
 estado que el registro público.
 
+Desde «Mi cuenta» (`/mi-cuenta`) cualquier rol puede cambiar solo `nombres`, `apellidos`, `telefono`, `unidad` y
+`ambienteHabitualId` (que admite `null`, «sin ambiente habitual»); los demás campos que se envíen se ignoran. Se validan
+y normalizan como en el registro, `unidad` debe ser de `unidades`, `ambienteHabitualId` debe existir en `ambientes` y
+cada cambio actualiza `actualizadoEn`.
+
 ### Invitación (`invitaciones`) · dueño: HU-1
 
 | Campo | Tipo | Valores admitidos / notas |
@@ -234,6 +239,20 @@ HU-1 los calcula leyendo `tickets` y `encuestas`, sin modificarlos:
 | Usuario | `encuestasRespondidas` (insignia de «Mis encuestas») | Encuestas que respondió. |
 | Técnico | `asignados` (píldora «Asignados a mí» e insignia de «Mi bandeja») | Tickets con `asignadoA` = su id, en cualquier estado. |
 | Supervisor | `colaSinAsignar` (píldora «Cola sin asignar») | Tickets `abierto` o `reabierto` con `asignadoA = null`. |
+
+### Resumen de «Mi cuenta» (`usuarios.service#obtenerResumenCuenta`)
+
+HU-1 lo calcula leyendo `tickets`, `encuestas` e `invitaciones`, sin modificarlos:
+
+| Rol | Campo | Regla |
+| --- | --- | --- |
+| Todos | `cuentaCreada` | `creadoEn` de la cuenta. |
+| Usuario | `ticketsReportados` | Todos los tickets que reportó. |
+| Usuario | `abiertosAhora` | Igual que `ticketsAbiertos`. |
+| Usuario | `encuestaPendiente` | `{ ticketCodigo, cerradoEn, fechaLimite }` de la encuesta pendiente que vence primero (`fechaLimite` = `cerradoEn` + 7 días), o `null`. |
+| Técnico | `ticketsAsignados` | Tickets con `asignadoA` = su id, en cualquier estado. |
+| Técnico | `enAtencion` | Sus tickets asignados en estado `en_atencion`. |
+| Supervisor | `invitacionesPendientes` | Invitaciones que envió (`invitadoPor` = su id) en estado `pendiente` y aún vigentes. |
 
 ## Contenido del seed
 
