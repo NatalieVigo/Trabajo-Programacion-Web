@@ -1,18 +1,38 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SESSION_STORAGE_KEY } from '../repositories/session.repository.js'
+import { tokensRecuperacionRepository } from '../repositories/tokensRecuperacion.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { cerrarSesion, haySesionGuardada, iniciarSesion, obtenerSesion } from './auth.service.js'
+import { verifyPassword } from '../utils/password.js'
+import {
+  cambiarPassword,
+  cerrarSesion,
+  haySesionGuardada,
+  iniciarSesion,
+  obtenerSesion,
+  restablecerPassword,
+  solicitarRecuperacion,
+  validarTokenRecuperacion,
+} from './auth.service.js'
 import { ServiceError } from './ServiceError.js'
 
 const AHORA = '2026-10-01T15:27:00.000Z' // 10:27 en Lima
 const BLOQUEADO_HASTA = '2026-10-01T15:42:00.000Z' // 10:42 en Lima, 15 minutos después
+const ENLACE_VENCE = '2026-10-01T15:57:00.000Z' // 30 minutos después
 const CAMILA = { correo: 'camila.quispe@aloe.ulima.edu.pe', password: 'Camila2026' }
 const DIEGO = { correo: 'diego.salas@aloe.ulima.edu.pe', password: 'Usuario2026' }
 const INCORRECTA = { ...CAMILA, password: 'Camila2025' }
+const NUEVA = 'Campus2027'
 
 const fallo = (promise) => promise.catch((error) => error)
 const camila = () => usuariosRepository.findById('usr-001')
 const sesionGuardada = (storage) => JSON.parse(storage.getItem(SESSION_STORAGE_KEY))
+const tieneLaContrasena = (usuario, password) => verifyPassword(password, usuario.passwordSalt, usuario.passwordHash)
+
+/** Pide un enlace de recuperación para el correo y devuelve su token, el que muestra la bandeja simulada. */
+async function pedirEnlace(correo = CAMILA.correo) {
+  const { tokenDemo } = await solicitarRecuperacion(correo)
+  return tokenDemo
+}
 
 /** Intenta ingresar `veces` veces con esas credenciales y devuelve el último error. */
 async function fallar(veces, credenciales = INCORRECTA) {
@@ -293,5 +313,250 @@ describe('auth.service · obtenerSesion, cerrarSesion y haySesionGuardada', () =
     expect(haySesionGuardada()).toBe(false)
     expect(localStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
     await expect(obtenerSesion()).resolves.toBeNull()
+  })
+})
+
+describe('auth.service · solicitarRecuperacion', () => {
+  it('con una cuenta crea un enlace aleatorio que vence en 30 minutos', async () => {
+    const respuesta = await solicitarRecuperacion(' Camila.Quispe@ALOE.ulima.edu.pe ')
+
+    expect(respuesta).toEqual({
+      enviado: true,
+      correo: CAMILA.correo,
+      tokenDemo: expect.stringMatching(/^REC-[0-9A-F]{32}$/),
+    })
+    expect(tokensRecuperacionRepository.findAll()).toEqual([
+      {
+        id: 'rec-001',
+        token: respuesta.tokenDemo,
+        usuarioId: 'usr-001',
+        creadoEn: AHORA,
+        venceEn: ENLACE_VENCE,
+        usadoEn: null,
+      },
+    ])
+  })
+
+  it('con un correo sin cuenta responde igual, pero sin token ni enlace', async () => {
+    const respuesta = await solicitarRecuperacion('nadie.registrado@ulima.edu.pe')
+
+    expect(respuesta).toEqual({ enviado: true, correo: 'nadie.registrado@ulima.edu.pe' })
+    expect(tokensRecuperacionRepository.findAll()).toEqual([])
+  })
+
+  it('valida el correo institucional (400)', async () => {
+    await expect(solicitarRecuperacion('camila@gmail.com')).rejects.toMatchObject({
+      status: 400,
+      code: 'VALIDATION_ERROR',
+      fieldErrors: { correo: 'Usa tu correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).' },
+    })
+    await expect(solicitarRecuperacion()).rejects.toMatchObject({
+      status: 400,
+      fieldErrors: { correo: 'Ingresa tu correo institucional.' },
+    })
+    expect(tokensRecuperacionRepository.findAll()).toEqual([])
+  })
+
+  it('un pedido nuevo anula el enlace anterior que no se usó', async () => {
+    const anterior = await pedirEnlace()
+    const nuevo = await pedirEnlace()
+
+    expect(nuevo).not.toBe(anterior)
+    await expect(validarTokenRecuperacion(anterior)).rejects.toMatchObject({
+      status: 404,
+      code: 'RESET_TOKEN_NOT_FOUND',
+    })
+    await expect(validarTokenRecuperacion(nuevo)).resolves.toEqual({ correo: CAMILA.correo })
+    expect(tokensRecuperacionRepository.findAll().map((enlace) => enlace.id)).toEqual(['rec-002'])
+  })
+
+  it('no anula los enlaces de otras cuentas', async () => {
+    const deCamila = await pedirEnlace()
+    await pedirEnlace('jparedes@ulima.edu.pe')
+
+    await expect(validarTokenRecuperacion(deCamila)).resolves.toEqual({ correo: CAMILA.correo })
+  })
+})
+
+describe('auth.service · validarTokenRecuperacion', () => {
+  it('un enlace vigente devuelve el correo de su cuenta', async () => {
+    const token = await pedirEnlace()
+
+    await expect(validarTokenRecuperacion(token)).resolves.toEqual({ correo: CAMILA.correo })
+  })
+
+  it('un token que no existe responde 404', async () => {
+    const error = await fallo(validarTokenRecuperacion('REC-NO-EXISTE'))
+
+    expect(error).toBeInstanceOf(ServiceError)
+    expect(error).toMatchObject({
+      status: 404,
+      code: 'RESET_TOKEN_NOT_FOUND',
+      message: 'Este enlace para restablecer la contraseña no es válido.',
+    })
+    await expect(validarTokenRecuperacion()).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('el enlace vence a los 30 minutos (410)', async () => {
+    const token = await pedirEnlace()
+
+    vi.setSystemTime('2026-10-01T15:56:59.999Z')
+    await expect(validarTokenRecuperacion(token)).resolves.toEqual({ correo: CAMILA.correo })
+
+    vi.setSystemTime(ENLACE_VENCE)
+    await expect(validarTokenRecuperacion(token)).rejects.toMatchObject({
+      status: 410,
+      code: 'RESET_TOKEN_EXPIRED',
+      message: 'Este enlace venció: es válido por 30 minutos.',
+    })
+    await expect(restablecerPassword(token, NUEVA, NUEVA)).rejects.toMatchObject({
+      status: 410,
+      code: 'RESET_TOKEN_EXPIRED',
+    })
+    await expect(tieneLaContrasena(camila(), CAMILA.password)).resolves.toBe(true)
+  })
+})
+
+describe('auth.service · restablecerPassword', () => {
+  it('guarda la nueva contraseña con una sal nueva, gasta el enlace y devuelve el correo', async () => {
+    const token = await pedirEnlace()
+    const salAnterior = camila().passwordSalt
+    vi.setSystemTime('2026-10-01T15:40:00.000Z')
+
+    await expect(restablecerPassword(token, NUEVA, NUEVA)).resolves.toEqual({ correo: CAMILA.correo })
+
+    const cuenta = camila()
+    expect(cuenta.passwordSalt).toMatch(/^[0-9a-f]{32}$/)
+    expect(cuenta.passwordSalt).not.toBe(salAnterior)
+    expect(JSON.stringify(cuenta)).not.toContain(NUEVA)
+    await expect(tieneLaContrasena(cuenta, NUEVA)).resolves.toBe(true)
+    expect(cuenta.actualizadoEn).toBe('2026-10-01T15:40:00.000Z')
+    expect(tokensRecuperacionRepository.findByToken(token).usadoEn).toBe('2026-10-01T15:40:00.000Z')
+  })
+
+  it('el enlace sirve una sola vez: el segundo intento responde 410', async () => {
+    const token = await pedirEnlace()
+    await restablecerPassword(token, NUEVA, NUEVA)
+
+    await expect(restablecerPassword(token, 'Otra2027', 'Otra2027')).rejects.toMatchObject({
+      status: 410,
+      code: 'RESET_TOKEN_USED',
+      message: 'Este enlace ya se usó: cada enlace sirve una sola vez.',
+    })
+    await expect(validarTokenRecuperacion(token)).rejects.toMatchObject({ status: 410, code: 'RESET_TOKEN_USED' })
+    await expect(tieneLaContrasena(camila(), NUEVA)).resolves.toBe(true)
+  })
+
+  it('con un token que no existe responde 404 sin cambiar nada', async () => {
+    await expect(restablecerPassword('REC-NO-EXISTE', NUEVA, NUEVA)).rejects.toMatchObject({
+      status: 404,
+      code: 'RESET_TOKEN_NOT_FOUND',
+    })
+    await expect(tieneLaContrasena(camila(), CAMILA.password)).resolves.toBe(true)
+  })
+
+  it('vuelve a validar la contraseña nueva (400) sin gastar el enlace', async () => {
+    const token = await pedirEnlace()
+
+    await expect(restablecerPassword(token, 'campus', 'Campus2027')).rejects.toMatchObject({
+      status: 400,
+      code: 'VALIDATION_ERROR',
+      fieldErrors: {
+        password: 'Mínimo 8 caracteres, con una mayúscula y un número.',
+        confirmacion: 'Las contraseñas no coinciden.',
+      },
+    })
+    expect(tokensRecuperacionRepository.findByToken(token).usadoEn).toBeNull()
+    await expect(tieneLaContrasena(camila(), CAMILA.password)).resolves.toBe(true)
+  })
+
+  it('desbloquea la cuenta bloqueada por intentos: entra con la nueva contraseña y ya no con la anterior', async () => {
+    await fallar(5)
+    expect(camila().bloqueadoHasta).toBe(BLOQUEADO_HASTA)
+    const token = await pedirEnlace()
+
+    await restablecerPassword(token, NUEVA, NUEVA)
+
+    expect(camila()).toMatchObject({ intentosFallidos: 0, bloqueadoHasta: null })
+    await expect(iniciarSesion({ ...CAMILA, password: NUEVA })).resolves.toMatchObject({ usuario: { id: 'usr-001' } })
+    await expect(iniciarSesion(CAMILA)).rejects.toMatchObject({ status: 401, code: 'INVALID_CREDENTIALS' })
+  })
+
+  it('no quita el bloqueo que aplicó un supervisor', async () => {
+    const token = await pedirEnlace(DIEGO.correo)
+
+    await restablecerPassword(token, NUEVA, NUEVA)
+
+    expect(usuariosRepository.findById('usr-004')).toMatchObject({
+      estado: 'bloqueado',
+      motivoBloqueo: 'Reportes falsos reiterados.',
+    })
+    await expect(iniciarSesion({ ...DIEGO, password: NUEVA })).rejects.toMatchObject({
+      status: 403,
+      code: 'ACCOUNT_BLOCKED',
+    })
+  })
+})
+
+describe('auth.service · cambiarPassword', () => {
+  const cambio = { actual: CAMILA.password, nueva: NUEVA, confirmacion: NUEVA }
+
+  it('con la contraseña actual correcta guarda la nueva y devuelve el usuario sin credenciales', async () => {
+    const usuario = await cambiarPassword('usr-001', cambio)
+
+    expect(usuario).toMatchObject({ id: 'usr-001', correo: CAMILA.correo, actualizadoEn: AHORA })
+    expect(usuario).not.toHaveProperty('passwordHash')
+    expect(usuario).not.toHaveProperty('passwordSalt')
+    await expect(iniciarSesion({ ...CAMILA, password: NUEVA })).resolves.toMatchObject({ usuario: { id: 'usr-001' } })
+    await expect(iniciarSesion(CAMILA)).rejects.toMatchObject({ status: 401, code: 'INVALID_CREDENTIALS' })
+  })
+
+  it('si la contraseña actual no es la correcta responde 400 en ese campo', async () => {
+    const error = await fallo(cambiarPassword('usr-001', { ...cambio, actual: 'Camila2025' }))
+
+    expect(error).toMatchObject({
+      status: 400,
+      code: 'VALIDATION_ERROR',
+      fieldErrors: { actual: 'La contraseña actual no es correcta.' },
+    })
+    await expect(tieneLaContrasena(camila(), CAMILA.password)).resolves.toBe(true)
+  })
+
+  it('la nueva contraseña debe ser distinta de la actual (400)', async () => {
+    const igual = { actual: CAMILA.password, nueva: CAMILA.password, confirmacion: CAMILA.password }
+
+    await expect(cambiarPassword('usr-001', igual)).rejects.toMatchObject({
+      status: 400,
+      fieldErrors: { nueva: 'La nueva contraseña debe ser distinta de la actual.' },
+    })
+  })
+
+  it('vuelve a validar la nueva contraseña y su confirmación (400)', async () => {
+    const debil = { ...cambio, nueva: 'campus', confirmacion: 'campus' }
+
+    await expect(cambiarPassword('usr-001', { ...cambio, confirmacion: 'Campus2028' })).rejects.toMatchObject({
+      status: 400,
+      fieldErrors: { confirmacion: 'Las contraseñas no coinciden.' },
+    })
+    await expect(cambiarPassword('usr-001', debil)).rejects.toMatchObject({
+      status: 400,
+      fieldErrors: { nueva: 'Mínimo 8 caracteres, con una mayúscula y un número.' },
+    })
+    await expect(cambiarPassword('usr-001')).rejects.toMatchObject({
+      status: 400,
+      fieldErrors: {
+        actual: 'Ingresa tu contraseña actual.',
+        nueva: 'Ingresa una contraseña.',
+        confirmacion: 'Confirma tu contraseña.',
+      },
+    })
+    await expect(tieneLaContrasena(camila(), CAMILA.password)).resolves.toBe(true)
+  })
+
+  it('una cuenta que no existe o que está bloqueada responde 401', async () => {
+    const deDiego = { actual: DIEGO.password, nueva: NUEVA, confirmacion: NUEVA }
+
+    await expect(cambiarPassword('usr-999', cambio)).rejects.toMatchObject({ status: 401, code: 'UNAUTHENTICATED' })
+    await expect(cambiarPassword('usr-004', deDiego)).rejects.toMatchObject({ status: 401, code: 'UNAUTHENTICATED' })
   })
 })

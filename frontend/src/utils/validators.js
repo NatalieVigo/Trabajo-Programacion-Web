@@ -27,6 +27,9 @@ export const VALIDATION_MESSAGES = Object.freeze({
   passwordMaxLength: `Usa como máximo ${PASSWORD_MAX_LENGTH} caracteres.`,
   confirmacionRequired: 'Confirma tu contraseña.',
   confirmacionMismatch: 'Las contraseñas no coinciden.',
+  passwordActualRequired: 'Ingresa tu contraseña actual.',
+  passwordActualIncorrect: 'La contraseña actual no es correcta.',
+  passwordSameAsActual: 'La nueva contraseña debe ser distinta de la actual.',
   unidadRequired: 'Selecciona tu unidad o carrera.',
   vinculoRequired: 'Selecciona tu vínculo con la universidad.',
   ambienteHabitualUnknown: 'Selecciona un ambiente de la lista.',
@@ -229,5 +232,31 @@ export function validateLogin(values) {
   return collectErrors({
     correo: validateCorreo(values.correo),
     password: asText(values.password) ? null : VALIDATION_MESSAGES.passwordRequired,
+  })
+}
+
+/** Valida el pedido de un enlace de recuperación de contraseña (p08): el correo institucional. */
+export function validateRecuperacion(values) {
+  return collectErrors({ correo: validateCorreo(values.correo) })
+}
+
+/** Valida la contraseña nueva que se define con un enlace de recuperación (p09) y su confirmación. */
+export function validateRestablecimiento(values) {
+  return collectErrors({
+    password: validatePassword(values.password),
+    confirmacion: validateConfirmacion(values.confirmacion, values.password),
+  })
+}
+
+/**
+ * Valida el cambio de contraseña de «Mi cuenta» (p10): la actual presente y una nueva válida, distinta de la actual
+ * y confirmada. Que la actual sea la correcta solo lo puede comprobar el servicio.
+ */
+export function validateCambioPassword(values) {
+  const nuevaRepetida = values.nueva === values.actual ? VALIDATION_MESSAGES.passwordSameAsActual : null
+  return collectErrors({
+    actual: asText(values.actual) ? null : VALIDATION_MESSAGES.passwordActualRequired,
+    nueva: validatePassword(values.nueva) ?? nuevaRepetida,
+    confirmacion: validateConfirmacion(values.confirmacion, values.nueva),
   })
 }

@@ -44,8 +44,8 @@ export const invitacionPath = (token) => generatePath(ROUTES.invitacion, { token
 
 export const restablecerContrasenaPath = (token) => generatePath(ROUTES.restablecerContrasena, { token })
 
-/** Recuperación de contraseña con el correo precargado: /recuperar-contrasena?correo=… */
+/** Recuperación de contraseña con el correo precargado: /recuperar-contrasena?correo=… (sin correo, sin búsqueda). */
 export const recuperarContrasenaPath = (correo) => ({
   pathname: ROUTES.recuperarContrasena,
-  search: `?${new URLSearchParams({ correo })}`,
+  search: correo ? `?${new URLSearchParams({ correo })}` : '',
 })

@@ -23,7 +23,7 @@ describe('GuestOnly', () => {
     ['/iniciar-sesion', 'Iniciar sesión'],
     ['/registro', 'Crear mi cuenta'],
     ['/recuperar-contrasena', 'Recuperar mi contraseña'],
-    ['/restablecer-contrasena/a1b2c3', 'Nueva contraseña'],
+    ['/restablecer-contrasena/a1b2c3', 'No encontramos este enlace'],
   ])('sin sesión, %s se muestra normalmente', async (ruta, titulo) => {
     renderApp(ruta)
 
