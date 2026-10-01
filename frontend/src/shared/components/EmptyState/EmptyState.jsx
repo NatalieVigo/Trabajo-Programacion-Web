@@ -1,10 +1,21 @@
 import { cx } from '../../../utils/classNames.js'
 import './EmptyState.css'
 
-/** Estado vacío (p15, p21, p23): ícono, título, descripción y una acción opcional. */
-export default function EmptyState({ icon, title, description, action, titleAs: Title = 'h2', className }) {
+/**
+ * Estado vacío (p15, p21, p23): ícono, título, descripción y una acción opcional. `compact` lo reduce para
+ * tarjetas angostas, como las de una columna lateral.
+ */
+export default function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+  titleAs: Title = 'h2',
+  compact = false,
+  className,
+}) {
   return (
-    <div className={cx('empty-state', className)}>
+    <div className={cx('empty-state', compact && 'empty-state--compact', className)}>
       {icon && (
         <div className="empty-state__icon" aria-hidden="true">
           {icon}

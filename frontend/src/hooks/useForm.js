@@ -33,7 +33,7 @@ function restoreLostFocus(submitter) {
  * enfoca el primer campo inválido. `errors` reúne lo que se debe mostrar junto a cada campo.
  */
 export function useForm({ initialValues, validate }) {
-  const [initial] = useState(initialValues)
+  const [initial, setInitial] = useState(initialValues)
   const [values, setValues] = useState(initialValues)
   const [touched, setTouched] = useState({})
   const [serverErrors, setServerErrors] = useState({})
@@ -111,10 +111,17 @@ export function useForm({ initialValues, validate }) {
     }
   }
 
-  function reset() {
-    setValues(initial)
+  /** Toma `nextValues` como los nuevos valores iniciales (por ejemplo, lo recién guardado) y limpia el estado. */
+  function resetTo(nextValues) {
+    setInitial(nextValues)
+    setValues(nextValues)
     setTouched({})
     setServerErrors({})
+  }
+
+  /** Vuelve a los valores iniciales. */
+  function reset() {
+    resetTo(initial)
   }
 
   return {
@@ -129,5 +136,6 @@ export function useForm({ initialValues, validate }) {
     getFieldProps,
     handleSubmit,
     reset,
+    resetTo,
   }
 }

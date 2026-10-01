@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout.jsx'
 import PublicLayout from '../layouts/PublicLayout.jsx'
+import AccountPage from '../pages/account/AccountPage.jsx'
 import InvitationPage from '../pages/auth/InvitationPage.jsx'
 import LoginPage from '../pages/auth/LoginPage.jsx'
 import RegisterPage from '../pages/auth/RegisterPage.jsx'
@@ -42,7 +43,7 @@ const PRIVATE_PAGES = {
   [ROUTES.supervisorUsuarios]: pendiente('Usuarios', HISTORIAS.metricas),
   [ROUTES.supervisorInvitaciones]: <InvitationsPage />,
 
-  [ROUTES.miCuenta]: pendiente('Mi cuenta', HISTORIAS.miCuenta),
+  [ROUTES.miCuenta]: <AccountPage />,
   [ROUTES.accesoDenegado]: <ForbiddenPage />,
 }
 

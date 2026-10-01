@@ -1,4 +1,4 @@
-import { unidadesRepository, vinculosRepository } from '../repositories/catalogo.repository.js'
+import { ambientesRepository, unidadesRepository, vinculosRepository } from '../repositories/catalogo.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { nextId } from '../utils/ids.js'
 import { createPasswordCredentials } from '../utils/password.js'
@@ -9,12 +9,22 @@ import {
   normalizeNombre,
   normalizeTelefono,
   validateCorreo,
+  validatePerfil,
   validateRegistro,
 } from '../utils/validators.js'
 import { simulateRequest } from './request.js'
+import { resumenDeCuenta } from './resumen.service.js'
 import { ServiceError, validationError } from './ServiceError.js'
 
 const PRIVATE_FIELDS = new Set(['passwordHash', 'passwordSalt'])
+/** Datos personales que la persona puede cambiar desde «Mi cuenta». */
+const CAMPOS_PERFIL = ['nombres', 'apellidos', 'telefono', 'unidad', 'ambienteHabitualId']
+
+/** Solo los `campos` presentes en `objeto`. */
+function pick(objeto, campos) {
+  const presentes = campos.filter((campo) => Object.hasOwn(objeto, campo))
+  return Object.fromEntries(presentes.map((campo) => [campo, objeto[campo]]))
+}
 
 /** Usuario apto para la interfaz: sin hash ni sal. Lo usan todos los servicios que devuelven usuarios. */
 export function sanitizeUsuario(usuario) {
@@ -91,10 +101,50 @@ export function correoDisponible(correo) {
   })
 }
 
+function buscarUsuario(id) {
+  const usuario = usuariosRepository.findById(id)
+  if (!usuario) throw new ServiceError(404, 'USER_NOT_FOUND', 'No encontramos la cuenta solicitada.')
+  return usuario
+}
+
 export function obtenerPorId(id) {
+  return simulateRequest(() => sanitizeUsuario(buscarUsuario(id)))
+}
+
+/**
+ * Edición de los datos personales (HU-1 · 1.5): nombres, apellidos, teléfono, unidad y ambiente habitual (o null).
+ * Cualquier otro campo de `cambios` (correo, rol, estado, contraseña…) se ignora y los que no se envían conservan su
+ * valor. Vuelve a validar como lo haría el servidor y normaliza como el registro. Falla con 404 USER_NOT_FOUND o
+ * 400 VALIDATION_ERROR (fieldErrors). Devuelve el usuario actualizado sin credenciales.
+ */
+export function actualizarPerfil(id, cambios) {
   return simulateRequest(() => {
-    const usuario = usuariosRepository.findById(id)
-    if (!usuario) throw new ServiceError(404, 'USER_NOT_FOUND', 'No encontramos la cuenta solicitada.')
-    return sanitizeUsuario(usuario)
+    const usuario = buscarUsuario(id)
+    const perfil = { ...pick(usuario, CAMPOS_PERFIL), ...pick(cambios ?? {}, CAMPOS_PERFIL) }
+    const fieldErrors = validatePerfil(perfil, {
+      unidades: unidadesRepository.findAll(),
+      ambientes: ambientesRepository.findAll().map((ambiente) => ambiente.id),
+    })
+    if (hasErrors(fieldErrors)) throw validationError(fieldErrors)
+
+    const actualizado = usuariosRepository.update(usuario.id, {
+      nombres: normalizeNombre(perfil.nombres),
+      apellidos: normalizeNombre(perfil.apellidos),
+      telefono: normalizeTelefono(perfil.telefono),
+      unidad: perfil.unidad,
+      ambienteHabitualId: perfil.ambienteHabitualId || null,
+      actualizadoEn: new Date().toISOString(),
+    })
+    return sanitizeUsuario(actualizado)
   })
+}
+
+/**
+ * Resumen de la cuenta en «Mi cuenta» (p10), según el rol de la persona. usuario: { ticketsReportados, abiertosAhora,
+ * cuentaCreada, encuestaPendiente: { ticketCodigo, cerradoEn, fechaLimite } | null } · tecnico: { ticketsAsignados,
+ * enAtencion, cuentaCreada } · supervisor: { invitacionesPendientes (las que envió y siguen vigentes), cuentaCreada }.
+ * Falla con 404 USER_NOT_FOUND.
+ */
+export function obtenerResumenCuenta(id) {
+  return simulateRequest(() => resumenDeCuenta(buscarUsuario(id)))
 }

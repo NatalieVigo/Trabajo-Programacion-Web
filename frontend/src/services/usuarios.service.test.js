@@ -1,8 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { readTable, writeTable } from '../repositories/db.js'
+import { invitacionesRepository } from '../repositories/invitaciones.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { verifyPassword } from '../utils/password.js'
 import { ServiceError } from './ServiceError.js'
-import { correoDisponible, obtenerPorId, registrar, sanitizeUsuario } from './usuarios.service.js'
+import {
+  actualizarPerfil,
+  correoDisponible,
+  obtenerPorId,
+  obtenerResumenCuenta,
+  registrar,
+  sanitizeUsuario,
+} from './usuarios.service.js'
 
 const datosValidos = {
   nombres: 'Valeria Sofía',
@@ -171,6 +180,207 @@ describe('usuarios.service · obtenerPorId', () => {
     const error = await obtenerPorId('usr-999').catch((reason) => reason)
 
     expect(error).toMatchObject({ status: 404, code: 'USER_NOT_FOUND' })
+  })
+})
+
+describe('usuarios.service · actualizarPerfil', () => {
+  const cambiosValidos = {
+    nombres: 'Camila Sofía',
+    apellidos: 'Quispe Rojas',
+    telefono: '912 345 678',
+    unidad: 'Arquitectura',
+    ambienteHabitualId: 'amb-05',
+  }
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('guarda los datos personales normalizados y devuelve la cuenta sin credenciales', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime('2026-10-01T15:00:00.000Z')
+
+    const usuario = await actualizarPerfil('usr-001', { ...cambiosValidos, nombres: '  Camila   Sofía ' })
+
+    expect(usuario).toMatchObject({
+      id: 'usr-001',
+      nombres: 'Camila Sofía',
+      apellidos: 'Quispe Rojas',
+      telefono: '912345678',
+      unidad: 'Arquitectura',
+      ambienteHabitualId: 'amb-05',
+      creadoEn: '2026-03-14T15:20:00.000Z',
+      actualizadoEn: '2026-10-01T15:00:00.000Z',
+    })
+    expect(usuario).not.toHaveProperty('passwordHash')
+    expect(usuario).not.toHaveProperty('passwordSalt')
+    expect(usuariosRepository.findById('usr-001')).toMatchObject({
+      nombres: 'Camila Sofía',
+      telefono: '912345678',
+      actualizadoEn: '2026-10-01T15:00:00.000Z',
+    })
+  })
+
+  it('ignora los campos que no son editables: correo, rol, estado, contraseña…', async () => {
+    const antes = usuariosRepository.findById('usr-001')
+
+    const usuario = await actualizarPerfil('usr-001', {
+      ...cambiosValidos,
+      id: 'usr-999',
+      correo: 'otra.cuenta@ulima.edu.pe',
+      rol: 'supervisor',
+      estado: 'bloqueado',
+      vinculo: 'Docente',
+      especialidades: ['cat-01'],
+      password: 'Nueva2026',
+      passwordHash: 'f'.repeat(64),
+      passwordSalt: '0'.repeat(32),
+    })
+
+    const guardado = usuariosRepository.findById('usr-001')
+    expect(usuario).toMatchObject({ id: 'usr-001', correo: 'camila.quispe@aloe.ulima.edu.pe', rol: 'usuario' })
+    expect(guardado).toMatchObject({
+      correo: antes.correo,
+      rol: 'usuario',
+      estado: 'activo',
+      vinculo: 'Estudiante',
+      especialidades: [],
+      passwordHash: antes.passwordHash,
+      passwordSalt: antes.passwordSalt,
+    })
+    expect(guardado).not.toHaveProperty('password')
+    expect(usuariosRepository.findById('usr-999')).toBeNull()
+  })
+
+  it('los datos que no se envían conservan su valor; un ambiente null quita el ambiente habitual', async () => {
+    const usuario = await actualizarPerfil('usr-001', { telefono: '912345678', ambienteHabitualId: null })
+
+    expect(usuario).toMatchObject({
+      nombres: 'Camila Alejandra',
+      apellidos: 'Quispe Ramos',
+      unidad: 'Ingeniería de Sistemas',
+      telefono: '912345678',
+      ambienteHabitualId: null,
+    })
+  })
+
+  it('vuelve a validar y responde 400 con el mensaje de cada campo, sin guardar nada', async () => {
+    const invalidos = { ...cambiosValidos, nombres: '', telefono: '812 345 678' }
+
+    const error = await actualizarPerfil('usr-001', invalidos).catch((reason) => reason)
+
+    expect(error).toBeInstanceOf(ServiceError)
+    expect(error).toMatchObject({
+      status: 400,
+      code: 'VALIDATION_ERROR',
+      fieldErrors: {
+        nombres: 'Ingresa tus nombres.',
+        telefono: 'Ingresa un celular de 9 dígitos que empiece con 9.',
+      },
+    })
+    expect(usuariosRepository.findById('usr-001')).toMatchObject({ apellidos: 'Quispe Ramos', telefono: '987654321' })
+  })
+
+  it('exige una unidad del catálogo y un ambiente que exista', async () => {
+    const error = await actualizarPerfil('usr-001', { unidad: 'Medicina', ambienteHabitualId: 'amb-99' }).catch(
+      (reason) => reason,
+    )
+
+    expect(error).toMatchObject({
+      status: 400,
+      fieldErrors: {
+        unidad: 'Selecciona tu unidad o carrera.',
+        ambienteHabitualId: 'Selecciona un ambiente de la lista.',
+      },
+    })
+    expect(usuariosRepository.findById('usr-001').ambienteHabitualId).toBe('amb-01')
+  })
+
+  it('responde 404 USER_NOT_FOUND si la cuenta no existe', async () => {
+    await expect(actualizarPerfil('usr-999', cambiosValidos)).rejects.toMatchObject({
+      status: 404,
+      code: 'USER_NOT_FOUND',
+    })
+  })
+})
+
+describe('usuarios.service · obtenerResumenCuenta', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime('2026-10-01T15:00:00.000Z')
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function cerrarTicket(id, cerradoEn) {
+    writeTable(
+      'tickets',
+      readTable('tickets').map((ticket) => (ticket.id === id ? { ...ticket, estado: 'cerrado', cerradoEn } : ticket)),
+    )
+  }
+
+  it('usuario: tickets reportados, abiertos ahora, fecha de creación y su encuesta pendiente (Camila)', async () => {
+    await expect(obtenerResumenCuenta('usr-001')).resolves.toEqual({
+      ticketsReportados: 12,
+      abiertosAhora: 3,
+      cuentaCreada: '2026-03-14T15:20:00.000Z',
+      encuestaPendiente: {
+        ticketCodigo: 'TCK-2026-00131',
+        cerradoEn: '2026-09-28T22:20:00.000Z',
+        fechaLimite: '2026-10-05T22:20:00.000Z',
+      },
+    })
+  })
+
+  it('usuario: con varias encuestas pendientes muestra la que vence primero', async () => {
+    cerrarTicket('tck-00141', '2026-09-27T18:00:00.000Z')
+
+    const { encuestaPendiente } = await obtenerResumenCuenta('usr-001')
+
+    expect(encuestaPendiente).toEqual({
+      ticketCodigo: 'TCK-2026-00141',
+      cerradoEn: '2026-09-27T18:00:00.000Z',
+      fechaLimite: '2026-10-04T18:00:00.000Z',
+    })
+  })
+
+  it('usuario: sin encuesta pendiente si ya la respondió o si venció su plazo', async () => {
+    vi.setSystemTime('2026-10-05T22:20:00.001Z')
+    await expect(obtenerResumenCuenta('usr-001')).resolves.toMatchObject({ encuestaPendiente: null })
+
+    vi.setSystemTime('2026-10-01T15:00:00.000Z')
+    writeTable('encuestas', [
+      ...readTable('encuestas'),
+      { id: 'enc-008', ticketId: 'tck-00131', usuarioId: 'usr-001', puntaje: 4, respondidaEn: '2026-09-30T15:00:00.000Z' },
+    ])
+    await expect(obtenerResumenCuenta('usr-001')).resolves.toMatchObject({ encuestaPendiente: null })
+  })
+
+  it('técnico: tickets asignados y los que están en atención (Julio)', async () => {
+    await expect(obtenerResumenCuenta('usr-002')).resolves.toEqual({
+      ticketsAsignados: 8,
+      enAtencion: 1,
+      cuentaCreada: '2026-03-02T14:15:00.000Z',
+    })
+  })
+
+  it('supervisor: invitaciones que envió y siguen vigentes (Lucía)', async () => {
+    await expect(obtenerResumenCuenta('usr-003')).resolves.toEqual({
+      invitacionesPendientes: 2,
+      cuentaCreada: '2026-01-12T13:30:00.000Z',
+    })
+
+    invitacionesRepository.update('inv-002', { invitadoPor: 'usr-099' })
+    await expect(obtenerResumenCuenta('usr-003')).resolves.toMatchObject({ invitacionesPendientes: 1 })
+
+    vi.setSystemTime('2027-01-02T00:00:00.000Z')
+    await expect(obtenerResumenCuenta('usr-003')).resolves.toMatchObject({ invitacionesPendientes: 0 })
+  })
+
+  it('responde 404 USER_NOT_FOUND si la cuenta no existe', async () => {
+    await expect(obtenerResumenCuenta('usr-999')).rejects.toMatchObject({ status: 404, code: 'USER_NOT_FOUND' })
   })
 })
 
