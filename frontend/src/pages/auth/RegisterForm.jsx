@@ -56,9 +56,9 @@ export default function RegisterForm() {
 
   async function crearCuenta(values) {
     try {
-      await registrar(values)
+      const usuario = await registrar(values)
       toast.success('Tu cuenta fue creada. Ya puedes iniciar sesión.')
-      navigate(ROUTES.home, { replace: true })
+      navigate(ROUTES.iniciarSesion, { replace: true, state: { correo: usuario.correo } })
     } catch (error) {
       if (error.code === 'EMAIL_TAKEN') emailAvailability.markTaken(values.correo)
       // 400 y 409 traen el mensaje de cada campo: el formulario los muestra junto a ellos.
@@ -89,7 +89,7 @@ export default function RegisterForm() {
   return (
     <form className="register-form" onSubmit={form.handleSubmit(crearCuenta)} noValidate>
       <fieldset disabled={form.isSubmitting}>
-        <div className="register-form__grid">
+        <div className="form-grid">
           <FormField label="Nombres" required error={form.errors.nombres}>
             <TextInput {...form.getFieldProps('nombres')} autoComplete="given-name" />
           </FormField>
@@ -126,7 +126,7 @@ export default function RegisterForm() {
           {opciones.status === 'error' && (
             <Alert
               variant="error"
-              className="register-form__full"
+              className="form-grid__full"
               actions={
                 <Button variant="secondary" size="sm" onClick={opciones.reload}>
                   Reintentar
@@ -156,12 +156,12 @@ export default function RegisterForm() {
           <Checkbox
             {...form.getFieldProps('aceptaTerminos')}
             required
-            className="register-form__full"
+            className="form-grid__full"
             label="Acepto los términos del servicio y la política de privacidad."
             error={form.errors.aceptaTerminos}
           />
 
-          <div className="register-form__actions register-form__full">
+          <div className="form-actions form-grid__full register-form__actions">
             <Button type="submit" loading={form.isSubmitting} loadingText="Creando cuenta…">
               Crear cuenta
             </Button>

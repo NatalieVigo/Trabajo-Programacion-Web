@@ -1,0 +1,36 @@
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-layout__body {
+  display: flex;
+  flex: 1;
+}
+
+.app-layout__column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Contenido centrado a 1200 px (p02) dentro del espacio que deja el menú lateral. */
+.app-layout__main {
+  flex: 1;
+  width: 100%;
+  max-width: calc(var(--content-max-width) + 2 * var(--page-gutter));
+  margin-inline: auto;
+  padding: var(--space-6) var(--page-gutter) var(--space-12);
+}
+
+.app-layout__main:focus {
+  outline: none;
+}
+
+@media (max-width: 640px) {
+  .app-layout__main {
+    padding-top: var(--space-5);
+  }
+}

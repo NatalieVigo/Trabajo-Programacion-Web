@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { readTable, writeTable } from '../repositories/db.js'
-import { renderApp } from '../test/test-utils.jsx'
+import { DEMO, renderApp } from '../test/test-utils.jsx'
 
 // Una ruta pública sin datos asíncronos: el layout es el mismo que el de la landing.
 const RUTA_PUBLICA = '/pagina-de-prueba'
@@ -24,6 +24,15 @@ describe('PublicLayout', () => {
     const banner = screen.getByRole('banner')
     expect(within(banner).getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/iniciar-sesion')
     expect(within(banner).getByRole('link', { name: 'Registrarme' })).toHaveAttribute('href', '/registro')
+  })
+
+  it('con la sesión iniciada ofrece «Ir a mi panel» en lugar de ingresar o registrarse', async () => {
+    renderApp(RUTA_PUBLICA, { usuario: DEMO.tecnico })
+
+    const banner = await screen.findByRole('banner')
+    expect(within(banner).getByRole('link', { name: 'Ir a mi panel' })).toHaveAttribute('href', '/tecnico')
+    expect(within(banner).queryByRole('link', { name: 'Iniciar sesión' })).not.toBeInTheDocument()
+    expect(within(banner).queryByRole('link', { name: 'Registrarme' })).not.toBeInTheDocument()
   })
 
   it('el botón «Menú» despliega y pliega la navegación', async () => {

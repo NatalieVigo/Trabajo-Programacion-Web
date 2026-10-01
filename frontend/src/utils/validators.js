@@ -8,6 +8,8 @@ const NAME_MAX_LENGTH = 60
 const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 64
 export const MAX_ESPECIALIDADES = 3
+/** Roles que solo se obtienen por invitación. */
+export const ROLES_INVITABLES = Object.freeze(['tecnico', 'supervisor'])
 
 export const VALIDATION_MESSAGES = Object.freeze({
   nombresRequired: 'Ingresa tus nombres.',
@@ -29,6 +31,8 @@ export const VALIDATION_MESSAGES = Object.freeze({
   vinculoRequired: 'Selecciona tu vínculo con la universidad.',
   terminosRequired: 'Debes aceptar los términos para continuar.',
   especialidadesRange: 'Elige entre una y tres categorías.',
+  especialidadesNoDisponible: 'Una de las categorías elegidas ya no está disponible. Actualiza la página y elige otra.',
+  rolInvitacionRequired: 'Selecciona el rol: técnico o supervisor.',
 })
 
 // Grupos de letras (con tildes y ñ) separados por espacios, apóstrofos o guiones: «María José», «O'Connor», «Ruiz-Tagle».
@@ -123,9 +127,19 @@ export function validateAceptaTerminos(value) {
   return value === true ? null : VALIDATION_MESSAGES.terminosRequired
 }
 
-export function validateEspecialidades(categoriaIds) {
-  const count = Array.isArray(categoriaIds) ? new Set(categoriaIds).size : 0
-  return count >= 1 && count <= MAX_ESPECIALIDADES ? null : VALIDATION_MESSAGES.especialidadesRange
+/**
+ * De una a tres categorías distintas. Si se pasan las `categorias` válidas (ids), cada una debe estar entre ellas:
+ * una categoría que se desactivó después de cargar el formulario tiene su propio mensaje.
+ */
+export function validateEspecialidades(categoriaIds, categorias) {
+  const elegidas = Array.isArray(categoriaIds) ? [...new Set(categoriaIds)] : []
+  if (elegidas.length < 1 || elegidas.length > MAX_ESPECIALIDADES) return VALIDATION_MESSAGES.especialidadesRange
+  const isUnknown = Array.isArray(categorias) && elegidas.some((id) => !categorias.includes(id))
+  return isUnknown ? VALIDATION_MESSAGES.especialidadesNoDisponible : null
+}
+
+export function validateRolInvitacion(value) {
+  return ROLES_INVITABLES.includes(value) ? null : VALIDATION_MESSAGES.rolInvitacionRequired
 }
 
 /** Deja solo los campos con error: { campo: mensaje }. */
@@ -148,5 +162,37 @@ export function validateRegistro(values, { unidades, vinculos } = {}) {
     unidad: validateUnidad(values.unidad, unidades),
     vinculo: validateVinculo(values.vinculo, vinculos),
     aceptaTerminos: validateAceptaTerminos(values.aceptaTerminos),
+  })
+}
+
+/**
+ * Valida la activación de una cuenta por invitación (p07): lo que completa el invitado. `categorias` (ids de las
+ * categorías activas) es opcional: el servicio la pasa para exigir especialidades del catálogo.
+ */
+export function validateActivacion(values, { categorias } = {}) {
+  return collectErrors({
+    telefono: validateTelefono(values.telefono),
+    password: validatePassword(values.password),
+    confirmacion: validateConfirmacion(values.confirmacion, values.password),
+    especialidades: validateEspecialidades(values.especialidades, categorias),
+  })
+}
+
+/** Valida los datos con los que un supervisor invita a un técnico o a otro supervisor. */
+export function validateInvitacion(values) {
+  return collectErrors({
+    nombres: validateNombres(values.nombres),
+    apellidos: validateApellidos(values.apellidos),
+    correo: validateCorreo(values.correo),
+    rol: validateRolInvitacion(values.rol),
+    telefono: validateTelefono(values.telefono),
+  })
+}
+
+/** Valida el inicio de sesión: correo institucional y contraseña presente (no se exponen las reglas de la contraseña). */
+export function validateLogin(values) {
+  return collectErrors({
+    correo: validateCorreo(values.correo),
+    password: asText(values.password) ? null : VALIDATION_MESSAGES.passwordRequired,
   })
 }

@@ -13,6 +13,7 @@ export const ROUTES = Object.freeze({
   usuarioNuevoTicket: '/usuario/tickets/nuevo',
   usuarioTickets: '/usuario/tickets',
   usuarioEncuestas: '/usuario/encuestas',
+  usuarioEncuestaPendiente: '/usuario/encuestas/pendiente',
 
   tecnicoBandeja: '/tecnico',
   tecnicoHistorial: '/tecnico/historial',
@@ -42,3 +43,9 @@ export const landingSectionPath = (sectionId) => ({ pathname: ROUTES.home, hash:
 export const invitacionPath = (token) => generatePath(ROUTES.invitacion, { token })
 
 export const restablecerContrasenaPath = (token) => generatePath(ROUTES.restablecerContrasena, { token })
+
+/** Recuperación de contraseña con el correo precargado: /recuperar-contrasena?correo=… */
+export const recuperarContrasenaPath = (correo) => ({
+  pathname: ROUTES.recuperarContrasena,
+  search: `?${new URLSearchParams({ correo })}`,
+})

@@ -6,13 +6,17 @@ import {
   normalizeNombre,
   normalizeTelefono,
   validateAceptaTerminos,
+  validateActivacion,
   validateApellidos,
   validateConfirmacion,
   validateCorreo,
   validateEspecialidades,
+  validateInvitacion,
+  validateLogin,
   validateNombres,
   validatePassword,
   validateRegistro,
+  validateRolInvitacion,
   validateTelefono,
   validateUnidad,
   validateVinculo,
@@ -49,6 +53,8 @@ describe('validators', () => {
       vinculoRequired: 'Selecciona tu vínculo con la universidad.',
       terminosRequired: 'Debes aceptar los términos para continuar.',
       especialidadesRange: 'Elige entre una y tres categorías.',
+      especialidadesNoDisponible: 'Una de las categorías elegidas ya no está disponible. Actualiza la página y elige otra.',
+      rolInvitacionRequired: 'Selecciona el rol: técnico o supervisor.',
     })
   })
 
@@ -167,6 +173,94 @@ describe('validators', () => {
       expect(validateEspecialidades(['cat-01', 'cat-02', 'cat-03', 'cat-04'])).toBe('Elige entre una y tres categorías.')
       expect(validateEspecialidades(['cat-01'])).toBeNull()
       expect(validateEspecialidades(['cat-01', 'cat-02', 'cat-03'])).toBeNull()
+      expect(validateEspecialidades(['cat-01', 'cat-01', 'cat-02', 'cat-02'])).toBeNull()
+    })
+
+    it('especialidades: con el catálogo, cada categoría debe estar entre las permitidas', () => {
+      const activas = ['cat-01', 'cat-02', 'cat-03']
+      const noDisponible = 'Una de las categorías elegidas ya no está disponible. Actualiza la página y elige otra.'
+
+      expect(validateEspecialidades(['cat-01', 'cat-03'], activas)).toBeNull()
+      expect(validateEspecialidades(['cat-01', 'cat-06'], activas)).toBe(noDisponible)
+      expect(validateEspecialidades(['cat-99'], activas)).toBe(noDisponible)
+      // La cantidad se revisa primero: con cero o más de tres categorías el mensaje es el del rango.
+      expect(validateEspecialidades([], activas)).toBe('Elige entre una y tres categorías.')
+      expect(validateEspecialidades(['cat-01', 'cat-02', 'cat-03', 'cat-06'], activas)).toBe(
+        'Elige entre una y tres categorías.',
+      )
+    })
+
+    it('el rol de una invitación es técnico o supervisor', () => {
+      expect(validateRolInvitacion('tecnico')).toBeNull()
+      expect(validateRolInvitacion('supervisor')).toBeNull()
+      expect(validateRolInvitacion('usuario')).toBe('Selecciona el rol: técnico o supervisor.')
+      expect(validateRolInvitacion('')).toBe('Selecciona el rol: técnico o supervisor.')
+    })
+  })
+
+  describe('validateActivacion (alta por invitación)', () => {
+    const activacionValida = {
+      telefono: '951 220 874',
+      password: 'Rosa2026',
+      confirmacion: 'Rosa2026',
+      especialidades: ['cat-01', 'cat-02'],
+    }
+
+    it('devuelve un objeto vacío si todo es válido', () => {
+      expect(validateActivacion(activacionValida)).toEqual({})
+    })
+
+    it('devuelve el mensaje de cada campo que completa el invitado', () => {
+      expect(validateActivacion({})).toEqual({
+        telefono: 'Ingresa un número de contacto.',
+        password: 'Ingresa una contraseña.',
+        confirmacion: 'Confirma tu contraseña.',
+        especialidades: 'Elige entre una y tres categorías.',
+      })
+    })
+
+    it('con el catálogo exige especialidades activas', () => {
+      expect(validateActivacion(activacionValida, { categorias: ['cat-01'] })).toEqual({
+        especialidades: 'Una de las categorías elegidas ya no está disponible. Actualiza la página y elige otra.',
+      })
+    })
+  })
+
+  describe('validateInvitacion', () => {
+    it('valida los datos con los que el supervisor invita', () => {
+      expect(
+        validateInvitacion({
+          nombres: 'Rosa Elena',
+          apellidos: 'Huamán Torres',
+          correo: 'rhuaman@ulima.edu.pe',
+          rol: 'tecnico',
+          telefono: '951220874',
+        }),
+      ).toEqual({})
+      expect(validateInvitacion({ correo: 'rosa@gmail.com', rol: 'usuario' })).toEqual({
+        nombres: 'Ingresa tus nombres.',
+        apellidos: 'Ingresa tus apellidos.',
+        correo: 'Usa tu correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
+        rol: 'Selecciona el rol: técnico o supervisor.',
+        telefono: 'Ingresa un número de contacto.',
+      })
+    })
+  })
+
+  describe('validateLogin', () => {
+    it('exige el correo institucional y la contraseña', () => {
+      expect(validateLogin({ correo: 'camila.quispe@aloe.ulima.edu.pe', password: 'Camila2026' })).toEqual({})
+      expect(validateLogin({})).toEqual({
+        correo: 'Ingresa tu correo institucional.',
+        password: 'Ingresa una contraseña.',
+      })
+      expect(validateLogin({ correo: 'camila@gmail.com', password: 'x' })).toEqual({
+        correo: 'Usa tu correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
+      })
+    })
+
+    it('no exige las reglas de una contraseña nueva', () => {
+      expect(validateLogin({ correo: 'jparedes@ulima.edu.pe', password: 'corta' })).toEqual({})
     })
   })
 

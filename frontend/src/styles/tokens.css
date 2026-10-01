@@ -97,6 +97,7 @@
   --table-row-height: 44px;
 
   --z-header: 100;
+  --z-drawer: 200;
   --z-modal: 1000;
   --z-toast: 1100;
 }

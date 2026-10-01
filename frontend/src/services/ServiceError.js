@@ -14,3 +14,8 @@ export class ServiceError extends Error {
     this.details = details
   }
 }
+
+/** 400 con el mensaje de cada campo inválido: { campo: mensaje }. */
+export function validationError(fieldErrors) {
+  return new ServiceError(400, 'VALIDATION_ERROR', 'Revisa los campos marcados.', fieldErrors)
+}
