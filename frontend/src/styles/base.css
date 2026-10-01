@@ -60,6 +60,14 @@ button {
   cursor: pointer;
 }
 
+/* Sin marco ni márgenes: agrupa los controles de un formulario para deshabilitarlos mientras se envía. */
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 a {
   color: var(--color-primary);
   text-underline-offset: 2px;

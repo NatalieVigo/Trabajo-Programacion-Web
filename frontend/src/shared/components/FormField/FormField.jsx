@@ -5,15 +5,16 @@ import './FormField.css'
 
 /**
  * Etiqueta + control + mensaje. El mensaje prioriza error > éxito > ayuda y queda enlazado al control
- * con aria-describedby; el control recibe el id y aria-invalid a través de contexto.
+ * con aria-describedby; el control recibe el id, aria-invalid y aria-required a través de contexto.
+ * `required` solo anuncia el campo como obligatorio: la validación la hace el formulario, no el navegador.
  */
-export default function FormField({ label, hint, error, success, id, className, children }) {
+export default function FormField({ label, hint, error, success, required = false, id, className, children }) {
   const generatedId = useId()
   const controlId = id ?? generatedId
   const message = error || success || hint
   const status = error ? 'error' : success ? 'success' : undefined
   const messageId = message ? `${controlId}-mensaje` : undefined
-  const context = useMemo(() => ({ controlId, messageId, status }), [controlId, messageId, status])
+  const context = useMemo(() => ({ controlId, messageId, status, required }), [controlId, messageId, status, required])
 
   return (
     <div className={cx('field', className)}>

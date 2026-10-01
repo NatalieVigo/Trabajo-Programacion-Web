@@ -4,7 +4,7 @@ export const FormFieldContext = createContext(null)
 
 /**
  * Props de accesibilidad que un control hereda del FormField que lo envuelve
- * (id, aria-describedby, aria-invalid) y su estado visual. Las props explícitas tienen prioridad.
+ * (id, aria-describedby, aria-invalid, aria-required) y su estado visual. Las props explícitas tienen prioridad.
  */
 export function useFieldControl(props, statusOverride) {
   const field = useContext(FormFieldContext)
@@ -15,6 +15,7 @@ export function useFieldControl(props, statusOverride) {
       id: props.id ?? field?.controlId,
       'aria-describedby': props['aria-describedby'] ?? field?.messageId,
       'aria-invalid': props['aria-invalid'] ?? (status === 'error' || undefined),
+      'aria-required': props['aria-required'] ?? (field?.required || undefined),
     },
   }
 }

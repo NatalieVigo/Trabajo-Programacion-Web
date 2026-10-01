@@ -33,6 +33,37 @@ describe('FormField y controles', () => {
     expect(screen.queryByText('Repite la contraseña.')).not.toBeInTheDocument()
   })
 
+  it('required anuncia el control como obligatorio sin activar la validación del navegador', () => {
+    render(
+      <>
+        <FormField label="Nombres" required>
+          <TextInput name="nombres" />
+        </FormField>
+        <FormField label="Contraseña" required>
+          <PasswordInput name="password" />
+        </FormField>
+        <FormField label="Unidad o carrera" required>
+          <SelectInput name="unidad" options={['Derecho']} />
+        </FormField>
+        <FormField label="Referencia">
+          <TextInput name="referencia" />
+        </FormField>
+        <Checkbox label="Acepto los términos" required />
+      </>,
+    )
+
+    for (const control of [
+      screen.getByLabelText('Nombres'),
+      screen.getByLabelText('Contraseña'),
+      screen.getByLabelText('Unidad o carrera'),
+      screen.getByRole('checkbox', { name: 'Acepto los términos' }),
+    ]) {
+      expect(control).toHaveAttribute('aria-required', 'true')
+      expect(control).not.toHaveAttribute('required')
+    }
+    expect(screen.getByLabelText('Referencia')).not.toBeRequired()
+  })
+
   it('muestra el mensaje de éxito', () => {
     render(
       <FormField label="Correo institucional" success="Correo válido y disponible.">

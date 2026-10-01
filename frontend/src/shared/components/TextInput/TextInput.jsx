@@ -6,10 +6,18 @@ import './TextInput.css'
 /** Campo de texto de 40 px. En estado de éxito muestra un check; `endAdornment` reserva espacio a la derecha. */
 export default function TextInput({ status: statusProp, mono = false, endAdornment, className, ...props }) {
   const { controlProps, status } = useFieldControl(props, statusProp)
-  const adornment = endAdornment ?? (status === 'success' ? <CheckIcon className="control__check" /> : null)
+  const showCheck = !endAdornment && status === 'success'
+  const adornment = endAdornment ?? (showCheck ? <CheckIcon className="control__check" /> : null)
 
   return (
-    <div className={cx('control', status && `control--${status}`, adornment && 'control--adorned')}>
+    <div
+      className={cx(
+        'control',
+        status && `control--${status}`,
+        endAdornment && 'control--adorned',
+        showCheck && 'control--checked',
+      )}
+    >
       <input
         type="text"
         {...props}

@@ -1,0 +1,51 @@
+.register-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 30%);
+  align-items: start;
+  gap: var(--space-8);
+}
+
+.register-page__card {
+  padding: var(--space-8);
+}
+
+.register-page__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.register-page__aside-title {
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-subtitle);
+}
+
+.register-page__aside-text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.register-page__aside-text + .register-page__aside-text {
+  margin-top: var(--space-1);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 1023px) {
+  .register-page {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+
+  /* En una columna el aviso va primero: un técnico o supervisor debe leerlo antes de llenar el formulario. */
+  .register-page__aside {
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .register-page__card {
+    padding: var(--space-5) var(--space-4);
+  }
+}
