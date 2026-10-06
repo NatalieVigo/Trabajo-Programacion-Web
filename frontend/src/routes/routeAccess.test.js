@@ -22,7 +22,7 @@ describe('routeAccess', () => {
   it('las rutas exclusivas de un rol nombran el recurso que muestran, para la vista 403', () => {
     const exclusivas = PRIVATE_ROUTES.filter(({ roles }) => roles.length === 1)
 
-    expect(exclusivas).toHaveLength(14)
+    expect(exclusivas).toHaveLength(16)
     exclusivas.forEach(({ recurso }) => expect(recurso).toMatch(/^(el|la|los|las) \S/))
     expect(PRIVATE_ROUTES.find(({ path }) => path === '/supervisor/cola').recurso).toBe('la cola de atención')
   })

@@ -1,0 +1,49 @@
+.categoria-form-page__breadcrumb {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.categoria-form-page__breadcrumb a {
+  color: inherit;
+}
+
+.categoria-form-page__breadcrumb [aria-current='page'] {
+  color: var(--color-text);
+}
+
+.categoria-form-page__summary {
+  margin-bottom: var(--space-4);
+}
+
+/* Formulario y, a la derecha, la tarjeta «Efecto del tiempo esperado» (p13); en pantallas angostas, uno bajo otro. */
+.categoria-form-page__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: var(--space-6);
+}
+
+.categoria-form-page__aside {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.categoria-form-page__aside-title {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.categoria-form-page__aside-text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+@media (max-width: 1023px) {
+  .categoria-form-page__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
