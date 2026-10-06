@@ -176,3 +176,25 @@ describe('CategoriaFormPage · editar', () => {
     expect(screen.getByRole('link', { name: 'Volver a las categorías' })).toHaveAttribute('href', '/supervisor/categorias')
   })
 })
+
+describe('CategoriaFormPage · desactivar con tickets en curso', () => {
+  it('pide la confirmación explícita antes de guardar la categoría inactiva', async () => {
+    const { user } = await renderFormulario('/supervisor/categorias/cat-01/editar', 'Editar categoría')
+
+    await user.click(screen.getByRole('checkbox', { name: 'Categoría activa · disponible al registrar tickets' }))
+    await user.click(screen.getByRole('button', { name: 'Guardar categoría' }))
+    let confirmacion = await screen.findByRole('alertdialog', { name: '¿Desactivar la categoría?' })
+    expect(confirmacion).toHaveTextContent('«Audiovisuales» tiene 2 tickets en curso.')
+    await user.click(within(confirmacion).getByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Editar categoría' })).toBeInTheDocument()
+    expect(categoriasRepository.findById('cat-01').activa).toBe(true)
+
+    await user.click(screen.getByRole('button', { name: 'Guardar categoría' }))
+    confirmacion = await screen.findByRole('alertdialog', { name: '¿Desactivar la categoría?' })
+    await user.click(within(confirmacion).getByRole('button', { name: 'Desactivar categoría' }))
+
+    expect(await screen.findByText('Categoría “Audiovisuales” actualizada correctamente.')).toBeInTheDocument()
+    expect(categoriasRepository.findById('cat-01').activa).toBe(false)
+  })
+})

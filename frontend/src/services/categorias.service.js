@@ -189,9 +189,27 @@ export function crear(datos, supervisorId) {
 }
 
 /**
+ * Desactivar algo que tiene tickets en curso exige una confirmación explícita (HU-2 · 2.6): sin `confirmado`, falla con
+ * 409 OPEN_TICKETS (details.ticketsEnCurso) para que la interfaz la pida. Los tickets en curso siguen su atención.
+ */
+function assertDesactivacionConfirmada(elemento, activa, confirmado) {
+  const desactiva = elemento.activa && activa === false
+  if (!desactiva || elemento.ticketsEnCurso === 0 || confirmado === true) return
+  const tickets = pluralize(elemento.ticketsEnCurso, 'ticket en curso', 'tickets en curso')
+  throw new ServiceError(
+    409,
+    'OPEN_TICKETS',
+    `«${elemento.nombre}» tiene ${tickets}. Confirma la desactivación: seguirán atendiéndose, pero no se podrán registrar tickets nuevos.`,
+    null,
+    { details: { ticketsEnCurso: elemento.ticketsEnCurso } },
+  )
+}
+
+/**
  * Edita una categoría o subcategoría. Los campos que no se envían conservan su valor. Una categoría principal no
- * puede pasar a ser subcategoría; una subcategoría puede cambiar de categoría, pero no quedarse sin ella. Falla con
- * 403, 404 CATEGORY_NOT_FOUND, 400 VALIDATION_ERROR o 409 NAME_TAKEN.
+ * puede pasar a ser subcategoría; una subcategoría puede cambiar de categoría, pero no quedarse sin ella. Si la
+ * desactiva y tiene tickets en curso, `datos.confirmado` debe ser true. Falla con 403, 404 CATEGORY_NOT_FOUND,
+ * 400 VALIDATION_ERROR, 409 NAME_TAKEN o 409 OPEN_TICKETS.
  */
 export function actualizar(id, datos, supervisorId) {
   return simulateRequest(() => {
@@ -202,6 +220,7 @@ export function actualizar(id, datos, supervisorId) {
     if (tipo === 'categoria' && valores.categoriaId) fieldErrors.categoriaId = CATALOGO_MESSAGES.padreNoPermitido
     if (tipo === 'subcategoria' && !valores.categoriaId) fieldErrors.categoriaId = CATALOGO_MESSAGES.padreRequired
     if (hasErrors(fieldErrors)) throw validationError(fieldErrors)
+    assertDesactivacionConfirmada(presentar({ tipo, registro }), valores.activa, datos?.confirmado)
 
     const campos = camposGuardados(valores)
     if (tipo === 'categoria') {
@@ -239,13 +258,15 @@ export function eliminar(id, supervisorId) {
 
 /**
  * Activa o desactiva una categoría o subcategoría (HU-2 · 2.4). Una inactiva no admite tickets nuevos; los que ya
- * tiene siguen su curso. Falla con 403, 404 CATEGORY_NOT_FOUND o 400 VALIDATION_ERROR si `activa` no es booleano.
+ * tiene siguen su curso. Desactivar algo con tickets en curso exige `{ confirmado: true }` (2.6). Falla con 403,
+ * 404 CATEGORY_NOT_FOUND, 400 VALIDATION_ERROR si `activa` no es booleano o 409 OPEN_TICKETS (details.ticketsEnCurso).
  */
-export function cambiarEstado(id, activa, supervisorId) {
+export function cambiarEstado(id, activa, supervisorId, { confirmado = false } = {}) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
     if (typeof activa !== 'boolean') throw validationError({ activa: 'Indica si está activa.' })
-    const { tipo } = buscar(id)
+    const { tipo, registro } = buscar(id)
+    assertDesactivacionConfirmada(presentar({ tipo, registro }), activa, confirmado)
     const repositorio = tipo === 'categoria' ? categoriasRepository : subcategoriasRepository
     return presentar({ tipo, registro: repositorio.update(id, { activa }) })
   })

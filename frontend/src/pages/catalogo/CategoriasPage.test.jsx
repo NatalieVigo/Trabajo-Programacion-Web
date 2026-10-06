@@ -316,3 +316,42 @@ describe('CategoriasPage · búsqueda, filtros y exportación', () => {
     expect(lineas.some((linea) => linea.includes('Calefacción'))).toBe(false)
   })
 })
+
+describe('CategoriasPage · confirmación al desactivar', () => {
+  it('desactivar una categoría con tickets en curso pide una confirmación explícita', async () => {
+    const { user } = await renderCatalogo()
+
+    await user.click(within(fila('Audiovisuales')).getByRole('button', { name: 'Desactivar Audiovisuales' }))
+    let confirmacion = await screen.findByRole('alertdialog', { name: '¿Desactivar la categoría?' })
+    expect(confirmacion).toHaveTextContent(
+      '«Audiovisuales» tiene 2 tickets en curso. Seguirán atendiéndose hasta su cierre, pero no se podrán registrar tickets nuevos en ella.',
+    )
+    await user.click(within(confirmacion).getByRole('button', { name: 'Cancelar' }))
+    expect(celdas('Audiovisuales')[3]).toBe('Activa')
+    expect(categoriasRepository.findById('cat-01').activa).toBe(true)
+
+    await user.click(within(fila('Audiovisuales')).getByRole('button', { name: 'Desactivar Audiovisuales' }))
+    confirmacion = await screen.findByRole('alertdialog', { name: '¿Desactivar la categoría?' })
+    await user.click(within(confirmacion).getByRole('button', { name: 'Desactivar categoría' }))
+
+    expect(await screen.findByText('Categoría “Audiovisuales” desactivada: ya no admite tickets nuevos.')).toBeInTheDocument()
+    expect(celdas('Audiovisuales')[3]).toBe('Inactiva')
+    expect(categoriasRepository.findById('cat-01').activa).toBe(false)
+  })
+
+  it('si la categoría empezó a tener tickets en curso después de cargar la página, la pide con la cantidad actual', async () => {
+    const { user } = await renderCatalogo()
+    writeTable(
+      'tickets',
+      readTable('tickets').map((ticket) => (ticket.id === 'tck-00147' ? { ...ticket, categoriaId: 'cat-06' } : ticket)),
+    )
+
+    await user.click(within(fila('Limpieza')).getByRole('button', { name: 'Desactivar Limpieza' }))
+    const confirmacion = await screen.findByRole('alertdialog', { name: '¿Desactivar la categoría?' })
+    expect(confirmacion).toHaveTextContent('«Limpieza» tiene 1 ticket en curso.')
+    await user.click(within(confirmacion).getByRole('button', { name: 'Desactivar categoría' }))
+
+    expect(await screen.findByText('Categoría “Limpieza” desactivada: ya no admite tickets nuevos.')).toBeInTheDocument()
+    expect(celdas('Limpieza').slice(2, 4)).toEqual(['1', 'Inactiva'])
+  })
+})
