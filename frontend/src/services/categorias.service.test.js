@@ -7,7 +7,8 @@ import {
 import { readTable, writeTable } from '../repositories/db.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { CATALOGO_MESSAGES } from '../utils/catalogoValidators.js'
-import { actualizar, crear, eliminar, listar, obtener } from './categorias.service.js'
+import { listarCategorias } from './catalogo.service.js'
+import { actualizar, cambiarEstado, crear, eliminar, listar, listarDisponibles, obtener } from './categorias.service.js'
 import { ServiceError } from './ServiceError.js'
 
 const SUPERVISORA = 'usr-003'
@@ -75,6 +76,7 @@ describe('categorias.service · listar', () => {
       activa: true,
       prioridadPorDefecto: 'critica',
       tiempoEsperadoHoras: 2,
+      disponible: true,
       ticketsEnCurso: 0,
       usos: { tickets: 0 },
       eliminable: true,
@@ -342,5 +344,77 @@ describe('categorias.service · eliminar', () => {
     expect(await fallo(eliminar('cat-99', SUPERVISORA))).toMatchObject({ status: 404, code: 'CATEGORY_NOT_FOUND' })
     expect(await fallo(eliminar('sub-10', TECNICO))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
     expect(subcategoriasRepository.findById('sub-10')).not.toBeNull()
+  })
+})
+
+describe('categorias.service · cambiarEstado', () => {
+  it('desactiva una categoría: sus subcategorías dejan de estar disponibles sin cambiar su propio estado', async () => {
+    await expect(cambiarEstado('cat-03', false, SUPERVISORA)).resolves.toMatchObject({ tipo: 'categoria', activa: false })
+
+    const climatizacion = (await listar()).find((categoria) => categoria.id === 'cat-03')
+    expect(climatizacion.subcategorias.map(({ activa, disponible }) => ({ activa, disponible }))).toEqual([
+      { activa: true, disponible: false },
+      { activa: false, disponible: false },
+      { activa: true, disponible: false },
+    ])
+    expect(subcategoriasRepository.findById('sub-08').activa).toBe(true)
+
+    await cambiarEstado('cat-03', true, SUPERVISORA)
+    expect(categoriasRepository.findById('cat-03').activa).toBe(true)
+  })
+
+  it('activa o desactiva una subcategoría', async () => {
+    await expect(cambiarEstado('sub-10', true, SUPERVISORA)).resolves.toMatchObject({
+      tipo: 'subcategoria',
+      activa: true,
+      disponible: true,
+    })
+    await expect(cambiarEstado('sub-01', false, SUPERVISORA)).resolves.toMatchObject({ activa: false, disponible: false })
+  })
+
+  it('una categoría inactiva ya no aparece en lo que leen las demás historias', async () => {
+    await cambiarEstado('cat-06', false, SUPERVISORA)
+
+    expect((await listarCategorias({ soloActivas: true })).map(({ id }) => id)).not.toContain('cat-06')
+    expect((await listarDisponibles()).map(({ nombre }) => nombre)).not.toContain('Limpieza')
+  })
+
+  it('falla con 400 si el estado no es booleano, 404 si no existe y 403 si no es un supervisor', async () => {
+    expect(await fallo(cambiarEstado('cat-03', 'no', SUPERVISORA))).toMatchObject({ status: 400 })
+    expect(await fallo(cambiarEstado('cat-99', false, SUPERVISORA))).toMatchObject({ status: 404 })
+    expect(await fallo(cambiarEstado('cat-03', false, TECNICO))).toMatchObject({ status: 403 })
+    expect(categoriasRepository.findById('cat-03').activa).toBe(true)
+  })
+})
+
+describe('categorias.service · listarDisponibles', () => {
+  it('devuelve las categorías activas con sus subcategorías activas, sin datos de administración', async () => {
+    const disponibles = await listarDisponibles()
+    const climatizacion = disponibles.find(({ nombre }) => nombre === 'Climatización')
+
+    expect(disponibles).toHaveLength(7)
+    expect(climatizacion).toEqual({
+      id: 'cat-03',
+      nombre: 'Climatización',
+      descripcion: 'Aire acondicionado, ventilación y fugas de condensado.',
+      prioridadPorDefecto: 'alta',
+      tiempoEsperadoHoras: 8,
+      subcategorias: [
+        {
+          id: 'sub-08',
+          nombre: 'Aire sin frío',
+          descripcion: 'El aire acondicionado enciende pero no enfría el ambiente.',
+          prioridadPorDefecto: 'alta',
+          tiempoEsperadoHoras: 8,
+        },
+        {
+          id: 'sub-09',
+          nombre: 'Fuga de condensado',
+          descripcion: 'Goteo de agua desde el equipo de aire acondicionado.',
+          prioridadPorDefecto: 'alta',
+          tiempoEsperadoHoras: 8,
+        },
+      ],
+    })
   })
 })

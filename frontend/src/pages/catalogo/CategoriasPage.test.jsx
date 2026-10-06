@@ -167,3 +167,46 @@ describe('CategoriasPage · eliminar', () => {
     expect(categoriasRepository.findById('cat-06')).not.toBeNull()
   })
 })
+
+describe('CategoriasPage · estado', () => {
+  it('desactiva una categoría sin tickets en curso y lo notifica', async () => {
+    const { user } = await renderCatalogo()
+
+    await user.click(within(fila('Limpieza')).getByRole('button', { name: 'Desactivar Limpieza' }))
+
+    expect(await screen.findByText('Categoría “Limpieza” desactivada: ya no admite tickets nuevos.')).toBeInTheDocument()
+    expect(celdas('Limpieza')[3]).toBe('Inactiva')
+    expect(celdas(sub('Baño sin insumos', 'Limpieza'))[3]).toBe('Activa · categoría inactiva')
+    expect(within(fila('Limpieza')).getByRole('button', { name: 'Activar Limpieza' })).toHaveFocus()
+    expect(categoriasRepository.findById('cat-06').activa).toBe(false)
+    expect(
+      screen.getByText('6 categorías activas · 20 subcategorías · la prioridad por defecto se aplica a cada ticket nuevo.'),
+    ).toBeInTheDocument()
+  })
+
+  it('activa una subcategoría inactiva', async () => {
+    const { user } = await renderCatalogo()
+
+    await user.click(screen.getByRole('button', { name: 'Activar Calefacción sin funcionar' }))
+
+    expect(
+      await screen.findByText('Subcategoría “Calefacción sin funcionar” activada: vuelve a admitir tickets nuevos.'),
+    ).toBeInTheDocument()
+    expect(celdas(sub('Calefacción sin funcionar', 'Climatización'))[3]).toBe('Activa')
+    expect(subcategoriasRepository.findById('sub-10').activa).toBe(true)
+  })
+
+  it('al activar una subcategoría de una categoría inactiva, avisa que aún no admite tickets', async () => {
+    categoriasRepository.update('cat-06', { activa: false })
+    subcategoriasRepository.update('sub-17', { activa: false })
+    const { user } = await renderCatalogo()
+
+    await user.click(screen.getByRole('button', { name: 'Activar Derrame o residuos' }))
+
+    expect(
+      await screen.findByText(
+        'Subcategoría “Derrame o residuos” activada. Admitirá tickets nuevos cuando «Limpieza» esté activa.',
+      ),
+    ).toBeInTheDocument()
+  })
+})

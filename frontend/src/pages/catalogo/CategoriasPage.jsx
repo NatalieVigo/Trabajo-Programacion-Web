@@ -1,9 +1,10 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { ROUTES } from '../../routes/routePaths.js'
-import { eliminar, listar } from '../../services/categorias.service.js'
-import { Alert, Button, Card, EmptyState, PageHeader } from '../../shared/components'
+import { cambiarEstado, eliminar, listar } from '../../services/categorias.service.js'
+import { Alert, Button, Card, EmptyState, PageHeader, useToast } from '../../shared/components'
 import { pluralize } from '../../utils/format.js'
 import { nombreDeTipo } from './catalogoFormat.js'
 import CategoriasTable from './CategoriasTable.jsx'
@@ -21,6 +22,16 @@ function resumirCatalogo(categorias) {
     pluralize(contarSubcategorias(categorias), 'subcategoría', 'subcategorías'),
     'la prioridad por defecto se aplica a cada ticket nuevo.',
   ].join(' · ')
+}
+
+/** Resultado de activar o desactivar, con lo que significa para los tickets nuevos. */
+function mensajeDeEstado(elemento, categoria, activa) {
+  const sujeto = `${nombreDeTipo(elemento.tipo, { mayuscula: true })} “${elemento.nombre}”`
+  if (!activa) return `${sujeto} desactivada: ya no admite tickets nuevos.`
+  if (categoria && !categoria.activa) {
+    return `${sujeto} activada. Admitirá tickets nuevos cuando «${categoria.nombre}» esté activa.`
+  }
+  return `${sujeto} activada: vuelve a admitir tickets nuevos.`
 }
 
 /** Carga, error o catálogo vacío (p15); con categorías muestra `children`. */
@@ -69,11 +80,33 @@ function CatalogoContent({ status, total, onRetry, children }) {
 export default function CategoriasPage() {
   const consulta = useConsultaRefrescable(listar)
   const { usuario } = useAuth()
+  const toast = useToast()
   const tablaRef = useRef(null)
   const { eliminandoId, eliminar: confirmarYEliminar } = useEliminacion(consulta.refrescar)
+  const [cambiandoId, setCambiandoId] = useState(null)
   useDocumentTitle('Categorías de servicio')
 
   const categorias = consulta.data ?? []
+  const ocupado = eliminandoId
+    ? { id: eliminandoId, accion: 'eliminar' }
+    : cambiandoId && { id: cambiandoId, accion: 'estado' }
+
+  /** Activa o desactiva la fila y devuelve el foco a su botón, que cambia de texto. */
+  async function cambiarEstadoElemento(elemento, categoria) {
+    const activa = !elemento.activa
+    setCambiandoId(elemento.id)
+    try {
+      await cambiarEstado(elemento.id, activa, usuario.id)
+      await consulta.refrescar()
+      toast.success(mensajeDeEstado(elemento, categoria, activa))
+    } catch (error) {
+      toast.error(error.message)
+      if (error.status === 404) await consulta.refrescar()
+    }
+    // El botón se habilita al terminar: se pinta antes de devolverle el foco, que el navegador soltó al deshabilitarlo.
+    flushSync(() => setCambiandoId(null))
+    tablaRef.current?.querySelector(`[data-estado="${elemento.id}"]`)?.focus()
+  }
 
   async function eliminarElemento(elemento) {
     const tipo = nombreDeTipo(elemento.tipo)
@@ -101,7 +134,8 @@ export default function CategoriasPage() {
         <CategoriasTable
           ref={tablaRef}
           categorias={categorias}
-          eliminandoId={eliminandoId}
+          ocupado={ocupado}
+          onCambiarEstado={cambiarEstadoElemento}
           onEliminar={eliminarElemento}
         />
         <p className="categorias-page__count">

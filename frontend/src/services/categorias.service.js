@@ -56,11 +56,16 @@ function presentarCategoria(categoria, totalSubcategorias, usos) {
   }
 }
 
-function presentarSubcategoria(subcategoria, usos) {
+/**
+ * Una subcategoría admite tickets nuevos (`disponible`) solo si ella y su categoría están activas: al desactivar una
+ * categoría, sus subcategorías dejan de estar disponibles sin cambiar su propio estado.
+ */
+function presentarSubcategoria(subcategoria, categoriaActiva, usos) {
   const tickets = usos.porSubcategoria.get(subcategoria.id) ?? SIN_TICKETS
   return {
     tipo: 'subcategoria',
     ...subcategoria,
+    disponible: subcategoria.activa && categoriaActiva,
     ticketsEnCurso: tickets.enCurso,
     usos: { tickets: tickets.total },
     eliminable: tickets.total === 0,
@@ -77,7 +82,10 @@ function buscar(id) {
 }
 
 function presentar({ tipo, registro }, usos = leerUsos()) {
-  if (tipo === 'subcategoria') return presentarSubcategoria(registro, usos)
+  if (tipo === 'subcategoria') {
+    const categoriaActiva = categoriasRepository.findById(registro.categoriaId)?.activa ?? false
+    return presentarSubcategoria(registro, categoriaActiva, usos)
+  }
   return presentarCategoria(registro, subcategoriasRepository.findAll({ categoriaId: registro.id }).length, usos)
 }
 
@@ -142,7 +150,7 @@ export function listar() {
         const propias = subcategorias.filter((subcategoria) => subcategoria.categoriaId === categoria.id)
         return {
           ...presentarCategoria(categoria, propias.length, usos),
-          subcategorias: propias.map((subcategoria) => presentarSubcategoria(subcategoria, usos)),
+          subcategorias: propias.map((subcategoria) => presentarSubcategoria(subcategoria, categoria.activa, usos)),
         }
       })
   })
@@ -226,5 +234,46 @@ export function eliminar(id, supervisorId) {
       subcategoriasRepository.remove(id)
     }
     return { id, tipo: elemento.tipo, nombre: elemento.nombre }
+  })
+}
+
+/**
+ * Activa o desactiva una categoría o subcategoría (HU-2 · 2.4). Una inactiva no admite tickets nuevos; los que ya
+ * tiene siguen su curso. Falla con 403, 404 CATEGORY_NOT_FOUND o 400 VALIDATION_ERROR si `activa` no es booleano.
+ */
+export function cambiarEstado(id, activa, supervisorId) {
+  return simulateRequest(() => {
+    exigirSupervisorActivo(supervisorId)
+    if (typeof activa !== 'boolean') throw validationError({ activa: 'Indica si está activa.' })
+    const { tipo } = buscar(id)
+    const repositorio = tipo === 'categoria' ? categoriasRepository : subcategoriasRepository
+    return presentar({ tipo, registro: repositorio.update(id, { activa }) })
+  })
+}
+
+/**
+ * Lo que admite tickets nuevos: las categorías activas, por nombre, cada una con sus subcategorías activas
+ * ({ id, nombre, descripcion, prioridadPorDefecto, tiempoEsperadoHoras, subcategorias }). Es la lectura que el
+ * catálogo ofrece a las demás historias; no incluye contadores ni datos de administración.
+ */
+export function listarDisponibles() {
+  return simulateRequest(() => {
+    const campos = ({ id, nombre, descripcion, prioridadPorDefecto, tiempoEsperadoHoras }) => ({
+      id,
+      nombre,
+      descripcion,
+      prioridadPorDefecto,
+      tiempoEsperadoHoras,
+    })
+    const subcategorias = subcategoriasRepository.findAll({ activa: true }).sort(porNombre)
+    return categoriasRepository
+      .findAll({ activa: true })
+      .sort(porNombre)
+      .map((categoria) => ({
+        ...campos(categoria),
+        subcategorias: subcategorias
+          .filter((subcategoria) => subcategoria.categoriaId === categoria.id)
+          .map(campos),
+      }))
   })
 }
