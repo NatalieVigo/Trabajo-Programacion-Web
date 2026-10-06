@@ -1,0 +1,96 @@
+/* Matriz técnico × categoría (p16). En pantallas angostas se desplaza en horizontal con el técnico fijo a la izquierda. */
+.matriz-tecnicos {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.matriz-tecnicos__scroll {
+  overflow-x: auto;
+}
+
+.matriz-tecnicos table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.matriz-tecnicos th,
+.matriz-tecnicos td {
+  height: var(--table-row-height);
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.matriz-tecnicos tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.matriz-tecnicos thead th {
+  height: 36px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.matriz-tecnicos .matriz-tecnicos__tecnico {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--color-surface);
+}
+
+.matriz-tecnicos tbody .matriz-tecnicos__tecnico {
+  font-weight: var(--font-weight-semibold);
+}
+
+.matriz-tecnicos__muted {
+  color: var(--color-text-muted);
+}
+
+/* La especialidad puede pasar a dos líneas para que las columnas de categoría quepan sin desplazar la tabla. */
+.matriz-tecnicos .matriz-tecnicos__especialidad {
+  min-width: 160px;
+  padding-block: var(--space-2);
+  white-space: normal;
+}
+
+.matriz-tecnicos__carga {
+  font-family: var(--font-mono);
+}
+
+.matriz-tecnicos .matriz-tecnicos__categoria,
+.matriz-tecnicos .matriz-tecnicos__celda {
+  width: 1%;
+  min-width: 64px;
+  padding-inline: var(--space-2);
+  border-left: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.matriz-tecnicos .matriz-tecnicos__categoria.is-inactiva {
+  font-style: italic;
+}
+
+.matriz-tecnicos__celda.is-habilitada {
+  background: var(--color-primary-soft);
+}
+
+.matriz-tecnicos__casilla {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.matriz-tecnicos__casilla:disabled {
+  cursor: not-allowed;
+}

@@ -2,6 +2,10 @@ import { Route, Routes } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout.jsx'
 import PublicLayout from '../layouts/PublicLayout.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
+import CategoriaFormPage from '../pages/catalogo/CategoriaFormPage.jsx'
+import CategoriasPage from '../pages/catalogo/CategoriasPage.jsx'
+import TecnicosCategoriaPage from '../pages/catalogo/TecnicosCategoriaPage.jsx'
+import UbicacionesPage from '../pages/catalogo/UbicacionesPage.jsx'
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage.jsx'
 import InvitationPage from '../pages/auth/InvitationPage.jsx'
 import LoginPage from '../pages/auth/LoginPage.jsx'
@@ -37,9 +41,11 @@ const PRIVATE_PAGES = {
 
   [ROUTES.supervisorTablero]: <SupervisorHomePage />,
   [ROUTES.supervisorCola]: pendiente('Cola de atención', HISTORIAS.cola),
-  [ROUTES.supervisorCategorias]: pendiente('Categorías de servicio', HISTORIAS.catalogo),
-  [ROUTES.supervisorAmbientes]: pendiente('Sedes y ambientes', HISTORIAS.catalogo),
-  [ROUTES.supervisorTecnicos]: pendiente('Técnicos por categoría', HISTORIAS.catalogo),
+  [ROUTES.supervisorCategorias]: <CategoriasPage />,
+  [ROUTES.supervisorCategoriaNueva]: <CategoriaFormPage />,
+  [ROUTES.supervisorCategoriaEditar]: <CategoriaFormPage />,
+  [ROUTES.supervisorAmbientes]: <UbicacionesPage />,
+  [ROUTES.supervisorTecnicos]: <TecnicosCategoriaPage />,
   [ROUTES.supervisorUsuarios]: pendiente('Usuarios', HISTORIAS.metricas),
   [ROUTES.supervisorInvitaciones]: <InvitationsPage />,
 

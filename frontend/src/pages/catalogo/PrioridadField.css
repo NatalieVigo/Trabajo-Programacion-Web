@@ -1,0 +1,90 @@
+.prioridad-field {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.prioridad-field__legend {
+  padding: 0;
+}
+
+.prioridad-field__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Cada prioridad es un radio con forma de botón (p13): el radio sigue siendo el control para el teclado y el lector. */
+.prioridad-field__option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.prioridad-field__option:hover {
+  border-color: var(--color-primary);
+}
+
+.prioridad-field__option:has(:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.prioridad-field__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.prioridad-field__option:has(:checked) {
+  font-weight: var(--font-weight-medium);
+}
+
+.prioridad-field__option--critica:has(:checked) {
+  border-color: var(--color-priority-critica);
+  background: var(--color-danger-soft);
+  color: var(--color-priority-critica);
+}
+
+.prioridad-field__option--alta:has(:checked) {
+  border-color: var(--color-priority-alta);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+}
+
+.prioridad-field__option--media:has(:checked) {
+  border-color: var(--color-priority-media);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-text);
+}
+
+.prioridad-field__option--baja:has(:checked) {
+  border-color: var(--color-priority-baja);
+  background: var(--color-info-soft);
+  color: var(--color-info-text);
+}
+
+.prioridad-field--error .prioridad-field__option {
+  border-color: var(--color-danger);
+}
+
+.prioridad-field .field__message {
+  margin-top: var(--space-2);
+}
