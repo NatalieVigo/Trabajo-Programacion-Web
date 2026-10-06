@@ -1,0 +1,4 @@
+.control__textarea {
+  min-height: 88px;
+  resize: vertical;
+}
