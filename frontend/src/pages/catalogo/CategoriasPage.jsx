@@ -1,17 +1,15 @@
-import { useRef, useState } from 'react'
-import { useAsyncData } from '../../hooks/useAsyncData.js'
+import { useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { ROUTES } from '../../routes/routePaths.js'
 import { eliminar, listar } from '../../services/categorias.service.js'
-import { Alert, Button, Card, EmptyState, PageHeader, useConfirm, useToast } from '../../shared/components'
+import { Alert, Button, Card, EmptyState, PageHeader } from '../../shared/components'
 import { pluralize } from '../../utils/format.js'
 import { nombreDeTipo } from './catalogoFormat.js'
 import CategoriasTable from './CategoriasTable.jsx'
+import { useConsultaRefrescable } from './useConsultaRefrescable.js'
+import { useEliminacion } from './useEliminacion.js'
 import './CategoriasPage.css'
-
-/** Al eliminar, estos errores indican que el catálogo cambió en otro lado: hay que volver a leerlo. */
-const CATALOGO_CAMBIADO = new Set(['IN_USE', 'CATEGORY_NOT_FOUND'])
 
 const contarSubcategorias = (categorias) => categorias.reduce((total, { subcategorias }) => total + subcategorias.length, 0)
 
@@ -69,47 +67,24 @@ function CatalogoContent({ status, total, onRetry, children }) {
  * esperado, tickets en curso y estado. Desde aquí se crea, edita y elimina lo que no se usa.
  */
 export default function CategoriasPage() {
-  const consulta = useAsyncData(listar)
+  const consulta = useConsultaRefrescable(listar)
   const { usuario } = useAuth()
-  const confirm = useConfirm()
-  const toast = useToast()
   const tablaRef = useRef(null)
-  const [eliminandoId, setEliminandoId] = useState(null)
+  const { eliminandoId, eliminar: confirmarYEliminar } = useEliminacion(consulta.refrescar)
   useDocumentTitle('Categorías de servicio')
 
   const categorias = consulta.data ?? []
 
-  /** Vuelve a leer el catálogo sin pasar por «cargando», para que la tabla no desaparezca mientras tanto. */
-  async function refrescar() {
-    try {
-      const actualizado = await listar()
-      consulta.updateData(() => actualizado)
-    } catch {
-      consulta.reload()
-    }
-  }
-
   async function eliminarElemento(elemento) {
     const tipo = nombreDeTipo(elemento.tipo)
-    const confirmado = await confirm({
-      title: `¿Eliminar la ${tipo}?`,
-      message: `«${elemento.nombre}» se quitará del catálogo. Esta acción no se puede deshacer.`,
+    await confirmarYEliminar({
+      id: elemento.id,
+      titulo: `¿Eliminar la ${tipo}?`,
+      mensaje: `«${elemento.nombre}» se quitará del catálogo. Esta acción no se puede deshacer.`,
       confirmText: `Eliminar ${tipo}`,
-      variant: 'destructive',
+      eliminarEnServicio: () => eliminar(elemento.id, usuario.id),
+      exito: `${nombreDeTipo(elemento.tipo, { mayuscula: true })} “${elemento.nombre}” eliminada correctamente.`,
     })
-    if (!confirmado) return
-
-    setEliminandoId(elemento.id)
-    try {
-      await eliminar(elemento.id, usuario.id)
-      await refrescar()
-      toast.success(`${nombreDeTipo(elemento.tipo, { mayuscula: true })} “${elemento.nombre}” eliminada correctamente.`)
-    } catch (error) {
-      toast.error(error.message)
-      if (CATALOGO_CAMBIADO.has(error.code)) await refrescar()
-    } finally {
-      setEliminandoId(null)
-    }
     // Su botón ya no existe: el foco pasa a la tabla en vez de perderse.
     tablaRef.current?.focus()
   }

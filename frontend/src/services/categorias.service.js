@@ -5,10 +5,11 @@ import {
 } from '../repositories/catalogo.repository.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { CATALOGO_MESSAGES, claveDeNombre, parseHoras, validateCategoria } from '../utils/catalogoValidators.js'
+import { CATALOGO_MESSAGES, parseHoras, validateCategoria } from '../utils/catalogoValidators.js'
 import { pluralize } from '../utils/format.js'
 import { nextId } from '../utils/ids.js'
 import { hasErrors, normalizeNombre } from '../utils/validators.js'
+import { assertNombreLibre, enUsoError, enumerar, pick } from './catalogoComun.js'
 import { simulateRequest } from './request.js'
 import { ServiceError, validationError } from './ServiceError.js'
 import { exigirSupervisorActivo } from './supervisorActivo.js'
@@ -18,16 +19,6 @@ import { SIN_TICKETS, contarTicketsPor } from './ticketsEnCurso.js'
 const CAMPOS = ['nombre', 'categoriaId', 'descripcion', 'activa', 'prioridadPorDefecto', 'tiempoEsperadoHoras']
 
 const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es')
-
-/** Solo los `campos` presentes en `objeto`. */
-function pick(objeto, campos) {
-  return Object.fromEntries(campos.filter((campo) => Object.hasOwn(objeto, campo)).map((campo) => [campo, objeto[campo]]))
-}
-
-/** «a», «a y b», «a, b y c». */
-function enumerar(partes) {
-  return partes.length > 1 ? `${partes.slice(0, -1).join(', ')} y ${partes.at(-1)}` : partes[0]
-}
 
 /**
  * Lo que el catálogo lee de otras historias para sus contadores y para saber si algo se puede eliminar: los tickets
@@ -113,13 +104,12 @@ function camposGuardados(valores) {
  * Las categorías no repiten nombre entre sí y las subcategorías no lo repiten dentro de su categoría, sin distinguir
  * mayúsculas ni tildes. Falla con 409 NAME_TAKEN.
  */
-function assertNombreLibre(nombre, categoriaId, idActual) {
-  const clave = claveDeNombre(nombre)
-  const [filas, mensaje] = categoriaId
-    ? [subcategoriasRepository.findAll({ categoriaId }), CATALOGO_MESSAGES.subcategoriaTaken]
-    : [categoriasRepository.findAll(), CATALOGO_MESSAGES.categoriaTaken]
-  if (filas.some((fila) => fila.id !== idActual && claveDeNombre(fila.nombre) === clave)) {
-    throw new ServiceError(409, 'NAME_TAKEN', mensaje, { nombre: mensaje })
+function assertNombreDisponible(nombre, categoriaId, idActual) {
+  if (categoriaId) {
+    const hermanas = subcategoriasRepository.findAll({ categoriaId })
+    assertNombreLibre(hermanas, nombre, CATALOGO_MESSAGES.subcategoriaTaken, idActual)
+  } else {
+    assertNombreLibre(categoriasRepository.findAll(), nombre, CATALOGO_MESSAGES.categoriaTaken, idActual)
   }
 }
 
@@ -176,7 +166,7 @@ export function crear(datos, supervisorId) {
 
     const campos = camposGuardados(valores)
     const padreId = valores.categoriaId || null
-    assertNombreLibre(campos.nombre, padreId)
+    assertNombreDisponible(campos.nombre, padreId)
     if (!padreId) {
       const categoria = categoriasRepository.insert({ id: nextId('cat', categoriasRepository.findAll(), 2), ...campos })
       return presentar({ tipo: 'categoria', registro: categoria })
@@ -207,10 +197,10 @@ export function actualizar(id, datos, supervisorId) {
 
     const campos = camposGuardados(valores)
     if (tipo === 'categoria') {
-      assertNombreLibre(campos.nombre, null, id)
+      assertNombreDisponible(campos.nombre, null, id)
       return presentar({ tipo, registro: categoriasRepository.update(id, campos) })
     }
-    assertNombreLibre(campos.nombre, valores.categoriaId, id)
+    assertNombreDisponible(campos.nombre, valores.categoriaId, id)
     return presentar({ tipo, registro: subcategoriasRepository.update(id, { categoriaId: valores.categoriaId, ...campos }) })
   })
 }
@@ -225,7 +215,7 @@ export function eliminar(id, supervisorId) {
     exigirSupervisorActivo(supervisorId)
     const elemento = presentar(buscar(id))
     if (!elemento.eliminable) {
-      throw new ServiceError(409, 'IN_USE', mensajeEnUso(elemento), null, { details: { usos: elemento.usos } })
+      throw enUsoError(mensajeEnUso(elemento), elemento.usos)
     }
     if (elemento.tipo === 'categoria') {
       habilitacionesRepository.findAll({ categoriaId: id }).forEach(({ id: habilitacionId }) => {

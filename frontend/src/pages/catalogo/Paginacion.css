@@ -1,0 +1,57 @@
+.paginacion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.paginacion__paginas {
+  display: flex;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paginacion__pagina {
+  min-width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-aux);
+  cursor: pointer;
+}
+
+.paginacion__pagina:hover {
+  border-color: var(--color-primary);
+}
+
+.paginacion__pagina:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.paginacion__pagina.is-current {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-dark);
+}
+
+/* Pie de las listas del catálogo: «Mostrando…» a la izquierda y la paginación a la derecha. */
+.catalogo-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.catalogo-pie__conteo {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}

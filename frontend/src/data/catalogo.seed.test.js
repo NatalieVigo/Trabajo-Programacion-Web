@@ -8,7 +8,13 @@ import {
   subcategoriasRepository,
 } from '../repositories/catalogo.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { claveDeNombre, validateCategoria } from '../utils/catalogoValidators.js'
+import {
+  claveDeNombre,
+  validateAmbiente,
+  validateCategoria,
+  validatePabellon,
+  validateSede,
+} from '../utils/catalogoValidators.js'
 
 const TIPOS_AMBIENTE = ['aula', 'laboratorio', 'auditorio', 'oficina', 'biblioteca']
 
@@ -51,11 +57,14 @@ describe('datos semilla · catálogo de servicios', () => {
     const ambientes = ambientesRepository.findAll()
 
     expect(sedes.map((sede) => sede.nombre)).toEqual(['Campus Monterrico'])
+    sedes.forEach((sede) => expect(validateSede(sede)).toEqual({}))
     expect(pabellones).toHaveLength(9)
-    pabellones.forEach((pabellon) => expect(sedesRepository.findById(pabellon.sedeId)).not.toBeNull())
+    pabellones.forEach((pabellon) => {
+      expect(validatePabellon(pabellon, { sedes: sedes.map((sede) => sede.id) })).toEqual({})
+    })
     expect(unicos(ambientes.map((ambiente) => ambiente.codigo))).toBe(true)
     for (const ambiente of ambientes) {
-      expect(pabellonesRepository.findById(ambiente.pabellonId)).not.toBeNull()
+      expect(validateAmbiente(ambiente, { pabellones: pabellones.map((pabellon) => pabellon.id) })).toEqual({})
       expect(TIPOS_AMBIENTE).toContain(ambiente.tipo)
       expect(Number.isInteger(ambiente.piso) && ambiente.piso >= -3 && ambiente.piso <= 20).toBe(true)
       expect(Number.isInteger(ambiente.capacidad) && ambiente.capacidad >= 1 && ambiente.capacidad <= 1000).toBe(true)
