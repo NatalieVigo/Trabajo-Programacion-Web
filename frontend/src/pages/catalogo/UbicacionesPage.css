@@ -1,0 +1,125 @@
+/* Pestañas «Ambientes» y «Sedes y pabellones». */
+.ubicaciones-tabs {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ubicaciones-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: -1px;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ubicaciones-tabs__tab:hover {
+  color: var(--color-primary);
+}
+
+.ubicaciones-tabs__tab:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.ubicaciones-tabs__tab[aria-selected='true'] {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.ubicaciones-tabs__count {
+  min-width: 20px;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-label);
+  text-align: center;
+}
+
+/* Sedes con sus pabellones. */
+.sedes-panel {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.sede-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.sede-card__title {
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-subtitle);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sede-card__meta,
+.sede-card__pabellon-meta,
+.sede-card__vacio {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.sede-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.sede-card__pabellones {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.sede-card__pabellon {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--table-row-height);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-aux);
+}
+
+.sede-card__pabellon + .sede-card__pabellon {
+  border-top: 1px solid var(--color-border);
+}
+
+.sede-card__pabellon-nombre {
+  font-weight: var(--font-weight-medium);
+}
+
+.sede-card__pabellon-actions {
+  display: flex;
+  gap: var(--space-1);
+  min-width: 160px;
+}
+
+@media (max-width: 640px) {
+  .sede-card__pabellon {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .sede-card__pabellon-actions {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+}

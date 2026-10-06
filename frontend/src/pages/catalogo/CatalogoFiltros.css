@@ -1,0 +1,25 @@
+/* Barra de búsqueda y filtros de las listas del catálogo (p12, p14). */
+.catalogo-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.catalogo-filtros__busqueda {
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
+.catalogo-filtros__select {
+  flex: 0 1 200px;
+}
+
+@media (max-width: 767px) {
+  .catalogo-filtros__busqueda,
+  .catalogo-filtros__select {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
