@@ -39,8 +39,9 @@ describe('CategoriaFormPage · nueva', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar categoría' }))
 
     expect(await screen.findByText('Categoría “Señalética” creada correctamente.')).toBeInTheDocument()
-    expect(ubicacionActual()).toBe('/supervisor/categorias')
+    // El router navega en una transición: la dirección cambia cuando la lista ya se muestra.
     expect(await screen.findByRole('rowheader', { name: 'Señalética' })).toBeInTheDocument()
+    expect(ubicacionActual()).toBe('/supervisor/categorias')
     expect(categoriasRepository.findOne({ nombre: 'Señalética' })).toMatchObject({
       prioridadPorDefecto: 'baja',
       tiempoEsperadoHoras: 48,
@@ -141,6 +142,7 @@ describe('CategoriaFormPage · editar', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar categoría' }))
 
     expect(await screen.findByText('Categoría “Climatización” actualizada correctamente.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Categorías de servicio' })).toBeInTheDocument()
     expect(ubicacionActual()).toBe('/supervisor/categorias')
     expect(categoriasRepository.findById('cat-03').tiempoEsperadoHoras).toBe(12)
   })

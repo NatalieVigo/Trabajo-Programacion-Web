@@ -1,0 +1,36 @@
+.tecnicos-page__pendientes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+  margin-bottom: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+}
+
+/* Avisos de cobertura a la izquierda y la nota de la carga a la derecha (p16). */
+.tecnicos-page__notas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.tecnicos-page__avisos {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.tecnicos-page__nota {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+@media (max-width: 767px) {
+  .tecnicos-page__notas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
