@@ -4,6 +4,7 @@ import PublicLayout from '../layouts/PublicLayout.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
 import CategoriaFormPage from '../pages/catalogo/CategoriaFormPage.jsx'
 import CategoriasPage from '../pages/catalogo/CategoriasPage.jsx'
+import TecnicosCategoriaPage from '../pages/catalogo/TecnicosCategoriaPage.jsx'
 import UbicacionesPage from '../pages/catalogo/UbicacionesPage.jsx'
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage.jsx'
 import InvitationPage from '../pages/auth/InvitationPage.jsx'
@@ -44,7 +45,7 @@ const PRIVATE_PAGES = {
   [ROUTES.supervisorCategoriaNueva]: <CategoriaFormPage />,
   [ROUTES.supervisorCategoriaEditar]: <CategoriaFormPage />,
   [ROUTES.supervisorAmbientes]: <UbicacionesPage />,
-  [ROUTES.supervisorTecnicos]: pendiente('Técnicos por categoría', HISTORIAS.catalogo),
+  [ROUTES.supervisorTecnicos]: <TecnicosCategoriaPage />,
   [ROUTES.supervisorUsuarios]: pendiente('Usuarios', HISTORIAS.metricas),
   [ROUTES.supervisorInvitaciones]: <InvitationsPage />,
 
