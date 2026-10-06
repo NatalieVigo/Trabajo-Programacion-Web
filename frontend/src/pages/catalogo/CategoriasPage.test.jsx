@@ -47,7 +47,7 @@ describe('CategoriasPage · lista', () => {
       'Activa',
     ])
     expect(celdas(sub('Calefacción sin funcionar', 'Climatización'))[3]).toBe('Inactiva')
-    expect(screen.getByText('7 categorías y 20 subcategorías')).toBeInTheDocument()
+    expect(screen.getByText('Mostrando 27 de 27 filas · 7 categorías y 20 subcategorías')).toBeInTheDocument()
 
     const menu = screen.getByRole('navigation', { name: 'Supervisión' })
     expect(within(menu).getByRole('link', { name: 'Categorías' })).toHaveAttribute('aria-current', 'page')
@@ -122,7 +122,7 @@ describe('CategoriasPage · eliminar', () => {
 
     expect(await screen.findByText('Subcategoría “Calefacción sin funcionar” eliminada correctamente.')).toBeInTheDocument()
     expect(within(tabla()).queryByRole('rowheader', { name: calefaccion })).not.toBeInTheDocument()
-    expect(screen.getByText('7 categorías y 19 subcategorías')).toBeInTheDocument()
+    expect(screen.getByText('Mostrando 26 de 26 filas · 7 categorías y 19 subcategorías')).toBeInTheDocument()
     expect(subcategoriasRepository.findById('sub-10')).toBeNull()
     expect(tabla()).toHaveFocus()
   })
@@ -208,5 +208,111 @@ describe('CategoriasPage · estado', () => {
         'Subcategoría “Derrame o residuos” activada. Admitirá tickets nuevos cuando «Limpieza» esté activa.',
       ),
     ).toBeInTheDocument()
+  })
+})
+
+describe('CategoriasPage · búsqueda, filtros y exportación', () => {
+  it('busca categorías y subcategorías sin distinguir tildes', async () => {
+    const { user } = await renderCatalogo()
+    const buscador = screen.getByRole('searchbox', { name: 'Buscar categoría o subcategoría' })
+
+    await user.type(buscador, 'proyector')
+    expect(nombresEnLaTabla()).toEqual(['Audiovisuales', sub('Proyector no enciende', 'Audiovisuales')])
+    expect(screen.getByText(/Filtros activos: 1/)).toBeInTheDocument()
+
+    await user.clear(buscador)
+    await user.type(buscador, 'climatizacion')
+    expect(nombresEnLaTabla()).toEqual([
+      'Climatización',
+      sub('Aire sin frío', 'Climatización'),
+      sub('Calefacción sin funcionar', 'Climatización'),
+      sub('Fuga de condensado', 'Climatización'),
+    ])
+    expect(screen.getByText('Mostrando 4 de 4 filas · 1 categoría y 3 subcategorías')).toBeInTheDocument()
+  })
+
+  it('filtra por estado y prioridad, y limpia los filtros', async () => {
+    const { user } = await renderCatalogo()
+
+    await user.click(screen.getByRole('button', { name: 'Solo activas', pressed: false }))
+    expect(screen.getByRole('button', { name: 'Solo activas', pressed: true })).toBeInTheDocument()
+    expect(within(tabla()).queryByRole('rowheader', { name: sub('Calefacción sin funcionar', 'Climatización') })).toBeNull()
+
+    await user.selectOptions(screen.getByLabelText('Prioridad'), 'Crítica')
+    expect(nombresEnLaTabla()).toEqual([
+      'Audiovisuales',
+      sub('Proyector no enciende', 'Audiovisuales'),
+      'Eléctrico',
+      sub('Tablero eléctrico con falla', 'Eléctrico'),
+      'Redes y conectividad',
+      sub('Punto de red caído', 'Redes y conectividad'),
+    ])
+    expect(screen.getByText(/Filtros activos: 2/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Limpiar' }))
+    expect(nombresEnLaTabla()).toHaveLength(27)
+    expect(screen.queryByText(/Filtros activos/)).not.toBeInTheDocument()
+  })
+
+  it('indica cuando ningún elemento coincide y ofrece volver a todo el catálogo', async () => {
+    const { user } = await renderCatalogo()
+
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar categoría o subcategoría' }), 'piscina')
+
+    expect(screen.getByRole('heading', { name: 'Ninguna categoría coincide con los filtros' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Exportar catálogo' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Ver todo el catálogo' }))
+    expect(nombresEnLaTabla()).toHaveLength(27)
+  })
+
+  it('pagina de 10 en 10 categorías sin separar sus subcategorías', async () => {
+    const extra = ['Ascensores', 'Fumigación', 'Gasfitería', 'Jardinería', 'Pintura'].map((nombre, indice) => ({
+      id: `cat-${20 + indice}`,
+      nombre,
+      descripcion: '',
+      activa: true,
+      prioridadPorDefecto: 'baja',
+      tiempoEsperadoHoras: 48,
+    }))
+    writeTable('categorias', [...readTable('categorias'), ...extra])
+    const { user } = await renderCatalogo()
+
+    expect(within(tabla()).getAllByRole('rowheader').filter((celda) => !celda.textContent.includes('(subcategoría'))).toHaveLength(10)
+    expect(screen.getByText('Mostrando 27 de 32 filas · 12 categorías y 20 subcategorías')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Página 2' }))
+    expect(nombresEnLaTabla()).toEqual([
+      'Pintura',
+      'Redes y conectividad',
+      sub('Punto de red caído', 'Redes y conectividad'),
+      sub('Señal intermitente', 'Redes y conectividad'),
+      sub('Wifi sin acceso', 'Redes y conectividad'),
+    ])
+    expect(screen.getByText('Mostrando 5 de 32 filas · 12 categorías y 20 subcategorías')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Página 2' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('exporta en CSV lo que muestran los filtros', async () => {
+    let archivo = null
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+      archivo = blob
+      return 'blob:catalogo'
+    })
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const descargar = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
+      expect(this.download).toMatch(/^catalogo-servicios-\d{4}-\d{2}-\d{2}\.csv$/)
+    })
+    const { user } = await renderCatalogo()
+
+    await user.click(screen.getByRole('button', { name: 'Solo activas' }))
+    await user.click(screen.getByRole('button', { name: 'Exportar catálogo' }))
+
+    expect(descargar).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText('Catálogo exportado: 26 filas.')).toBeInTheDocument()
+    const lineas = (await archivo.text()).replace(/^\uFEFF/, '').split('\r\n')
+    expect(lineas[0]).toBe('Tipo,Categoría,Subcategoría,Prioridad,Tiempo esperado (horas),Tickets en curso,Estado')
+    expect(lineas).toHaveLength(27)
+    expect(lineas).toContain('Categoría,Audiovisuales,,Alta,4,2,Activa')
+    expect(lineas.some((linea) => linea.includes('Calefacción'))).toBe(false)
   })
 })

@@ -37,6 +37,34 @@ export function paginar(elementos, pagina, porPagina) {
   }
 }
 
+export const CATALOGO_SIN_FILTROS = Object.freeze({ busqueda: '', soloActivas: false, prioridad: '' })
+
+/**
+ * Catálogo filtrado (p12). «Solo activas» deja las categorías activas y las subcategorías disponibles, y la prioridad
+ * se aplica a cada fila. La búsqueda encuentra categorías y subcategorías: si coincide el nombre de una categoría,
+ * se muestran también sus subcategorías. Una categoría aparece si cumple los filtros o si alguna de sus subcategorías
+ * los cumple (para mostrar a qué categoría pertenece).
+ */
+export function filtrarCatalogo(categorias, { busqueda, soloActivas, prioridad }) {
+  const cumple = (elemento) =>
+    (!soloActivas || (elemento.tipo === 'subcategoria' ? elemento.disponible : elemento.activa)) &&
+    (!prioridad || elemento.prioridadPorDefecto === prioridad)
+
+  return categorias.flatMap((categoria) => {
+    const nombreCoincide = coincideBusqueda([categoria.nombre], busqueda)
+    const subcategorias = categoria.subcategorias.filter(
+      (subcategoria) => cumple(subcategoria) && (nombreCoincide || coincideBusqueda([subcategoria.nombre], busqueda)),
+    )
+    const visible = (nombreCoincide && cumple(categoria)) || subcategorias.length > 0
+    return visible ? [{ ...categoria, subcategorias }] : []
+  })
+}
+
+/** Filas de un catálogo: cada categoría y cada subcategoría. */
+export function contarFilas(categorias) {
+  return categorias.reduce((total, { subcategorias }) => total + 1 + subcategorias.length, 0)
+}
+
 export const AMBIENTES_SIN_FILTROS = Object.freeze({ busqueda: '', sedeId: '', pabellonId: '', tipo: '' })
 
 /** Ambientes de la sede, el pabellón y el tipo elegidos ('' = todos) cuyo código o nombre coincide con la búsqueda. */
