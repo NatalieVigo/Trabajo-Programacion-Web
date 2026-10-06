@@ -75,8 +75,13 @@
   font-family: var(--font-mono);
 }
 
-.catalogo-table .catalogo-table__muted {
+.catalogo-table .catalogo-table__muted,
+.catalogo-table .catalogo-table__nota {
   color: var(--color-text-muted);
+}
+
+.catalogo-table .catalogo-table__nota {
+  font-size: var(--font-size-label);
 }
 
 /* Las acciones quedan fijas a la derecha cuando el resto de la tabla se desplaza. */

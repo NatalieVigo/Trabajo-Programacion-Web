@@ -4,8 +4,22 @@ import { cx } from '../../utils/classNames.js'
 import { formatHoras } from './catalogoFormat.js'
 import './CatalogoTable.css'
 
-function FilaCatalogo({ elemento, categoria, eliminando, onEliminar }) {
+/** Activa o inactiva; una subcategoría activa de una categoría inactiva no admite tickets nuevos y se indica. */
+function Estado({ elemento }) {
+  if (!elemento.activa) return <Badge tone="neutral">Inactiva</Badge>
+  if (elemento.tipo === 'subcategoria' && !elemento.disponible) {
+    return (
+      <>
+        <Badge tone="neutral">Activa</Badge> <span className="catalogo-table__nota">· categoría inactiva</span>
+      </>
+    )
+  }
+  return <Badge tone="success">Activa</Badge>
+}
+
+function FilaCatalogo({ elemento, categoria, ocupadoId, accion, onCambiarEstado, onEliminar }) {
   const esSubcategoria = elemento.tipo === 'subcategoria'
+  const ocupado = ocupadoId === elemento.id
 
   return (
     <tr className={cx(esSubcategoria && 'catalogo-table__row--sub')}>
@@ -26,18 +40,30 @@ function FilaCatalogo({ elemento, categoria, eliminando, onEliminar }) {
         {elemento.ticketsEnCurso}
       </td>
       <td data-label="Estado">
-        <Badge tone={elemento.activa ? 'success' : 'neutral'}>{elemento.activa ? 'Activa' : 'Inactiva'}</Badge>
+        <Estado elemento={elemento} />
       </td>
       <td className="catalogo-table__actions">
-        <Button to={categoriaEditarPath(elemento.id)} variant="tertiary" size="sm" disabled={eliminando}>
+        <Button to={categoriaEditarPath(elemento.id)} variant="tertiary" size="sm" disabled={ocupado}>
           Editar <span className="visually-hidden">{elemento.nombre}</span>
+        </Button>
+        <Button
+          variant={elemento.activa ? 'tertiary-destructive' : 'tertiary'}
+          size="sm"
+          data-estado={elemento.id}
+          onClick={() => onCambiarEstado(elemento, categoria)}
+          disabled={ocupado && accion !== 'estado'}
+          loading={ocupado && accion === 'estado'}
+          loadingText={elemento.activa ? 'Desactivando…' : 'Activando…'}
+        >
+          {elemento.activa ? 'Desactivar' : 'Activar'} <span className="visually-hidden">{elemento.nombre}</span>
         </Button>
         {elemento.eliminable && (
           <Button
             variant="tertiary-destructive"
             size="sm"
             onClick={() => onEliminar(elemento)}
-            loading={eliminando}
+            disabled={ocupado && accion !== 'eliminar'}
+            loading={ocupado && accion === 'eliminar'}
             loadingText="Eliminando…"
           >
             Eliminar <span className="visually-hidden">{elemento.nombre}</span>
@@ -50,9 +76,12 @@ function FilaCatalogo({ elemento, categoria, eliminando, onEliminar }) {
 
 /**
  * Catálogo en un árbol de dos niveles (p12): cada categoría encabeza su grupo de filas y debajo, con sangría, sus
- * subcategorías. «Eliminar» solo aparece en lo que no se usa. `ref` llega a la tabla, para devolverle el foco.
+ * subcategorías. Cada fila se edita, se activa o desactiva y, si no se usa, se elimina. `ocupado` ({ id, accion })
+ * indica la fila que espera una respuesta. `ref` llega a la tabla, para devolverle el foco.
  */
-export default function CategoriasTable({ ref, categorias, eliminandoId, onEliminar }) {
+export default function CategoriasTable({ ref, categorias, ocupado, onCambiarEstado, onEliminar }) {
+  const filaProps = { ocupadoId: ocupado?.id, accion: ocupado?.accion, onCambiarEstado, onEliminar }
+
   return (
     <div className="catalogo-table">
       <div className="catalogo-table__scroll">
@@ -72,15 +101,9 @@ export default function CategoriasTable({ ref, categorias, eliminandoId, onElimi
           </thead>
           {categorias.map((categoria) => (
             <tbody key={categoria.id}>
-              <FilaCatalogo elemento={categoria} eliminando={eliminandoId === categoria.id} onEliminar={onEliminar} />
+              <FilaCatalogo elemento={categoria} {...filaProps} />
               {categoria.subcategorias.map((subcategoria) => (
-                <FilaCatalogo
-                  key={subcategoria.id}
-                  elemento={subcategoria}
-                  categoria={categoria}
-                  eliminando={eliminandoId === subcategoria.id}
-                  onEliminar={onEliminar}
-                />
+                <FilaCatalogo key={subcategoria.id} elemento={subcategoria} categoria={categoria} {...filaProps} />
               ))}
             </tbody>
           ))}
