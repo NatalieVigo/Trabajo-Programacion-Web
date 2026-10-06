@@ -4,11 +4,12 @@ import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { ROUTES } from '../../routes/routePaths.js'
 import { cambiarEstado, eliminar, listar } from '../../services/categorias.service.js'
-import { Alert, Button, Card, EmptyState, PageHeader, SearchIcon, useToast } from '../../shared/components'
+import { Alert, Button, Card, EmptyState, PageHeader, SearchIcon, useConfirm, useToast } from '../../shared/components'
 import { pluralize } from '../../utils/format.js'
 import { nombreDeTipo } from './catalogoFormat.js'
 import { CATALOGO_SIN_FILTROS, contarFilas, filtrarCatalogo, paginar } from './catalogoList.js'
 import CategoriasTable from './CategoriasTable.jsx'
+import { desactivarConfirmando } from './desactivacion.js'
 import { catalogoACsv, descargarCsv, nombreDelArchivo } from './exportarCatalogo.js'
 import FiltrosCatalogo from './FiltrosCatalogo.jsx'
 import Paginacion from './Paginacion.jsx'
@@ -88,6 +89,7 @@ export default function CategoriasPage() {
   const consulta = useConsultaRefrescable(listar)
   const { usuario } = useAuth()
   const toast = useToast()
+  const confirm = useConfirm()
   const tablaRef = useRef(null)
   const { eliminandoId, eliminar: confirmarYEliminar } = useEliminacion(consulta.refrescar)
   const [cambiandoId, setCambiandoId] = useState(null)
@@ -117,11 +119,20 @@ export default function CategoriasPage() {
   /** Activa o desactiva la fila y devuelve el foco a su botón, que cambia de texto. */
   async function cambiarEstadoElemento(elemento, categoria) {
     const activa = !elemento.activa
-    setCambiandoId(elemento.id)
     try {
-      await cambiarEstado(elemento.id, activa, usuario.id)
+      // Desactivar algo con tickets en curso pide antes una confirmación explícita (2.6).
+      const { cancelado } = await desactivarConfirmando({
+        elemento,
+        desactiva: !activa,
+        confirm,
+        operacion: (confirmado) => {
+          setCambiandoId(elemento.id)
+          return cambiarEstado(elemento.id, activa, usuario.id, { confirmado })
+        },
+      })
+      // Aunque se cancele se vuelve a leer: la confirmación pudo pedirse porque los tickets en curso cambiaron.
       await consulta.refrescar()
-      toast.success(mensajeDeEstado(elemento, categoria, activa))
+      if (!cancelado) toast.success(mensajeDeEstado(elemento, categoria, activa))
     } catch (error) {
       toast.error(error.message)
       if (error.status === 404) await consulta.refrescar()

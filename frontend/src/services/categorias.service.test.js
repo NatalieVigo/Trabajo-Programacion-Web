@@ -349,7 +349,11 @@ describe('categorias.service · eliminar', () => {
 
 describe('categorias.service · cambiarEstado', () => {
   it('desactiva una categoría: sus subcategorías dejan de estar disponibles sin cambiar su propio estado', async () => {
-    await expect(cambiarEstado('cat-03', false, SUPERVISORA)).resolves.toMatchObject({ tipo: 'categoria', activa: false })
+    // Climatización tiene un ticket en curso: desactivarla exige confirmarlo (2.6).
+    await expect(cambiarEstado('cat-03', false, SUPERVISORA, { confirmado: true })).resolves.toMatchObject({
+      tipo: 'categoria',
+      activa: false,
+    })
 
     const climatizacion = (await listar()).find((categoria) => categoria.id === 'cat-03')
     expect(climatizacion.subcategorias.map(({ activa, disponible }) => ({ activa, disponible }))).toEqual([
@@ -415,6 +419,55 @@ describe('categorias.service · listarDisponibles', () => {
           tiempoEsperadoHoras: 8,
         },
       ],
+    })
+  })
+})
+
+describe('categorias.service · confirmación al desactivar con tickets en curso', () => {
+  it('sin confirmación no desactiva una categoría con tickets en curso y dice cuántos tiene', async () => {
+    const error = await fallo(cambiarEstado('cat-01', false, SUPERVISORA))
+
+    expect(error).toMatchObject({
+      status: 409,
+      code: 'OPEN_TICKETS',
+      message:
+        '«Audiovisuales» tiene 2 tickets en curso. Confirma la desactivación: seguirán atendiéndose, pero no se ' +
+        'podrán registrar tickets nuevos.',
+      details: { ticketsEnCurso: 2 },
+    })
+    expect(categoriasRepository.findById('cat-01').activa).toBe(true)
+
+    await expect(cambiarEstado('cat-01', false, SUPERVISORA, { confirmado: true })).resolves.toMatchObject({ activa: false })
+  })
+
+  it('sin tickets en curso, y al activar, no hace falta confirmar', async () => {
+    await expect(cambiarEstado('cat-06', false, SUPERVISORA)).resolves.toMatchObject({ activa: false })
+    await expect(cambiarEstado('cat-06', true, SUPERVISORA)).resolves.toMatchObject({ activa: true })
+  })
+
+  it('desactivarla desde el formulario también exige la confirmación', async () => {
+    const error = await fallo(actualizar('cat-01', { activa: false, tiempoEsperadoHoras: '6' }, SUPERVISORA))
+    expect(error).toMatchObject({ status: 409, code: 'OPEN_TICKETS', details: { ticketsEnCurso: 2 } })
+    expect(categoriasRepository.findById('cat-01')).toMatchObject({ activa: true, tiempoEsperadoHoras: 4 })
+
+    await expect(
+      actualizar('cat-01', { activa: false, tiempoEsperadoHoras: '6', confirmado: true }, SUPERVISORA),
+    ).resolves.toMatchObject({ activa: false, tiempoEsperadoHoras: 6 })
+  })
+
+  it('editar otros datos de una categoría activa con tickets en curso no pide confirmación', async () => {
+    await expect(actualizar('cat-01', { tiempoEsperadoHoras: '6' }, SUPERVISORA)).resolves.toMatchObject({
+      activa: true,
+      tiempoEsperadoHoras: 6,
+    })
+  })
+
+  it('también la pide para una subcategoría con tickets en curso', async () => {
+    marcarSubcategoria('tck-00147', 'sub-01')
+
+    expect(await fallo(cambiarEstado('sub-01', false, SUPERVISORA))).toMatchObject({
+      code: 'OPEN_TICKETS',
+      details: { ticketsEnCurso: 1 },
     })
   })
 })

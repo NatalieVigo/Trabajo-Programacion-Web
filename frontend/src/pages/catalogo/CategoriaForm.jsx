@@ -19,6 +19,7 @@ import {
 } from '../../shared/components'
 import { DESCRIPCION_MAX_LENGTH, validateCategoria } from '../../utils/catalogoValidators.js'
 import { nombreDeTipo } from './catalogoFormat.js'
+import { desactivarConfirmando } from './desactivacion.js'
 import PrioridadField from './PrioridadField.jsx'
 import TextArea from './TextArea.jsx'
 import './CategoriaForm.css'
@@ -78,7 +79,15 @@ export default function CategoriaForm({ categorias, elemento }) {
 
   async function guardar(values) {
     try {
-      const guardado = elemento ? await actualizar(elemento.id, values, usuario.id) : await crear(values, usuario.id)
+      // Desactivarla desde el formulario con tickets en curso también pide la confirmación explícita (2.6).
+      const { cancelado, resultado: guardado } = await desactivarConfirmando({
+        elemento,
+        desactiva: Boolean(elemento?.activa && !values.activa),
+        confirm,
+        operacion: (confirmado) =>
+          elemento ? actualizar(elemento.id, { ...values, confirmado }, usuario.id) : crear(values, usuario.id),
+      })
+      if (cancelado) return null
       const accion = elemento ? 'actualizada' : 'creada'
       toast.success(`${nombreDeTipo(guardado.tipo, { mayuscula: true })} “${guardado.nombre}” ${accion} correctamente.`)
       navigate(ROUTES.supervisorCategorias)
