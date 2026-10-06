@@ -21,6 +21,8 @@ export const ROUTES = Object.freeze({
   supervisorTablero: '/supervisor',
   supervisorCola: '/supervisor/cola',
   supervisorCategorias: '/supervisor/categorias',
+  supervisorCategoriaNueva: '/supervisor/categorias/nueva',
+  supervisorCategoriaEditar: '/supervisor/categorias/:id/editar',
   supervisorAmbientes: '/supervisor/ambientes',
   supervisorTecnicos: '/supervisor/tecnicos',
   supervisorUsuarios: '/supervisor/usuarios',
@@ -43,6 +45,9 @@ export const landingSectionPath = (sectionId) => ({ pathname: ROUTES.home, hash:
 export const invitacionPath = (token) => generatePath(ROUTES.invitacion, { token })
 
 export const restablecerContrasenaPath = (token) => generatePath(ROUTES.restablecerContrasena, { token })
+
+/** Edición de una categoría o subcategoría del catálogo (HU-2): /supervisor/categorias/cat-01/editar. */
+export const categoriaEditarPath = (id) => generatePath(ROUTES.supervisorCategoriaEditar, { id })
 
 /** Recuperación de contraseña con el correo precargado: /recuperar-contrasena?correo=… (sin correo, sin búsqueda). */
 export const recuperarContrasenaPath = (correo) => ({

@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "usuarios": [
     {
       "id": "usr-001",
@@ -356,94 +356,392 @@
       "tiempoEsperadoHoras": 8
     }
   ],
+  "subcategorias": [
+    {
+      "id": "sub-01",
+      "categoriaId": "cat-01",
+      "nombre": "Proyector no enciende",
+      "descripcion": "El proyector no prende o se apaga a los pocos minutos de uso.",
+      "activa": true,
+      "prioridadPorDefecto": "critica",
+      "tiempoEsperadoHoras": 2
+    },
+    {
+      "id": "sub-02",
+      "categoriaId": "cat-01",
+      "nombre": "Imagen distorsionada",
+      "descripcion": "Colores alterados, imagen borrosa, cortada o parpadeante.",
+      "activa": true,
+      "prioridadPorDefecto": "media",
+      "tiempoEsperadoHoras": 8
+    },
+    {
+      "id": "sub-03",
+      "categoriaId": "cat-01",
+      "nombre": "Audio sin señal",
+      "descripcion": "Parlantes o micrófonos del ambiente sin sonido.",
+      "activa": true,
+      "prioridadPorDefecto": "media",
+      "tiempoEsperadoHoras": 8
+    },
+    {
+      "id": "sub-04",
+      "categoriaId": "cat-01",
+      "nombre": "Ecran atascado",
+      "descripcion": "El ecran no baja o no se recoge por completo.",
+      "activa": true,
+      "prioridadPorDefecto": "baja",
+      "tiempoEsperadoHoras": 24
+    },
+    {
+      "id": "sub-05",
+      "categoriaId": "cat-02",
+      "nombre": "Punto de red caído",
+      "descripcion": "El punto de red del ambiente no da conexión.",
+      "activa": true,
+      "prioridadPorDefecto": "critica",
+      "tiempoEsperadoHoras": 2
+    },
+    {
+      "id": "sub-06",
+      "categoriaId": "cat-02",
+      "nombre": "Señal intermitente",
+      "descripcion": "La conexión wifi o cableada se corta cada cierto tiempo.",
+      "activa": true,
+      "prioridadPorDefecto": "media",
+      "tiempoEsperadoHoras": 12
+    },
+    {
+      "id": "sub-07",
+      "categoriaId": "cat-02",
+      "nombre": "Wifi sin acceso",
+      "descripcion": "La red inalámbrica aparece pero no permite navegar.",
+      "activa": true,
+      "prioridadPorDefecto": "alta",
+      "tiempoEsperadoHoras": 4
+    },
+    {
+      "id": "sub-08",
+      "categoriaId": "cat-03",
+      "nombre": "Aire sin frío",
+      "descripcion": "El aire acondicionado enciende pero no enfría el ambiente.",
+      "activa": true,
+      "prioridadPorDefecto": "alta",
+      "tiempoEsperadoHoras": 8
+    },
+    {
+      "id": "sub-09",
+      "categoriaId": "cat-03",
+      "nombre": "Fuga de condensado",
+      "descripcion": "Goteo de agua desde el equipo de aire acondicionado.",
+      "activa": true,
+      "prioridadPorDefecto": "alta",
+      "tiempoEsperadoHoras": 8
+    },
+    {
+      "id": "sub-10",
+      "categoriaId": "cat-03",
+      "nombre": "Calefacción sin funcionar",
+      "descripcion": "La calefacción del ambiente no enciende.",
+      "activa": false,
+      "prioridadPorDefecto": "baja",
+      "tiempoEsperadoHoras": 48
+    },
+    {
+      "id": "sub-11",
+      "categoriaId": "cat-04",
+      "nombre": "Tomacorriente sin energía",
+      "descripcion": "Uno o más tomacorrientes del ambiente no tienen energía.",
+      "activa": true,
+      "prioridadPorDefecto": "alta",
+      "tiempoEsperadoHoras": 8
+    },
+    {
+      "id": "sub-12",
+      "categoriaId": "cat-04",
+      "nombre": "Luminaria apagada",
+      "descripcion": "Fluorescentes o paneles LED que no encienden o parpadean.",
+      "activa": true,
+      "prioridadPorDefecto": "media",
+      "tiempoEsperadoHoras": 24
+    },
+    {
+      "id": "sub-13",
+      "categoriaId": "cat-04",
+      "nombre": "Tablero eléctrico con falla",
+      "descripcion": "Llaves que saltan, olor a quemado o chispas en el tablero.",
+      "activa": true,
+      "prioridadPorDefecto": "critica",
+      "tiempoEsperadoHoras": 2
+    },
+    {
+      "id": "sub-14",
+      "categoriaId": "cat-05",
+      "nombre": "Silla rota",
+      "descripcion": "Sillas con el asiento, el respaldo o las patas dañadas.",
+      "activa": true,
+      "prioridadPorDefecto": "baja",
+      "tiempoEsperadoHoras": 48
+    },
+    {
+      "id": "sub-15",
+      "categoriaId": "cat-05",
+      "nombre": "Carpeta o mesa dañada",
+      "descripcion": "Carpetas o mesas inestables, rotas o con piezas sueltas.",
+      "activa": true,
+      "prioridadPorDefecto": "baja",
+      "tiempoEsperadoHoras": 48
+    },
+    {
+      "id": "sub-16",
+      "categoriaId": "cat-05",
+      "nombre": "Pizarra suelta",
+      "descripcion": "Pizarra floja o desprendida de la pared.",
+      "activa": true,
+      "prioridadPorDefecto": "media",
+      "tiempoEsperadoHoras": 24
+    },
+    {
+      "id": "sub-17",
+      "categoriaId": "cat-06",
+      "nombre": "Derrame o residuos",
+      "descripcion": "Líquidos derramados o residuos que impiden usar el ambiente.",
+      "activa": true,
+      "prioridadPorDefecto": "media",
+      "tiempoEsperadoHoras": 8
+    },
+    {
+      "id": "sub-18",
+      "categoriaId": "cat-06",
+      "nombre": "Baño sin insumos",
+      "descripcion": "Falta de papel, jabón o toallas en los servicios higiénicos.",
+      "activa": true,
+      "prioridadPorDefecto": "media",
+      "tiempoEsperadoHoras": 24
+    },
+    {
+      "id": "sub-19",
+      "categoriaId": "cat-07",
+      "nombre": "Chapa trabada",
+      "descripcion": "La cerradura no abre, no cierra o la llave no gira.",
+      "activa": true,
+      "prioridadPorDefecto": "alta",
+      "tiempoEsperadoHoras": 8
+    },
+    {
+      "id": "sub-20",
+      "categoriaId": "cat-07",
+      "nombre": "Control de acceso sin respuesta",
+      "descripcion": "El lector de tarjetas o el control de acceso no responde.",
+      "activa": true,
+      "prioridadPorDefecto": "alta",
+      "tiempoEsperadoHoras": 4
+    }
+  ],
+  "sedes": [
+    {
+      "id": "sed-01",
+      "nombre": "Campus Monterrico"
+    }
+  ],
+  "pabellones": [
+    {
+      "id": "pab-01",
+      "sedeId": "sed-01",
+      "nombre": "A"
+    },
+    {
+      "id": "pab-02",
+      "sedeId": "sed-01",
+      "nombre": "C"
+    },
+    {
+      "id": "pab-03",
+      "sedeId": "sed-01",
+      "nombre": "E"
+    },
+    {
+      "id": "pab-04",
+      "sedeId": "sed-01",
+      "nombre": "H"
+    },
+    {
+      "id": "pab-05",
+      "sedeId": "sed-01",
+      "nombre": "L"
+    },
+    {
+      "id": "pab-06",
+      "sedeId": "sed-01",
+      "nombre": "N"
+    },
+    {
+      "id": "pab-07",
+      "sedeId": "sed-01",
+      "nombre": "Q"
+    },
+    {
+      "id": "pab-08",
+      "sedeId": "sed-01",
+      "nombre": "Biblioteca"
+    },
+    {
+      "id": "pab-09",
+      "sedeId": "sed-01",
+      "nombre": "Central"
+    }
+  ],
   "ambientes": [
     {
       "id": "amb-01",
       "codigo": "A-201",
       "nombre": "Aula A-201",
       "tipo": "aula",
-      "pabellon": "A",
-      "sede": "Monterrico"
+      "pabellonId": "pab-01",
+      "piso": 2,
+      "capacidad": 68
     },
     {
       "id": "amb-02",
       "codigo": "A-305",
       "nombre": "Aula A-305",
       "tipo": "aula",
-      "pabellon": "A",
-      "sede": "Monterrico"
+      "pabellonId": "pab-01",
+      "piso": 3,
+      "capacidad": 54
     },
     {
       "id": "amb-03",
       "codigo": "E-304",
       "nombre": "Aula magna E-304",
       "tipo": "aula",
-      "pabellon": "E",
-      "sede": "Monterrico"
+      "pabellonId": "pab-03",
+      "piso": 3,
+      "capacidad": 120
     },
     {
       "id": "amb-04",
       "codigo": "H-105",
       "nombre": "Laboratorio de cómputo",
       "tipo": "laboratorio",
-      "pabellon": "H",
-      "sede": "Monterrico"
+      "pabellonId": "pab-04",
+      "piso": 1,
+      "capacidad": 32
     },
     {
       "id": "amb-05",
       "codigo": "H-210",
       "nombre": "Laboratorio de Redes",
       "tipo": "laboratorio",
-      "pabellon": "H",
-      "sede": "Monterrico"
+      "pabellonId": "pab-04",
+      "piso": 2,
+      "capacidad": 28
     },
     {
       "id": "amb-06",
       "codigo": "N-402",
       "nombre": "Aula N-402",
       "tipo": "aula",
-      "pabellon": "N",
-      "sede": "Monterrico"
+      "pabellonId": "pab-06",
+      "piso": 4,
+      "capacidad": 48
     },
     {
       "id": "amb-07",
       "codigo": "Q-101",
       "nombre": "Auditorio Q-101",
       "tipo": "auditorio",
-      "pabellon": "Q",
-      "sede": "Monterrico"
+      "pabellonId": "pab-07",
+      "piso": 1,
+      "capacidad": 180
     },
     {
       "id": "amb-08",
       "codigo": "BIB-P2",
       "nombre": "Biblioteca piso 2",
       "tipo": "biblioteca",
-      "pabellon": "Biblioteca",
-      "sede": "Monterrico"
+      "pabellonId": "pab-08",
+      "piso": 2,
+      "capacidad": 210
     },
     {
       "id": "amb-09",
       "codigo": "AUD-CEN",
       "nombre": "Auditorio Central",
       "tipo": "auditorio",
-      "pabellon": "Central",
-      "sede": "Monterrico"
+      "pabellonId": "pab-09",
+      "piso": 1,
+      "capacidad": 420
     },
     {
       "id": "amb-10",
       "codigo": "L-108",
       "nombre": "Laboratorio de Física",
       "tipo": "laboratorio",
-      "pabellon": "L",
-      "sede": "Monterrico"
+      "pabellonId": "pab-05",
+      "piso": 1,
+      "capacidad": 30
     },
     {
       "id": "amb-11",
       "codigo": "C-102",
       "nombre": "Oficina de Bienestar Universitario",
       "tipo": "oficina",
-      "pabellon": "C",
-      "sede": "Monterrico"
+      "pabellonId": "pab-02",
+      "piso": 1,
+      "capacidad": 8
+    }
+  ],
+  "habilitaciones": [
+    {
+      "id": "hab-001",
+      "tecnicoId": "usr-002",
+      "categoriaId": "cat-01"
+    },
+    {
+      "id": "hab-002",
+      "tecnicoId": "usr-002",
+      "categoriaId": "cat-02"
+    },
+    {
+      "id": "hab-003",
+      "tecnicoId": "usr-002",
+      "categoriaId": "cat-07"
+    },
+    {
+      "id": "hab-004",
+      "tecnicoId": "usr-008",
+      "categoriaId": "cat-01"
+    },
+    {
+      "id": "hab-005",
+      "tecnicoId": "usr-008",
+      "categoriaId": "cat-05"
+    },
+    {
+      "id": "hab-006",
+      "tecnicoId": "usr-009",
+      "categoriaId": "cat-04"
+    },
+    {
+      "id": "hab-007",
+      "tecnicoId": "usr-009",
+      "categoriaId": "cat-05"
+    },
+    {
+      "id": "hab-008",
+      "tecnicoId": "usr-009",
+      "categoriaId": "cat-07"
+    },
+    {
+      "id": "hab-009",
+      "tecnicoId": "usr-010",
+      "categoriaId": "cat-02"
+    },
+    {
+      "id": "hab-010",
+      "tecnicoId": "usr-010",
+      "categoriaId": "cat-03"
     }
   ],
   "unidades": [

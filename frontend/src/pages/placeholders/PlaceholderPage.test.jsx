@@ -19,9 +19,6 @@ describe('PlaceholderPage', () => {
     ['/usuario/encuestas', 'usuario', 'Mis encuestas', deOtroIntegrante('HU-6 (Encuesta de satisfacción)')],
     ['/tecnico/historial', 'tecnico', 'Historial', deOtroIntegrante('HU-5 (Atención y cierre)')],
     ['/supervisor/cola', 'supervisor', 'Cola de atención', deOtroIntegrante('HU-4 (Cola y asignación)')],
-    ['/supervisor/categorias', 'supervisor', 'Categorías de servicio', deOtroIntegrante('HU-2 (Catálogo de servicios)')],
-    ['/supervisor/ambientes', 'supervisor', 'Sedes y ambientes', deOtroIntegrante('HU-2 (Catálogo de servicios)')],
-    ['/supervisor/tecnicos', 'supervisor', 'Técnicos por categoría', deOtroIntegrante('HU-2 (Catálogo de servicios)')],
     ['/supervisor/usuarios', 'supervisor', 'Usuarios', deOtroIntegrante('HU-7 (Métricas y usuarios)')],
   ])('%s indica que la sección pendiente corresponde a su historia', async (ruta, rol, titulo, descripcion) => {
     await renderSeccion(ruta, rol)

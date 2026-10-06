@@ -1,0 +1,214 @@
+/* Tablas del catálogo de servicios (p12, p14, p16): filas compactas que por debajo de 768 px se apilan en tarjetas. */
+.catalogo-table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.catalogo-table__scroll {
+  overflow-x: auto;
+}
+
+.catalogo-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.catalogo-table table:focus {
+  outline: none;
+}
+
+.catalogo-table table:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.catalogo-table thead th {
+  height: 36px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.catalogo-table tbody th,
+.catalogo-table tbody td {
+  height: var(--table-row-height);
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.catalogo-table tbody tr {
+  background: var(--color-surface);
+}
+
+.catalogo-table tbody:last-child tr:last-child > * {
+  border-bottom: 0;
+}
+
+.catalogo-table tbody tr:hover {
+  background: var(--color-bg);
+}
+
+.catalogo-table .catalogo-table__name {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Subcategorías: con sangría bajo su categoría (árbol de dos niveles, p12). */
+.catalogo-table .catalogo-table__row--sub .catalogo-table__name {
+  padding-left: var(--space-8);
+  font-weight: var(--font-weight-regular);
+}
+
+.catalogo-table .catalogo-table__number {
+  font-family: var(--font-mono);
+}
+
+.catalogo-table .catalogo-table__muted,
+.catalogo-table .catalogo-table__nota {
+  color: var(--color-text-muted);
+}
+
+.catalogo-table .catalogo-table__nota {
+  font-size: var(--font-size-label);
+}
+
+/* Las acciones quedan fijas a la derecha cuando el resto de la tabla se desplaza. */
+.catalogo-table .catalogo-table__actions,
+.catalogo-table thead th:last-child {
+  position: sticky;
+  right: 0;
+  background: inherit;
+}
+
+.catalogo-table thead tr {
+  background: var(--color-surface);
+}
+
+/* Alineadas a la izquierda: «Editar» queda en la misma columna aunque la fila no ofrezca «Eliminar». */
+.catalogo-table .catalogo-table__actions {
+  text-align: left;
+}
+
+.catalogo-table__actions .btn + .btn {
+  margin-left: var(--space-1);
+}
+
+@media (max-width: 767px) {
+  .catalogo-table {
+    border: 0;
+    background: none;
+  }
+
+  .catalogo-table__scroll {
+    overflow: visible;
+  }
+
+  .catalogo-table table,
+  .catalogo-table tbody,
+  .catalogo-table tbody tr,
+  .catalogo-table tbody th,
+  .catalogo-table tbody td {
+    display: block;
+  }
+
+  .catalogo-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .catalogo-table tbody + tbody {
+    margin-top: var(--space-4);
+  }
+
+  .catalogo-table tbody tr {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+  }
+
+  .catalogo-table tbody tr + tr {
+    margin-top: var(--space-2);
+  }
+
+  .catalogo-table tbody tr.catalogo-table__row--sub {
+    margin-left: var(--space-4);
+  }
+
+  .catalogo-table tbody tr:hover {
+    background: var(--color-surface);
+  }
+
+  .catalogo-table tbody th,
+  .catalogo-table tbody td {
+    height: auto;
+    padding: var(--space-1) 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .catalogo-table .catalogo-table__row--sub .catalogo-table__name {
+    padding-left: 0;
+  }
+
+  .catalogo-table .catalogo-table__name {
+    padding-bottom: var(--space-2);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+  }
+
+  .catalogo-table td[data-label] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+
+  .catalogo-table td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--color-text-muted);
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+  }
+
+  .catalogo-table .catalogo-table__actions {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+    text-align: left;
+  }
+
+  .catalogo-table__actions .btn + .btn {
+    margin-left: 0;
+  }
+
+  .catalogo-table .catalogo-table__actions:empty {
+    display: none;
+  }
+}
