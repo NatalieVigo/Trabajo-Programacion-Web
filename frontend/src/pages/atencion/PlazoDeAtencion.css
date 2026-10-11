@@ -1,0 +1,21 @@
+.plazo {
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.plazo__resultado {
+  font-weight: var(--font-weight-medium);
+}
+
+.plazo__resultado--dentro {
+  color: var(--color-success-text);
+}
+
+.plazo__resultado--fuera {
+  color: var(--color-danger-text);
+}
+
+.plazo__detalle {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+}

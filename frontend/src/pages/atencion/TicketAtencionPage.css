@@ -1,0 +1,352 @@
+/* Vista consolidada de un ticket (p25): ruta de navegación, cabecera con el código y dos columnas de contenido. */
+.ticket-atencion__breadcrumb {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.ticket-atencion__breadcrumb a {
+  color: inherit;
+}
+
+.ticket-atencion__breadcrumb [aria-current='page'] {
+  color: var(--color-text);
+}
+
+/* Cabecera del ticket */
+.ticket-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.ticket-cabecera__texto {
+  min-width: 0;
+}
+
+.ticket-cabecera__linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.ticket-cabecera__codigo {
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-title);
+}
+
+.ticket-cabecera__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ticket-cabecera__asunto {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-subtitle);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.ticket-cabecera__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* A la izquierda, la espera o el desenlace y la bitácora; a la derecha, los datos del reporte (p25). */
+.ticket-atencion__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.ticket-atencion__principal,
+.ticket-atencion__lateral {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* Tarjetas de la columna lateral: datos del reporte, ambiente e historial reciente. */
+.ticket-dato-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-5);
+}
+
+.ticket-dato-card__titulo {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.ticket-dato-card__nota {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.ticket-dato-card__cita {
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.ticket-datos {
+  width: 100%;
+}
+
+.ticket-datos__fila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.ticket-datos__fila + .ticket-datos__fila {
+  border-top: 1px solid var(--color-border);
+}
+
+.ticket-datos__fila dt {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.ticket-datos__fila dd {
+  min-width: 0;
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.ticket-ambiente__codigo {
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-subtitle);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ticket-ambiente__nombre {
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+  font-weight: var(--font-weight-medium);
+}
+
+.ticket-recientes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.ticket-recientes__evento {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 var(--space-3);
+}
+
+.ticket-recientes__momento {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Desenlace del ticket cerrado: la solución a todo el ancho y, debajo, el cierre y el tiempo total. */
+.desenlace__titulo {
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-subtitle);
+}
+
+.desenlace {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-6);
+}
+
+.desenlace__dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.desenlace__dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.desenlace__solucion {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.desenlace__tiempo {
+  font-size: var(--font-size-section);
+  line-height: var(--line-height-section);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Bitácora */
+.bitacora-panel__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.bitacora-panel__titulo {
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-subtitle);
+}
+
+.bitacora-panel__filtro {
+  flex: 0 1 260px;
+}
+
+.bitacora-panel__lectura {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+/* Nueva entrada (p25): al elegir «Nota interna» toma el tono de advertencia, igual que las notas ya guardadas. */
+.nueva-entrada {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.nueva-entrada > fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.nueva-entrada--interna {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.nueva-entrada__tipos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Cada tipo es un radio con forma de botón: el radio sigue siendo el control para el teclado y el lector. */
+.nueva-entrada__tipo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+  cursor: pointer;
+}
+
+.nueva-entrada__tipo:hover {
+  border-color: var(--color-primary);
+}
+
+.nueva-entrada__tipo:has(:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.nueva-entrada__tipo:has(:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-dark);
+  font-weight: var(--font-weight-medium);
+}
+
+.nueva-entrada--interna .nueva-entrada__tipo:has(:checked) {
+  border-color: var(--color-warning-text);
+  background: var(--color-warning-text);
+}
+
+.nueva-entrada__radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nueva-entrada__aviso {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.nueva-entrada--interna .nueva-entrada__aviso {
+  color: var(--color-warning-text);
+}
+
+.nueva-entrada--interna .btn--primary {
+  border-color: var(--color-warning-text);
+  background: var(--color-warning-text);
+}
+
+.nueva-entrada--interna .btn--primary:not(:disabled, [aria-disabled='true']):hover {
+  --nueva-entrada-hover: color-mix(in srgb, var(--color-warning-text) 80%, var(--color-text));
+  border-color: var(--nueva-entrada-hover);
+  background: var(--nueva-entrada-hover);
+}
+
+/* Por debajo de 1024 px los datos del reporte pasan debajo de la bitácora. */
+@media (max-width: 1023px) {
+  .ticket-atencion__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .ticket-cabecera__codigo {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .desenlace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
