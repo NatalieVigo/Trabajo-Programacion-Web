@@ -1,5 +1,11 @@
 import { bitacoraRepository, estadoDeTicketRepository, historialRepository } from '../repositories/atencion.repository.js'
-import { ambientesRepository, categoriasRepository, subcategoriasRepository } from '../repositories/catalogo.repository.js'
+import {
+  ambientesRepository,
+  categoriasRepository,
+  pabellonesRepository,
+  sedesRepository,
+  subcategoriasRepository,
+} from '../repositories/catalogo.repository.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import {
@@ -18,6 +24,7 @@ import { hasErrors } from '../utils/validators.js'
 import { esSuTecnico, exigirCuentaActiva, permisosSobre } from './atencionAcceso.js'
 import { simulateRequest } from './request.js'
 import { ServiceError, validationError } from './ServiceError.js'
+import { esTicketEnCurso } from './ticketsEnCurso.js'
 import { etapasDe, tiempoPorEstado, tiemposDe } from './tiemposDeAtencion.js'
 
 /** De la más antigua a la más reciente; si coinciden en el momento, en el orden en que se registraron. */
@@ -39,21 +46,55 @@ function buscarTicket(codigo) {
   return ticket
 }
 
-/** Datos del ticket con los nombres de su categoría, su ambiente y las personas. Solo lee lo de otras historias. */
-function resumirTicket(ticket) {
-  const categoria = categoriasRepository.findById(ticket.categoriaId)
+/** Solo el id y el nombre de una fila del catálogo (HU-2), o null si no existe. */
+const referencia = (fila) => (fila ? { id: fila.id, nombre: fila.nombre } : null)
+
+/**
+ * El ambiente del ticket con su ubicación (catálogo de HU-2) y lo que pasa en él: cuántos tickets siguen en curso
+ * allí y cuándo se cerró el último.
+ */
+function ambienteDe(ticket) {
   const ambiente = ambientesRepository.findById(ticket.ambienteId)
+  const pabellon = pabellonesRepository.findById(ambiente.pabellonId)
+  const delAmbiente = ticketsRepository.findAll({ ambienteId: ambiente.id })
+  const cierres = delAmbiente.map(({ cerradoEn }) => cerradoEn).filter(Boolean)
+  return {
+    id: ambiente.id,
+    codigo: ambiente.codigo,
+    nombre: ambiente.nombre,
+    tipo: ambiente.tipo,
+    piso: ambiente.piso,
+    capacidad: ambiente.capacidad,
+    pabellon: pabellon?.nombre ?? null,
+    sede: sedesRepository.findById(pabellon?.sedeId)?.nombre ?? null,
+    ticketsEnCurso: delAmbiente.filter(esTicketEnCurso).length,
+    ultimoCierre: cierres.sort().at(-1) ?? null,
+  }
+}
+
+/** Quien reportó el ticket, con el teléfono para coordinar el acceso al ambiente. */
+function solicitanteDe(ticket) {
+  return { ...persona(ticket.usuarioId), telefono: usuariosRepository.findById(ticket.usuarioId).telefono }
+}
+
+/**
+ * Datos del reporte con los nombres de su categoría, su ambiente y las personas. Solo lee lo de otras historias: la
+ * subcategoría y la descripción son del registro de HU-3 y quedan en null mientras el ticket no las tenga.
+ */
+function resumirTicket(ticket) {
   return {
     id: ticket.id,
     codigo: ticket.codigo,
     asunto: ticket.asunto,
+    descripcion: ticket.descripcion ?? null,
     estado: ticket.estado,
     prioridad: ticket.prioridad,
     creadoEn: ticket.creadoEn,
     cerradoEn: ticket.cerradoEn,
-    categoria: { id: categoria.id, nombre: categoria.nombre },
-    ambiente: { id: ambiente.id, codigo: ambiente.codigo, nombre: ambiente.nombre },
-    solicitante: persona(ticket.usuarioId),
+    categoria: referencia(categoriasRepository.findById(ticket.categoriaId)),
+    subcategoria: referencia(subcategoriasRepository.findById(ticket.subcategoriaId)),
+    ambiente: ambienteDe(ticket),
+    solicitante: solicitanteDe(ticket),
     tecnico: persona(ticket.asignadoA),
   }
 }
@@ -121,16 +162,20 @@ function leerAtencion(ticket, usuario) {
     tiempos: leerTiempos(ticket),
     desenlace: leerDesenlace(ticket),
     bitacora: leerBitacora(ticket, permisos),
+    eventos: leerEventos(ticket),
     permisos,
   }
 }
 
 /**
- * Atención de un ticket (HU-5 · 5.1, p25): { ticket, espera, tiempos, desenlace, bitacora: [{ id, tipo, mensaje,
- * creadoEn, autor }], permisos: { verInternas, comentar, notaInterna, transiciones, cerrar } }.
+ * Vista consolidada de la atención de un ticket (HU-5 · 5.1 y 5.6, p25): { ticket, espera, tiempos, desenlace,
+ * bitacora: [{ id, tipo, mensaje, creadoEn, autor }], eventos, permisos: { verInternas, comentar, notaInterna,
+ * transiciones, cerrar } }.
+ * - `ticket`: los datos del reporte, con su ambiente y quien lo reportó.
  * - `espera`: { motivo, retornoEstimado, desde, retornoVencido } mientras el ticket está en espera; si no, null.
  * - `tiempos`: { totalMs, enEsperaMs, atencionMs, esperadoHoras, dentroDelPlazo }, hasta el cierre o hasta ahora.
  * - `desenlace`: { solucion, cerradoEn, cerradoPor } de un ticket cerrado; si no, null.
+ * - `eventos`: el historial del ticket, como en obtenerHistorial.
  * El equipo de atención lee toda la bitácora; quien reportó el ticket solo recibe los comentarios públicos. Falla con
  * 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
  */
@@ -321,5 +366,47 @@ export function obtenerHistorial(codigo, usuarioId) {
       etapas: tiempoPorEstado(estadosDe(ticket)),
       tiempos: leerTiempos(ticket),
     }
+  })
+}
+
+/** Momento de la última entrada de bitácora o del último evento del historial del ticket. */
+function ultimaActividadDe(ticket) {
+  const momentos = [
+    ...bitacoraRepository.findAll({ ticketId: ticket.id }),
+    ...historialRepository.findAll({ ticketId: ticket.id }),
+  ].map(({ creadoEn }) => creadoEn)
+  return momentos.sort().at(-1) ?? ticket.creadoEn
+}
+
+/**
+ * Historial de atención de un técnico (HU-5 · 5.6): los tickets que tiene o tuvo a su cargo, del de actividad más
+ * reciente al más antiguo: [{ id, codigo, asunto, estado, prioridad, creadoEn, cerradoEn, actualizadoEn, categoria,
+ * ambiente: { id, codigo }, solicitante }]. Falla con 401 o con 403 FORBIDDEN si la cuenta no es de un técnico.
+ */
+export function listarAtendidos(usuarioId) {
+  return simulateRequest(() => {
+    const usuario = exigirCuentaActiva(usuarioId)
+    if (usuario.rol !== 'tecnico') {
+      throw new ServiceError(403, 'FORBIDDEN', 'Solo los técnicos tienen un historial de atención.')
+    }
+    return ticketsRepository
+      .findAll({ asignadoA: usuario.id })
+      .map((ticket) => {
+        const ambiente = ambientesRepository.findById(ticket.ambienteId)
+        return {
+          id: ticket.id,
+          codigo: ticket.codigo,
+          asunto: ticket.asunto,
+          estado: ticket.estado,
+          prioridad: ticket.prioridad,
+          creadoEn: ticket.creadoEn,
+          cerradoEn: ticket.cerradoEn,
+          actualizadoEn: ultimaActividadDe(ticket),
+          categoria: referencia(categoriasRepository.findById(ticket.categoriaId)),
+          ambiente: { id: ambiente.id, codigo: ambiente.codigo },
+          solicitante: persona(ticket.usuarioId),
+        }
+      })
+      .sort((a, b) => b.actualizadoEn.localeCompare(a.actualizadoEn) || b.codigo.localeCompare(a.codigo))
   })
 }

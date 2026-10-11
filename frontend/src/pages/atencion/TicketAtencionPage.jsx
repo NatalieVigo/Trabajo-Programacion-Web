@@ -6,21 +6,29 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { ticketHistorialPath } from '../../routes/routePaths.js'
 import { obtenerAtencion } from '../../services/atencion.service.js'
 import { Button } from '../../shared/components'
+import AmbienteDelTicket from './AmbienteDelTicket.jsx'
 import BitacoraPanel from './BitacoraPanel.jsx'
 import CambiarEstadoModal from './CambiarEstadoModal.jsx'
 import CargaDelTicket from './CargaDelTicket.jsx'
 import CerrarTicketModal from './CerrarTicketModal.jsx'
+import DatosDelReporte from './DatosDelReporte.jsx'
 import Desenlace from './Desenlace.jsx'
 import EsperaAviso from './EsperaAviso.jsx'
+import HistorialReciente from './HistorialReciente.jsx'
 import { origenDelTicket } from './origenDelTicket.js'
 import TicketCabecera from './TicketCabecera.jsx'
 import './TicketAtencionPage.css'
 
-/** El ticket ya cargado: la ruta de navegación, su cabecera con las acciones de quien lo atiende y la bitácora. */
+/**
+ * El ticket ya cargado, en una sola vista (p25): su cabecera con las acciones de quien lo atiende; a la izquierda, la
+ * espera en curso o el desenlace y la bitácora; a la derecha, los datos del reporte, el ambiente y el historial
+ * reciente.
+ */
 function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
   const { usuario } = useAuth()
-  const { ticket, espera, tiempos, desenlace, permisos } = atencion
+  const { ticket, espera, tiempos, desenlace, eventos, permisos } = atencion
   const origen = origenDelTicket(usuario.rol)
+  const rutaDelHistorial = ticketHistorialPath(usuario.rol, ticket.codigo)
   // Diálogo abierto: 'estado' (cambiar estado), 'cierre' (cerrar ticket) o null.
   const [dialogo, setDialogo] = useState(null)
   const cerrarDialogo = () => setDialogo(null)
@@ -53,15 +61,29 @@ function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
                 Cerrar ticket
               </Button>
             )}
-            <Button variant="tertiary" to={ticketHistorialPath(usuario.rol, ticket.codigo)}>
+            <Button variant="tertiary" to={rutaDelHistorial}>
               Historial
             </Button>
           </>
         }
       />
-      {espera && <EsperaAviso espera={espera} className="ticket-atencion__aviso" />}
-      {desenlace && <Desenlace desenlace={desenlace} tiempos={tiempos} className="ticket-atencion__aviso" />}
-      <BitacoraPanel atencion={atencion} onActualizada={onActualizada} onDesactualizada={onDesactualizada} />
+      <div className="ticket-atencion__layout">
+        <div className="ticket-atencion__principal">
+          {espera && <EsperaAviso espera={espera} />}
+          {desenlace && <Desenlace desenlace={desenlace} tiempos={tiempos} />}
+          <BitacoraPanel atencion={atencion} onActualizada={onActualizada} onDesactualizada={onDesactualizada} />
+        </div>
+        <aside className="ticket-atencion__lateral" aria-label="Datos del ticket">
+          <DatosDelReporte ticket={ticket} tiempos={tiempos} />
+          <AmbienteDelTicket ambiente={ticket.ambiente} />
+          <HistorialReciente
+            eventos={eventos}
+            tiempos={tiempos}
+            cerrado={ticket.estado === 'cerrado'}
+            rutaDelHistorial={rutaDelHistorial}
+          />
+        </aside>
+      </div>
       {dialogo === 'estado' && (
         <CambiarEstadoModal
           ticket={ticket}
@@ -85,8 +107,8 @@ function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
 }
 
 /**
- * /tecnico/tickets/:codigo y /supervisor/tickets/:codigo (HU-5, mockup p25): la atención de un ticket. Si el código
- * no corresponde a ningún ticket, lo indica con un 404.
+ * /tecnico/tickets/:codigo y /supervisor/tickets/:codigo (HU-5, mockup p25): la vista consolidada de un ticket, con
+ * los datos del reporte, la bitácora y el desenlace. Si el código no corresponde a ningún ticket, lo indica con un 404.
  */
 export default function TicketAtencionPage() {
   const { codigo } = useParams()

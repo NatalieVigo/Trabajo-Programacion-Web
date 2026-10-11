@@ -8,11 +8,11 @@ import PlazoDeAtencion from './PlazoDeAtencion.jsx'
  * Desenlace de un ticket cerrado (HU-5 · 5.4): la solución aplicada, quién lo cerró y cuándo, y el tiempo total de
  * atención frente al tiempo esperado.
  */
-export default function Desenlace({ desenlace, tiempos, className }) {
+export default function Desenlace({ desenlace, tiempos }) {
   const tituloId = useId()
 
   return (
-    <Card as="section" className={className} aria-labelledby={tituloId}>
+    <Card as="section" aria-labelledby={tituloId}>
       <h2 id={tituloId} className="desenlace__titulo">
         Desenlace
       </h2>

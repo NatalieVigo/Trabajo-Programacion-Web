@@ -1,4 +1,4 @@
-/* Atención de un ticket (p25): ruta de navegación, cabecera con el código y la bitácora. */
+/* Vista consolidada de un ticket (p25): ruta de navegación, cabecera con el código y dos columnas de contenido. */
 .ticket-atencion__breadcrumb {
   margin-bottom: var(--space-2);
   color: var(--color-text-muted);
@@ -63,9 +63,119 @@
   gap: var(--space-2);
 }
 
-/* Lo que hay que saber antes de leer la bitácora: la espera en curso o el desenlace del ticket cerrado. */
-.ticket-atencion__aviso {
-  margin-bottom: var(--space-4);
+/* A la izquierda, la espera o el desenlace y la bitácora; a la derecha, los datos del reporte (p25). */
+.ticket-atencion__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.ticket-atencion__principal,
+.ticket-atencion__lateral {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* Tarjetas de la columna lateral: datos del reporte, ambiente e historial reciente. */
+.ticket-dato-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-5);
+}
+
+.ticket-dato-card__titulo {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.ticket-dato-card__nota {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.ticket-dato-card__cita {
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.ticket-datos {
+  width: 100%;
+}
+
+.ticket-datos__fila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.ticket-datos__fila + .ticket-datos__fila {
+  border-top: 1px solid var(--color-border);
+}
+
+.ticket-datos__fila dt {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.ticket-datos__fila dd {
+  min-width: 0;
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.ticket-ambiente__codigo {
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-subtitle);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ticket-ambiente__nombre {
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+  font-weight: var(--font-weight-medium);
+}
+
+.ticket-recientes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.ticket-recientes__evento {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 var(--space-3);
+}
+
+.ticket-recientes__momento {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Desenlace del ticket cerrado: la solución a todo el ancho y, debajo, el cierre y el tiempo total. */
@@ -221,6 +331,13 @@
   --nueva-entrada-hover: color-mix(in srgb, var(--color-warning-text) 80%, var(--color-text));
   border-color: var(--nueva-entrada-hover);
   background: var(--nueva-entrada-hover);
+}
+
+/* Por debajo de 1024 px los datos del reporte pasan debajo de la bitácora. */
+@media (max-width: 1023px) {
+  .ticket-atencion__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 640px) {

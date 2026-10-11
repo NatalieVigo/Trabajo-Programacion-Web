@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout.jsx'
 import PublicLayout from '../layouts/PublicLayout.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
+import HistorialAtencionPage from '../pages/atencion/HistorialAtencionPage.jsx'
 import HistorialCambiosPage from '../pages/atencion/HistorialCambiosPage.jsx'
 import TicketAtencionPage from '../pages/atencion/TicketAtencionPage.jsx'
 import CategoriaFormPage from '../pages/catalogo/CategoriaFormPage.jsx'
@@ -39,7 +40,7 @@ const PRIVATE_PAGES = {
   [ROUTES.usuarioEncuestas]: pendiente('Mis encuestas', HISTORIAS.encuestas),
 
   [ROUTES.tecnicoBandeja]: <TechnicianHomePage />,
-  [ROUTES.tecnicoHistorial]: pendiente('Historial', HISTORIAS.atencion),
+  [ROUTES.tecnicoHistorial]: <HistorialAtencionPage />,
   [ROUTES.tecnicoTicket]: <TicketAtencionPage />,
   [ROUTES.tecnicoTicketHistorial]: <HistorialCambiosPage />,
 
