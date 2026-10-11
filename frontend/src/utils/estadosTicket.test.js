@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ESTADOS, TRANSICIONES, esTransicionValida, transicionesDesde } from './estadosTicket.js'
+import { ESTADOS, TRANSICIONES, esTransicionValida, sePuedeCerrar, transicionesDesde } from './estadosTicket.js'
 import { ESTADO_LABELS } from './format.js'
 
 describe('estadosTicket', () => {
@@ -35,5 +35,10 @@ describe('estadosTicket', () => {
     expect(transicionesDesde('archivado')).toEqual([])
     expect(transicionesDesde('constructor')).toEqual([])
     expect(esTransicionValida(undefined, 'en_atencion')).toBe(false)
+  })
+
+  it('solo se cierra un ticket que se está atendiendo o que ya está resuelto', () => {
+    expect(ESTADOS.filter(sePuedeCerrar)).toEqual(['en_atencion', 'resuelto'])
+    expect(sePuedeCerrar(undefined)).toBe(false)
   })
 })

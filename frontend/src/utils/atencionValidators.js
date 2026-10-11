@@ -10,6 +10,8 @@ export const TIPOS_ENTRADA = Object.freeze(['publico', 'interno'])
 
 export const MENSAJE_MAX_LENGTH = 600
 export const MOTIVO_MAX_LENGTH = 240
+export const SOLUCION_MIN_LENGTH = 10
+export const SOLUCION_MAX_LENGTH = 600
 
 export const ATENCION_MESSAGES = Object.freeze({
   tipoRequired: 'Elige si es un comentario público o una nota interna.',
@@ -21,6 +23,9 @@ export const ATENCION_MESSAGES = Object.freeze({
   retornoRequired: 'Indica la fecha estimada de retorno.',
   retornoInvalido: 'Ingresa una fecha válida.',
   retornoPasado: 'La fecha de retorno no puede ser anterior a hoy.',
+  solucionRequired: 'Describe la solución aplicada.',
+  solucionMin: `Describe la solución con al menos ${SOLUCION_MIN_LENGTH} caracteres.`,
+  solucionMax: `Usa como máximo ${SOLUCION_MAX_LENGTH} caracteres.`,
 })
 
 const asText = (value) => (typeof value === 'string' ? value : '')
@@ -81,4 +86,16 @@ export function validateCambioEstado(values, { hoy } = {}) {
     motivo: enEspera ? validateMotivoEspera(values.motivo) : null,
     retornoEstimado: enEspera ? validateRetornoEstimado(values.retornoEstimado, hoy) : null,
   })
+}
+
+export function validateSolucion(value) {
+  const solucion = normalizeTexto(value)
+  if (!solucion) return ATENCION_MESSAGES.solucionRequired
+  if (solucion.length < SOLUCION_MIN_LENGTH) return ATENCION_MESSAGES.solucionMin
+  return solucion.length > SOLUCION_MAX_LENGTH ? ATENCION_MESSAGES.solucionMax : null
+}
+
+/** Valida el cierre de un ticket (p26): la descripción de la solución aplicada. */
+export function validateCierre(values) {
+  return soloErrores({ solucion: validateSolucion(values.solucion) })
 }

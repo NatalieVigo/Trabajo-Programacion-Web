@@ -28,3 +28,10 @@ export function transicionesDesde(estado) {
 export function esTransicionValida(desde, hacia) {
   return transicionesDesde(desde).includes(hacia)
 }
+
+/** Estados desde los que el técnico puede cerrar el ticket con su solución: mientras lo atiende o ya resuelto. */
+export const ESTADOS_QUE_SE_CIERRAN = Object.freeze(['en_atencion', 'resuelto'])
+
+export function sePuedeCerrar(estado) {
+  return ESTADOS_QUE_SE_CIERRAN.includes(estado)
+}

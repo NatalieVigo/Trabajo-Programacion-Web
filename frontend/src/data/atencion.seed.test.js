@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { bitacoraRepository, historialRepository } from '../repositories/atencion.repository.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { validateEntrada, validateMotivoEspera } from '../utils/atencionValidators.js'
+import { validateEntrada, validateMotivoEspera, validateSolucion } from '../utils/atencionValidators.js'
 import { ESTADOS, esTransicionValida } from '../utils/estadosTicket.js'
 import { fechaEnLima, finDelDiaEnLima } from '../utils/fechaLima.js'
 
@@ -157,5 +157,17 @@ describe('datos semilla · atención y cierre', () => {
       expect(evento.motivo).toBeNull()
       expect(evento.retornoEstimado).toBeNull()
     }
+  })
+
+  it('cada ticket cerrado se cerró una vez, con su solución, y ningún otro cambio de estado la tiene', () => {
+    const eventos = historialRepository.findAll()
+
+    for (const ticket of ticketsRepository.findAll()) {
+      const cierres = estadosDe(ticket.id).filter((evento) => evento.estado === 'cerrado')
+      expect(cierres).toHaveLength(ticket.estado === 'cerrado' ? 1 : 0)
+      cierres.forEach((cierre) => expect(validateSolucion(cierre.solucion)).toBeNull())
+    }
+    expect(eventos.filter((evento) => evento.estado === 'cerrado')).toHaveLength(8)
+    eventos.filter((evento) => evento.estado !== 'cerrado').forEach((evento) => expect(evento.solucion).toBeNull())
   })
 })

@@ -1,5 +1,5 @@
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { transicionesDesde } from '../utils/estadosTicket.js'
+import { sePuedeCerrar, transicionesDesde } from '../utils/estadosTicket.js'
 import { ServiceError } from './ServiceError.js'
 
 /** Pasos internos de los servicios de atención (HU-5): quién hace la petición y qué puede hacer con un ticket. */
@@ -22,7 +22,7 @@ export function exigirCuentaActiva(usuarioId) {
   return usuario
 }
 
-/** Si `usuario` es el técnico que tiene asignado el ticket: solo él cambia su estado. */
+/** Si `usuario` es el técnico que tiene asignado el ticket: solo él cambia su estado y lo cierra. */
 export function esSuTecnico(ticket, usuario) {
   return usuario.rol === 'tecnico' && ticket.asignadoA === usuario.id
 }
@@ -34,6 +34,7 @@ export function esSuTecnico(ticket, usuario) {
  * - `comentar`: publica comentarios (quien lo reportó, el técnico que lo tiene asignado y el supervisor).
  * - `notaInterna`: registra notas internas (el técnico que lo tiene asignado y el supervisor).
  * - `transiciones`: estados a los que puede pasar el ticket (solo el técnico que lo tiene asignado).
+ * - `cerrar`: puede cerrarlo con su solución (ese mismo técnico, con el ticket en atención o resuelto).
  * Un ticket cerrado ya no admite entradas ni cambios de estado.
  */
 export function permisosSobre(ticket, usuario) {
@@ -43,11 +44,13 @@ export function permisosSobre(ticket, usuario) {
     throw new ServiceError(403, 'FORBIDDEN', 'No tienes permiso para ver este ticket.')
   }
   const admiteEntradas = ticket.estado !== 'cerrado'
-  const loAtiende = usuario.rol === 'supervisor' || esSuTecnico(ticket, usuario)
+  const loGestiona = esSuTecnico(ticket, usuario)
+  const loAtiende = usuario.rol === 'supervisor' || loGestiona
   return {
     verInternas: esEquipo,
     comentar: admiteEntradas && (loAtiende || loReporto),
     notaInterna: admiteEntradas && loAtiende,
-    transiciones: esSuTecnico(ticket, usuario) ? [...transicionesDesde(ticket.estado)] : [],
+    transiciones: loGestiona ? [...transicionesDesde(ticket.estado)] : [],
+    cerrar: loGestiona && sePuedeCerrar(ticket.estado),
   }
 }

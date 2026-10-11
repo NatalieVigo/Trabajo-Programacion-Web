@@ -3,8 +3,10 @@ import {
   ATENCION_MESSAGES,
   MENSAJE_MAX_LENGTH,
   MOTIVO_MAX_LENGTH,
+  SOLUCION_MAX_LENGTH,
   normalizeTexto,
   validateCambioEstado,
+  validateCierre,
   validateEntrada,
   validateMensaje,
   validateMotivoEspera,
@@ -96,5 +98,19 @@ describe('atencionValidators · espera', () => {
     ).toEqual({})
     expect(validateCambioEstado({ estado: 'resuelto', motivo: '', retornoEstimado: '' }, { hoy: HOY })).toEqual({})
     expect(validateCambioEstado({ estado: 'en_atencion' })).toEqual({})
+  })
+})
+
+describe('atencionValidators · cierre', () => {
+  it('exige describir la solución con entre 10 y 600 caracteres', () => {
+    expect(validateCierre({ solucion: 'Se reemplazó el cable HDMI.' })).toEqual({})
+    expect(validateCierre({ solucion: 'a'.repeat(SOLUCION_MAX_LENGTH) })).toEqual({})
+    expect(validateCierre({ solucion: '  1234567890  ' })).toEqual({})
+    expect(validateCierre({ solucion: '   ' })).toEqual({ solucion: ATENCION_MESSAGES.solucionRequired })
+    expect(validateCierre({})).toEqual({ solucion: 'Describe la solución aplicada.' })
+    expect(validateCierre({ solucion: 'Listo.' })).toEqual({ solucion: 'Describe la solución con al menos 10 caracteres.' })
+    expect(validateCierre({ solucion: 'a'.repeat(SOLUCION_MAX_LENGTH + 1) })).toEqual({
+      solucion: 'Usa como máximo 600 caracteres.',
+    })
   })
 })
