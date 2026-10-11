@@ -7,6 +7,7 @@ import { obtenerAtencion } from '../../services/atencion.service.js'
 import { Alert, Button, Card, MessageCard } from '../../shared/components'
 import BitacoraPanel from './BitacoraPanel.jsx'
 import CambiarEstadoModal from './CambiarEstadoModal.jsx'
+import EsperaAviso from './EsperaAviso.jsx'
 import { origenDelTicket } from './origenDelTicket.js'
 import TicketCabecera from './TicketCabecera.jsx'
 import './TicketAtencionPage.css'
@@ -20,7 +21,7 @@ function EstadoDeLaPagina({ titulo, children }) {
 /** El ticket ya cargado: la ruta de navegación, su cabecera con las acciones de quien lo atiende y la bitácora. */
 function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
   const { usuario } = useAuth()
-  const { ticket, permisos } = atencion
+  const { ticket, espera, permisos } = atencion
   const origen = origenDelTicket(usuario.rol)
   const [cambiandoEstado, setCambiandoEstado] = useState(false)
   useDocumentTitle(ticket.codigo)
@@ -48,6 +49,7 @@ function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
           permisos.transiciones.length > 0 && <Button onClick={() => setCambiandoEstado(true)}>Cambiar estado</Button>
         }
       />
+      {espera && <EsperaAviso espera={espera} className="ticket-atencion__espera" />}
       <BitacoraPanel atencion={atencion} onActualizada={onActualizada} onDesactualizada={onDesactualizada} />
       {cambiandoEstado && (
         <CambiarEstadoModal

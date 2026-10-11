@@ -10,6 +10,7 @@ const PILDORA = { usuario: 'Mis tickets abiertos', tecnico: 'Asignados a mí', s
 
 /** Lo reportó Camila y lo atiende Julio. */
 const EN_ATENCION = 'TCK-2026-00144'
+const EN_ESPERA = 'TCK-2026-00143'
 const RESUELTO = 'TCK-2026-00141'
 const DE_SANDRA = 'TCK-2026-00138'
 const SIN_ASIGNAR = 'TCK-2026-00147'
@@ -338,13 +339,119 @@ describe('TicketAtencionPage · cambio de estado', () => {
     const { user } = await renderTicket(EN_ATENCION)
 
     await user.click(boton('Cambiar estado'))
-    modificarTicket('tck-00144', { estado: 'resuelto' })
-    await user.click(opcion('En espera · falta un repuesto o depende de un tercero'))
+    modificarTicket('tck-00144', { estado: 'cerrado', cerradoEn: AHORA })
+    await user.click(opcion('Resuelto · la falla ya no se presenta'))
     await user.click(boton('Guardar estado'))
 
-    expect(await screen.findByText('El ticket está resuelto y no admite el cambio a «En espera».')).toBeInTheDocument()
-    await waitFor(() => expect(etiquetas()).toHaveTextContent('Estado: Resuelto'))
+    expect(await screen.findByText('El ticket está cerrado y no admite el cambio a «Resuelto».')).toBeInTheDocument()
+    await waitFor(() => expect(etiquetas()).toHaveTextContent('Estado: Cerrado'))
     expect(dialogo(DIALOGO)).not.toBeInTheDocument()
+    expect(boton('Cambiar estado')).not.toBeInTheDocument()
     expect(historialRepository.findAll()).toHaveLength(66)
+  })
+})
+
+describe('TicketAtencionPage · espera', () => {
+  const EN_ESPERA_OPCION = 'En espera · falta un repuesto o depende de un tercero'
+
+  it('un ticket en espera muestra el motivo, desde cuándo espera y la fecha estimada de retorno', async () => {
+    await renderTicket(EN_ESPERA)
+
+    const aviso = screen.getByText('Ticket en espera').closest('[role="status"]')
+    expect(aviso).toHaveTextContent('Se solicitó al proveedor un filtro de línea para el amplificador.')
+    expect(aviso).toHaveTextContent('En espera desde el 30/09/2026 09:30 · retorno estimado: 05/10/2026')
+    expect(aviso).not.toHaveTextContent('ya pasó')
+  })
+
+  it('avisa cuando la fecha estimada de retorno ya pasó', async () => {
+    vi.setSystemTime('2026-10-07T15:00:00.000Z')
+    await renderTicket(EN_ESPERA)
+
+    expect(screen.getByText('Ticket en espera').closest('[role="alert"]')).toHaveTextContent(
+      'retorno estimado: 05/10/2026 · la fecha estimada ya pasó',
+    )
+  })
+
+  it('un ticket que no está en espera no muestra el aviso', async () => {
+    await renderTicket(EN_ATENCION)
+
+    expect(screen.queryByText('Ticket en espera')).not.toBeInTheDocument()
+  })
+
+  it('pide el motivo y la fecha de retorno solo al elegir «En espera»', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+    expect(screen.queryByRole('textbox', { name: 'Motivo de espera' })).not.toBeInTheDocument()
+
+    await user.click(opcion(EN_ESPERA_OPCION))
+    expect(campo('Motivo de espera')).toBeRequired()
+    expect(screen.getByLabelText('Fecha estimada de retorno')).toHaveAttribute('min', '2026-10-01')
+
+    await user.click(opcion('Resuelto · la falla ya no se presenta'))
+    expect(screen.queryByRole('textbox', { name: 'Motivo de espera' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Fecha estimada de retorno')).not.toBeInTheDocument()
+  })
+
+  it('deja el ticket en espera con su motivo y su fecha estimada de retorno', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+    await user.click(opcion(EN_ESPERA_OPCION))
+    await user.type(campo('Motivo de espera'), 'Tomacorriente solicitado al almacén.')
+    await user.type(screen.getByLabelText('Fecha estimada de retorno'), '2026-10-05')
+    await user.click(boton('Guardar estado'))
+
+    expect(await screen.findByText('Estado actualizado: En espera.')).toBeInTheDocument()
+    expect(etiquetas()).toHaveTextContent('Estado: En espera')
+    const aviso = screen.getByText('Ticket en espera').closest('[role="status"]')
+    expect(aviso).toHaveTextContent('Tomacorriente solicitado al almacén.')
+    expect(aviso).toHaveTextContent('En espera desde el 01/10/2026 10:00 · retorno estimado: 05/10/2026')
+    expect(historialRepository.findAll({ ticketId: 'tck-00144' }).at(-1)).toMatchObject({
+      estado: 'en_espera',
+      motivo: 'Tomacorriente solicitado al almacén.',
+      retornoEstimado: '2026-10-06T04:59:59.000Z',
+    })
+  })
+
+  it('sin motivo ni fecha señala cada error junto a su campo y no cambia el estado', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+    await user.click(opcion(EN_ESPERA_OPCION))
+    await user.click(boton('Guardar estado'))
+
+    expect(campo('Motivo de espera')).toHaveAccessibleDescription('Indica el motivo de la espera.')
+    expect(campo('Motivo de espera')).toHaveFocus()
+    expect(screen.getByLabelText('Fecha estimada de retorno')).toHaveAccessibleDescription(
+      'Indica la fecha estimada de retorno.',
+    )
+    expect(ticketsRepository.findById('tck-00144').estado).toBe('en_atencion')
+  })
+
+  it('rechaza una fecha de retorno anterior a hoy', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+    await user.click(opcion(EN_ESPERA_OPCION))
+    await user.type(campo('Motivo de espera'), 'Tomacorriente solicitado al almacén.')
+    await user.type(screen.getByLabelText('Fecha estimada de retorno'), '2026-09-30')
+    await user.click(boton('Guardar estado'))
+
+    expect(screen.getByLabelText('Fecha estimada de retorno')).toHaveAccessibleDescription(
+      'La fecha de retorno no puede ser anterior a hoy.',
+    )
+    expect(ticketsRepository.findById('tck-00144').estado).toBe('en_atencion')
+  })
+
+  it('al retomar la atención el aviso de espera desaparece', async () => {
+    const { user } = await renderTicket(EN_ESPERA)
+
+    await user.click(boton('Cambiar estado'))
+    await user.click(opcion('En atención · estás trabajando en la falla'))
+    await user.click(boton('Guardar estado'))
+
+    expect(await screen.findByText('Estado actualizado: En atención.')).toBeInTheDocument()
+    expect(screen.queryByText('Ticket en espera')).not.toBeInTheDocument()
   })
 })

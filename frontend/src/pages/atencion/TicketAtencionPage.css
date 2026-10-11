@@ -63,6 +63,10 @@
   gap: var(--space-2);
 }
 
+.ticket-atencion__espera {
+  margin-bottom: var(--space-4);
+}
+
 /* Bitácora */
 .bitacora-panel__cabecera {
   display: flex;

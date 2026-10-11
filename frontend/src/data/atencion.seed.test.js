@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { bitacoraRepository, historialRepository } from '../repositories/atencion.repository.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { validateEntrada } from '../utils/atencionValidators.js'
+import { validateEntrada, validateMotivoEspera } from '../utils/atencionValidators.js'
 import { ESTADOS, esTransicionValida } from '../utils/estadosTicket.js'
+import { fechaEnLima, finDelDiaEnLima } from '../utils/fechaLima.js'
 
 const unicos = (valores) => new Set(valores).size === valores.length
 const esFechaIso = (valor) => new Date(valor).toISOString() === valor
@@ -140,5 +141,21 @@ describe('datos semilla · atención y cierre', () => {
       'resuelto',
       'cerrado',
     ])
+  })
+
+  it('solo las esperas tienen motivo y fecha estimada de retorno, que es el fin de un día posterior o igual', () => {
+    const eventos = historialRepository.findAll()
+    const esperas = eventos.filter((evento) => evento.estado === 'en_espera')
+
+    expect(esperas).toHaveLength(7)
+    for (const espera of esperas) {
+      expect(validateMotivoEspera(espera.motivo)).toBeNull()
+      expect(espera.retornoEstimado).toBe(finDelDiaEnLima(fechaEnLima(espera.retornoEstimado)))
+      expect(espera.retornoEstimado > espera.creadoEn).toBe(true)
+    }
+    for (const evento of eventos.filter((otro) => otro.estado !== 'en_espera')) {
+      expect(evento.motivo).toBeNull()
+      expect(evento.retornoEstimado).toBeNull()
+    }
   })
 })
