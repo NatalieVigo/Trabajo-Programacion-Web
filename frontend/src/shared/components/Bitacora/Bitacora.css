@@ -1,0 +1,65 @@
+/* Bitácora de un ticket (p20, p25): una tarjeta por entrada, de la más antigua a la más reciente. */
+.bitacora {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bitacora__entrada {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+/* Nota interna (p25): en tono de advertencia, para que no se confunda con lo que ve el usuario. */
+.bitacora__entrada--interna {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.bitacora__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.bitacora__autor {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.bitacora__nombre {
+  margin-right: var(--space-1);
+  font-weight: var(--font-weight-semibold);
+}
+
+.bitacora__meta {
+  color: var(--color-text-muted);
+}
+
+.bitacora__tipo {
+  color: var(--color-info-text);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.bitacora__entrada--interna .bitacora__tipo {
+  color: var(--color-warning-text);
+}
+
+/* El mensaje conserva los saltos de línea con que se escribió. */
+.bitacora__mensaje {
+  margin-top: var(--space-2);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

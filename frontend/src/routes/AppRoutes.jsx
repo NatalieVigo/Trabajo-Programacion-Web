@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout.jsx'
 import PublicLayout from '../layouts/PublicLayout.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
+import TicketAtencionPage from '../pages/atencion/TicketAtencionPage.jsx'
 import CategoriaFormPage from '../pages/catalogo/CategoriaFormPage.jsx'
 import CategoriasPage from '../pages/catalogo/CategoriasPage.jsx'
 import TecnicosCategoriaPage from '../pages/catalogo/TecnicosCategoriaPage.jsx'
@@ -38,9 +39,11 @@ const PRIVATE_PAGES = {
 
   [ROUTES.tecnicoBandeja]: <TechnicianHomePage />,
   [ROUTES.tecnicoHistorial]: pendiente('Historial', HISTORIAS.atencion),
+  [ROUTES.tecnicoTicket]: <TicketAtencionPage />,
 
   [ROUTES.supervisorTablero]: <SupervisorHomePage />,
   [ROUTES.supervisorCola]: pendiente('Cola de atención', HISTORIAS.cola),
+  [ROUTES.supervisorTicket]: <TicketAtencionPage />,
   [ROUTES.supervisorCategorias]: <CategoriasPage />,
   [ROUTES.supervisorCategoriaNueva]: <CategoriaFormPage />,
   [ROUTES.supervisorCategoriaEditar]: <CategoriaFormPage />,

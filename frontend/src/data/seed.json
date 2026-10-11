@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "usuarios": [
     {
       "id": "usr-001",
@@ -1000,6 +1000,360 @@
       "usuarioId": "usr-001",
       "puntaje": 4,
       "respondidaEn": "2026-09-01T23:40:00.000Z"
+    }
+  ],
+  "bitacora": [
+    {
+      "id": "bit-001",
+      "ticketId": "tck-00103",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "El ecran del aula A-305 se queda arriba y no baja con el control ni con el botón de la pared.",
+      "creadoEn": "2026-08-04T14:20:00.000Z"
+    },
+    {
+      "id": "bit-002",
+      "ticketId": "tck-00103",
+      "autorId": "usr-002",
+      "tipo": "interno",
+      "mensaje": "La guía izquierda está doblada. Necesito la escalera alta del almacén para desmontarla.",
+      "creadoEn": "2026-08-04T19:35:00.000Z"
+    },
+    {
+      "id": "bit-003",
+      "ticketId": "tck-00103",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "El ecran ya sube y baja con normalidad. Se enderezó la guía y se lubricó el eje.",
+      "creadoEn": "2026-08-05T15:55:00.000Z"
+    },
+    {
+      "id": "bit-004",
+      "ticketId": "tck-00109",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "Una silla de la tercera fila tiene el respaldo roto y puede lastimar a alguien.",
+      "creadoEn": "2026-08-12T15:05:00.000Z"
+    },
+    {
+      "id": "bit-005",
+      "ticketId": "tck-00109",
+      "autorId": "usr-008",
+      "tipo": "publico",
+      "mensaje": "Retiré la silla dañada. La de reemplazo llega mañana del almacén.",
+      "creadoEn": "2026-08-13T14:45:00.000Z"
+    },
+    {
+      "id": "bit-006",
+      "ticketId": "tck-00109",
+      "autorId": "usr-008",
+      "tipo": "publico",
+      "mensaje": "Ya está colocada la silla nueva.",
+      "creadoEn": "2026-08-14T21:05:00.000Z"
+    },
+    {
+      "id": "bit-007",
+      "ticketId": "tck-00114",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "Los parlantes del auditorio Q-101 no emiten sonido, aunque la consola está encendida.",
+      "creadoEn": "2026-08-17T13:40:00.000Z"
+    },
+    {
+      "id": "bit-008",
+      "ticketId": "tck-00114",
+      "autorId": "usr-002",
+      "tipo": "interno",
+      "mensaje": "La consola envía señal, pero el amplificador no la recibe. Sospecho del cable XLR del canal principal.",
+      "creadoEn": "2026-08-17T16:20:00.000Z"
+    },
+    {
+      "id": "bit-009",
+      "ticketId": "tck-00114",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "Cambié el cable entre la consola y el amplificador. El audio funciona en todos los parlantes.",
+      "creadoEn": "2026-08-18T16:35:00.000Z"
+    },
+    {
+      "id": "bit-010",
+      "ticketId": "tck-00118",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "El proyector del aula A-201 no enciende. La luz del equipo parpadea en rojo.",
+      "creadoEn": "2026-08-20T12:55:00.000Z"
+    },
+    {
+      "id": "bit-011",
+      "ticketId": "tck-00118",
+      "autorId": "usr-003",
+      "tipo": "publico",
+      "mensaje": "Asignamos tu ticket a Julio Paredes. Lo revisará antes de la clase de las 10:00.",
+      "creadoEn": "2026-08-20T13:06:00.000Z"
+    },
+    {
+      "id": "bit-012",
+      "ticketId": "tck-00118",
+      "autorId": "usr-002",
+      "tipo": "interno",
+      "mensaje": "Luz roja intermitente: lámpara agotada (3900 h de uso). No hay repuesto en el pañol del pabellón.",
+      "creadoEn": "2026-08-20T13:35:00.000Z"
+    },
+    {
+      "id": "bit-013",
+      "ticketId": "tck-00118",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "El proyector necesita una lámpara nueva, que llega mañana. Hoy dejé un proyector portátil en el aula.",
+      "creadoEn": "2026-08-20T14:12:00.000Z"
+    },
+    {
+      "id": "bit-014",
+      "ticketId": "tck-00118",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "Lámpara reemplazada. El proyector enciende y proyecta con normalidad.",
+      "creadoEn": "2026-08-21T14:18:00.000Z"
+    },
+    {
+      "id": "bit-015",
+      "ticketId": "tck-00122",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "El aire acondicionado del aula magna E-304 enciende pero no enfría.",
+      "creadoEn": "2026-08-25T16:15:00.000Z"
+    },
+    {
+      "id": "bit-016",
+      "ticketId": "tck-00122",
+      "autorId": "usr-010",
+      "tipo": "interno",
+      "mensaje": "Presión baja en el circuito: hay una fuga en la unión de la tubería exterior.",
+      "creadoEn": "2026-08-25T21:35:00.000Z"
+    },
+    {
+      "id": "bit-017",
+      "ticketId": "tck-00122",
+      "autorId": "usr-010",
+      "tipo": "publico",
+      "mensaje": "El equipo tiene una fuga de gas. El proveedor trae la recarga el 27/08.",
+      "creadoEn": "2026-08-25T21:40:00.000Z"
+    },
+    {
+      "id": "bit-018",
+      "ticketId": "tck-00122",
+      "autorId": "usr-010",
+      "tipo": "publico",
+      "mensaje": "Fuga sellada y gas recargado. El aula ya enfría.",
+      "creadoEn": "2026-08-27T20:05:00.000Z"
+    },
+    {
+      "id": "bit-019",
+      "ticketId": "tck-00126",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "El punto de red de la mesa 14 del laboratorio H-105 no da conexión.",
+      "creadoEn": "2026-08-29T19:20:00.000Z"
+    },
+    {
+      "id": "bit-020",
+      "ticketId": "tck-00126",
+      "autorId": "usr-002",
+      "tipo": "interno",
+      "mensaje": "El punto 14 no enlaza con el switch. El conector de la roseta está sulfatado.",
+      "creadoEn": "2026-08-29T20:45:00.000Z"
+    },
+    {
+      "id": "bit-021",
+      "ticketId": "tck-00126",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "Cambié el conector del punto de red. Ya tiene enlace.",
+      "creadoEn": "2026-08-30T14:45:00.000Z"
+    },
+    {
+      "id": "bit-022",
+      "ticketId": "tck-00130",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "La extensión que alimenta el podio del aula E-304 tiene el cable pelado y hace chispas.",
+      "creadoEn": "2026-08-31T14:04:00.000Z"
+    },
+    {
+      "id": "bit-023",
+      "ticketId": "tck-00130",
+      "autorId": "usr-009",
+      "tipo": "publico",
+      "mensaje": "Retiré la extensión para evitar riesgos. Instalaré tomacorrientes fijos junto al podio.",
+      "creadoEn": "2026-08-31T15:20:00.000Z"
+    },
+    {
+      "id": "bit-024",
+      "ticketId": "tck-00130",
+      "autorId": "usr-009",
+      "tipo": "interno",
+      "mensaje": "Falta un tramo de canaleta de 2 m. El almacén lo entrega mañana temprano.",
+      "creadoEn": "2026-08-31T21:02:00.000Z"
+    },
+    {
+      "id": "bit-025",
+      "ticketId": "tck-00130",
+      "autorId": "usr-009",
+      "tipo": "publico",
+      "mensaje": "Quedaron instalados dos tomacorrientes fijos junto al podio.",
+      "creadoEn": "2026-09-01T15:35:00.000Z"
+    },
+    {
+      "id": "bit-026",
+      "ticketId": "tck-00131",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "El micrófono inalámbrico del Auditorio Central se corta cada pocos segundos.",
+      "creadoEn": "2026-09-24T13:30:00.000Z"
+    },
+    {
+      "id": "bit-027",
+      "ticketId": "tck-00131",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "El receptor del micrófono falla y lo enviamos al proveedor. Mientras tanto dejé un micrófono de cable.",
+      "creadoEn": "2026-09-24T16:35:00.000Z"
+    },
+    {
+      "id": "bit-028",
+      "ticketId": "tck-00131",
+      "autorId": "usr-002",
+      "tipo": "interno",
+      "mensaje": "Guía de envío al proveedor: 4471. Ofrecen devolverlo el lunes 28.",
+      "creadoEn": "2026-09-24T16:40:00.000Z"
+    },
+    {
+      "id": "bit-029",
+      "ticketId": "tck-00131",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "Receptor reemplazado. Los dos micrófonos inalámbricos funcionan.",
+      "creadoEn": "2026-09-28T21:45:00.000Z"
+    },
+    {
+      "id": "bit-030",
+      "ticketId": "tck-00138",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "El aire acondicionado del laboratorio H-210 gotea sobre las carpetas de la segunda fila.",
+      "creadoEn": "2026-09-25T15:15:00.000Z"
+    },
+    {
+      "id": "bit-031",
+      "ticketId": "tck-00138",
+      "autorId": "usr-010",
+      "tipo": "publico",
+      "mensaje": "Coloqué un recipiente y moví las carpetas. Revisaré el drenaje del equipo.",
+      "creadoEn": "2026-09-25T16:45:00.000Z"
+    },
+    {
+      "id": "bit-032",
+      "ticketId": "tck-00138",
+      "autorId": "usr-010",
+      "tipo": "interno",
+      "mensaje": "Bandeja de condensado rajada. La cotización del proveedor está pendiente de aprobación.",
+      "creadoEn": "2026-09-26T14:05:00.000Z"
+    },
+    {
+      "id": "bit-033",
+      "ticketId": "tck-00141",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "La imagen del proyector del auditorio Q-101 sale con franjas verdes.",
+      "creadoEn": "2026-09-27T14:00:00.000Z"
+    },
+    {
+      "id": "bit-034",
+      "ticketId": "tck-00141",
+      "autorId": "usr-002",
+      "tipo": "interno",
+      "mensaje": "El cable VGA del podio tiene un pin doblado. Lo cambio por HDMI con adaptador.",
+      "creadoEn": "2026-09-27T15:30:00.000Z"
+    },
+    {
+      "id": "bit-035",
+      "ticketId": "tck-00141",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "Cambié el cable del podio. La imagen se ve bien; por favor confírmalo en tu próxima clase.",
+      "creadoEn": "2026-09-29T21:12:00.000Z"
+    },
+    {
+      "id": "bit-036",
+      "ticketId": "tck-00143",
+      "autorId": "usr-006",
+      "tipo": "publico",
+      "mensaje": "Los parlantes del Auditorio Central tienen un zumbido constante, incluso sin micrófonos.",
+      "creadoEn": "2026-09-29T16:20:00.000Z"
+    },
+    {
+      "id": "bit-037",
+      "ticketId": "tck-00143",
+      "autorId": "usr-002",
+      "tipo": "interno",
+      "mensaje": "Zumbido de 60 Hz: lazo de tierra entre la consola y el amplificador.",
+      "creadoEn": "2026-09-29T19:20:00.000Z"
+    },
+    {
+      "id": "bit-038",
+      "ticketId": "tck-00143",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "El ruido viene de la instalación eléctrica del amplificador. Pedimos un filtro que llega la próxima semana.",
+      "creadoEn": "2026-09-30T14:35:00.000Z"
+    },
+    {
+      "id": "bit-039",
+      "ticketId": "tck-00144",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "No hay red en ninguna computadora del laboratorio H-210. Mañana hay práctica calificada a las 8:00.",
+      "creadoEn": "2026-09-29T20:40:00.000Z"
+    },
+    {
+      "id": "bit-040",
+      "ticketId": "tck-00144",
+      "autorId": "usr-003",
+      "tipo": "publico",
+      "mensaje": "Asignamos tu ticket a Julio Paredes con prioridad crítica por la práctica de mañana.",
+      "creadoEn": "2026-09-29T20:52:00.000Z"
+    },
+    {
+      "id": "bit-041",
+      "ticketId": "tck-00144",
+      "autorId": "usr-002",
+      "tipo": "interno",
+      "mensaje": "El switch del gabinete del piso 2 está apagado: no le llega energía del tomacorriente del rack.",
+      "creadoEn": "2026-09-29T21:30:00.000Z"
+    },
+    {
+      "id": "bit-042",
+      "ticketId": "tck-00144",
+      "autorId": "usr-002",
+      "tipo": "publico",
+      "mensaje": "El equipo de red del piso está sin energía. Conecté el laboratorio a otro gabinete de forma provisional.",
+      "creadoEn": "2026-09-29T21:45:00.000Z"
+    },
+    {
+      "id": "bit-043",
+      "ticketId": "tck-00146",
+      "autorId": "usr-005",
+      "tipo": "publico",
+      "mensaje": "El tomacorriente junto a la pizarra del aula N-402 no tiene energía.",
+      "creadoEn": "2026-09-30T12:45:00.000Z"
+    },
+    {
+      "id": "bit-044",
+      "ticketId": "tck-00147",
+      "autorId": "usr-001",
+      "tipo": "publico",
+      "mensaje": "El proyector enciende el foco pero la imagen no llega a la pantalla. Probé con dos laptops y el mismo cable HDMI de la mesa. Hay clase de 10:00 a 13:00.",
+      "creadoEn": "2026-09-30T13:12:00.000Z"
     }
   ]
 }

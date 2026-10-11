@@ -3,6 +3,7 @@ import {
   formatCountdown,
   formatDate,
   formatDateTime,
+  formatEstado,
   formatPrioridad,
   formatRol,
   formatTelefono,
@@ -60,9 +61,12 @@ describe('format', () => {
     expect(pluralize(0, 'encuesta pendiente', 'encuestas pendientes')).toBe('0 encuestas pendientes')
   })
 
-  it('traduce prioridades y roles a sus etiquetas', () => {
+  it('traduce prioridades, estados y roles a sus etiquetas', () => {
     expect(formatPrioridad('critica')).toBe('Crítica')
     expect(formatPrioridad('baja')).toBe('Baja')
+    expect(formatEstado('en_atencion')).toBe('En atención')
+    expect(formatEstado('reabierto')).toBe('Reabierto')
+    expect(formatEstado('archivado')).toBe('archivado')
     expect(formatRol('tecnico')).toBe('Técnico')
     expect(formatRol('desconocido')).toBe('desconocido')
   })

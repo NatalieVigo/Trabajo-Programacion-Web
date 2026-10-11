@@ -5,6 +5,7 @@ import {
   landingSectionPath,
   recuperarContrasenaPath,
   restablecerContrasenaPath,
+  ticketAtencionPath,
 } from './routePaths.js'
 
 describe('routePaths', () => {
@@ -25,5 +26,10 @@ describe('routePaths', () => {
       search: '?correo=camila.quispe%40aloe.ulima.edu.pe',
     })
     expect(recuperarContrasenaPath('')).toEqual({ pathname: '/recuperar-contrasena', search: '' })
+  })
+
+  it('lleva a la atención de un ticket en el panel de cada rol', () => {
+    expect(ticketAtencionPath('tecnico', 'TCK-2026-00144')).toBe('/tecnico/tickets/TCK-2026-00144')
+    expect(ticketAtencionPath('supervisor', 'TCK-2026-00144')).toBe('/supervisor/tickets/TCK-2026-00144')
   })
 })

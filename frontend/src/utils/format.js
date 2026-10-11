@@ -22,6 +22,15 @@ export const PRIORIDAD_LABELS = {
   baja: 'Baja',
 }
 
+export const ESTADO_LABELS = {
+  abierto: 'Abierto',
+  en_atencion: 'En atención',
+  en_espera: 'En espera',
+  resuelto: 'Resuelto',
+  cerrado: 'Cerrado',
+  reabierto: 'Reabierto',
+}
+
 export const ROL_LABELS = {
   usuario: 'Usuario',
   tecnico: 'Técnico',
@@ -88,6 +97,10 @@ export function pluralize(count, singular, plural) {
 
 export function formatPrioridad(prioridad) {
   return PRIORIDAD_LABELS[prioridad] ?? prioridad
+}
+
+export function formatEstado(estado) {
+  return ESTADO_LABELS[estado] ?? estado
 }
 
 export function formatRol(rol) {
