@@ -2,8 +2,9 @@ import { bitacoraRepository, estadoDeTicketRepository, historialRepository } fro
 import { ambientesRepository, categoriasRepository } from '../repositories/catalogo.repository.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { normalizeTexto, validateCambioEstado, validateEntrada } from '../utils/atencionValidators.js'
+import { normalizeTexto, validateCambioEstado, validateEntrada, validateNuevoEstado } from '../utils/atencionValidators.js'
 import { esTransicionValida, transicionesDesde } from '../utils/estadosTicket.js'
+import { finDelDiaEnLima } from '../utils/fechaLima.js'
 import { formatEstado } from '../utils/format.js'
 import { nextId } from '../utils/ids.js'
 import { hasErrors } from '../utils/validators.js'
@@ -58,16 +59,37 @@ function leerBitacora(ticket, permisos) {
     .map(({ id, tipo, mensaje, creadoEn, autorId }) => ({ id, tipo, mensaje, creadoEn, autor: persona(autorId) }))
 }
 
-/** La atención del ticket tal como la ve `usuario`: 403 FORBIDDEN si no es del equipo ni quien lo reportó. */
-function leerAtencion(ticket, usuario) {
-  const permisos = permisosSobre(ticket, usuario)
-  return { ticket: resumirTicket(ticket), bitacora: leerBitacora(ticket, permisos), permisos }
+/** Cambios de estado del ticket que quedaron en el historial, del más antiguo al más reciente. */
+function estadosDe(ticket) {
+  return historialRepository.findAll({ ticketId: ticket.id, tipo: 'estado' }).sort(porAntiguedad)
 }
 
 /**
- * Atención de un ticket (HU-5 · 5.1, p25): { ticket, bitacora: [{ id, tipo, mensaje, creadoEn, autor }], permisos:
- * { verInternas, comentar, notaInterna, transiciones } }. El equipo de atención lee toda la bitácora; quien reportó
- * el ticket solo recibe los comentarios públicos. Falla con 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
+ * La espera en curso de un ticket en espera: { motivo, retornoEstimado, desde, retornoVencido }, donde
+ * `retornoVencido` indica que la fecha estimada de retorno ya pasó. Para cualquier otro estado, null.
+ */
+function leerEspera(ticket, ahora = Date.now()) {
+  if (ticket.estado !== 'en_espera') return null
+  const { motivo, retornoEstimado, creadoEn } = estadosDe(ticket).findLast((evento) => evento.estado === 'en_espera')
+  return { motivo, retornoEstimado, desde: creadoEn, retornoVencido: Date.parse(retornoEstimado) < ahora }
+}
+
+/** La atención del ticket tal como la ve `usuario`: 403 FORBIDDEN si no es del equipo ni quien lo reportó. */
+function leerAtencion(ticket, usuario) {
+  const permisos = permisosSobre(ticket, usuario)
+  return {
+    ticket: resumirTicket(ticket),
+    espera: leerEspera(ticket),
+    bitacora: leerBitacora(ticket, permisos),
+    permisos,
+  }
+}
+
+/**
+ * Atención de un ticket (HU-5 · 5.1, p25): { ticket, espera, bitacora: [{ id, tipo, mensaje, creadoEn, autor }],
+ * permisos: { verInternas, comentar, notaInterna, transiciones } }. `espera` es { motivo, retornoEstimado, desde,
+ * retornoVencido } mientras el ticket está en espera y null si no. El equipo de atención lee toda la bitácora; quien
+ * reportó el ticket solo recibe los comentarios públicos. Falla con 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
  */
 export function obtenerAtencion(codigo, usuarioId) {
   return simulateRequest(() => {
@@ -126,8 +148,11 @@ function transicionInvalida(ticket, estado) {
   )
 }
 
-/** Deja el nuevo estado en el historial, con su autor y su momento, y en el ticket. Devuelve el ticket actualizado. */
-function registrarEstado(ticket, estado, usuario) {
+/**
+ * Deja el nuevo estado en el historial, con su autor, su momento y, si es una espera, su motivo y su fecha estimada de
+ * retorno, y en el ticket. Devuelve el ticket actualizado.
+ */
+function registrarEstado(ticket, estado, usuario, { motivo = null, retornoEstimado = null } = {}) {
   const ahora = new Date().toISOString()
   historialRepository.insert({
     id: nextId('his', historialRepository.findAll()),
@@ -136,8 +161,8 @@ function registrarEstado(ticket, estado, usuario) {
     estado,
     asignadoA: null,
     autorId: usuario.id,
-    motivo: null,
-    retornoEstimado: null,
+    motivo,
+    retornoEstimado,
     solucion: null,
     creadoEn: ahora,
   })
@@ -145,10 +170,11 @@ function registrarEstado(ticket, estado, usuario) {
 }
 
 /**
- * Cambia el estado del ticket (HU-5 · 5.2, p26): `datos` es { estado }. Solo lo hace el técnico que lo tiene asignado
- * y solo a un estado que el actual admita (utils/estadosTicket.js). Falla con 403 FORBIDDEN, 400 VALIDATION_ERROR o
- * 409 INVALID_TRANSITION, con details: { estado, permitidas }. El cambio queda en el historial y se devuelve la
- * atención actualizada.
+ * Cambia el estado del ticket (HU-5 · 5.2 y 5.3, p26): `datos` es { estado } y, para dejarlo en espera, además
+ * { motivo, retornoEstimado } con la fecha estimada de retorno como «2026-10-05» (de hoy en adelante). Solo lo hace el
+ * técnico que lo tiene asignado y solo a un estado que el actual admita (utils/estadosTicket.js). Falla con 403
+ * FORBIDDEN, 400 VALIDATION_ERROR o 409 INVALID_TRANSITION, con details: { estado, permitidas }. El cambio queda en el
+ * historial y se devuelve la atención actualizada.
  */
 export function cambiarEstado(codigo, datos, usuarioId) {
   return simulateRequest(() => {
@@ -158,10 +184,18 @@ export function cambiarEstado(codigo, datos, usuarioId) {
     if (!esSuTecnico(ticket, usuario)) {
       throw new ServiceError(403, 'FORBIDDEN', 'Solo el técnico que tiene asignado el ticket cambia su estado.')
     }
-    const errores = validateCambioEstado(datos ?? {})
-    if (hasErrors(errores)) throw validationError(errores)
+    const errorDeEstado = validateNuevoEstado(datos?.estado)
+    if (errorDeEstado) throw validationError({ estado: errorDeEstado })
+    // Antes que el detalle del cambio: no tiene sentido pedir el motivo de una espera que el ticket no admite.
     if (!esTransicionValida(ticket.estado, datos.estado)) throw transicionInvalida(ticket, datos.estado)
+    const errores = validateCambioEstado(datos)
+    if (hasErrors(errores)) throw validationError(errores)
 
-    return leerAtencion(registrarEstado(ticket, datos.estado, usuario), usuario)
+    // El motivo y la fecha de retorno solo se guardan con la espera: en otro estado se ignoran.
+    const detalle =
+      datos.estado === 'en_espera'
+        ? { motivo: normalizeTexto(datos.motivo), retornoEstimado: finDelDiaEnLima(datos.retornoEstimado) }
+        : {}
+    return leerAtencion(registrarEstado(ticket, datos.estado, usuario, detalle), usuario)
   })
 }

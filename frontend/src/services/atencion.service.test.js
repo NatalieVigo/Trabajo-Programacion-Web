@@ -20,6 +20,9 @@ const SIN_ASIGNAR = 'TCK-2026-00147'
 const CERRADO = 'TCK-2026-00131'
 const AHORA = '2026-10-01T15:00:00.000Z'
 
+/** Motivo y fecha estimada de retorno válidos para dejar un ticket en espera. */
+const ESPERA = { motivo: 'Tomacorriente solicitado al almacén.', retornoEstimado: '2026-10-05' }
+
 const fallo = (promise) => promise.catch((error) => error)
 const permisosDe = async (codigo, usuarioId) => (await obtenerAtencion(codigo, usuarioId)).permisos
 const estadoDe = (ticketId) => ticketsRepository.findById(ticketId).estado
@@ -58,6 +61,34 @@ describe('atencion.service · obtenerAtencion', () => {
       ambiente: { id: 'amb-05', codigo: 'H-210', nombre: 'Laboratorio de Redes' },
       solicitante: { id: CAMILA, nombres: 'Camila Alejandra', apellidos: 'Quispe Ramos', rol: 'usuario' },
       tecnico: { id: JULIO, nombres: 'Julio César', apellidos: 'Paredes Soto', rol: 'tecnico' },
+    })
+  })
+
+  it('un ticket en espera trae su motivo, desde cuándo espera y la fecha estimada de retorno', async () => {
+    const { espera } = await obtenerAtencion(EN_ESPERA, JULIO)
+
+    expect(espera).toEqual({
+      motivo: 'Se solicitó al proveedor un filtro de línea para el amplificador.',
+      retornoEstimado: '2026-10-06T04:59:59.000Z',
+      desde: '2026-09-30T14:30:00.000Z',
+      retornoVencido: false,
+    })
+    expect((await obtenerAtencion(EN_ATENCION, JULIO)).espera).toBeNull()
+    expect((await obtenerAtencion(CERRADO, JULIO)).espera).toBeNull()
+  })
+
+  it('señala la espera cuya fecha estimada de retorno ya pasó', async () => {
+    vi.setSystemTime('2026-10-06T05:00:00.000Z')
+
+    expect((await obtenerAtencion(EN_ESPERA, JULIO)).espera.retornoVencido).toBe(true)
+  })
+
+  it('quien reportó el ticket también conoce el motivo de la espera', async () => {
+    const { espera } = await obtenerAtencion(DE_SANDRA, CAMILA)
+
+    expect(espera).toMatchObject({
+      motivo: 'La bandeja de condensado está rota; se pidió el repuesto al proveedor.',
+      retornoEstimado: '2026-10-03T04:59:59.000Z',
     })
   })
 
@@ -257,14 +288,14 @@ describe('atencion.service · cambiarEstado', () => {
   })
 
   it('deja el cambio en el historial con su autor y su momento', async () => {
-    await cambiarEstado(EN_ATENCION, { estado: 'en_espera' }, JULIO)
+    await cambiarEstado(EN_ATENCION, { estado: 'resuelto' }, JULIO)
 
     expect(historialDe('tck-00144')).toHaveLength(4)
     expect(historialDe('tck-00144').at(-1)).toEqual({
       id: 'his-067',
       ticketId: 'tck-00144',
       tipo: 'estado',
-      estado: 'en_espera',
+      estado: 'resuelto',
       asignadoA: null,
       autorId: JULIO,
       motivo: null,
@@ -280,7 +311,7 @@ describe('atencion.service · cambiarEstado', () => {
     [RESUELTO, 'tck-00141', 'en_atencion'],
     [EN_ATENCION, 'tck-00144', 'en_espera'],
   ])('%s (%s) admite pasar a %s', async (codigo, ticketId, estado) => {
-    await cambiarEstado(codigo, { estado }, JULIO)
+    await cambiarEstado(codigo, { estado, ...ESPERA }, JULIO)
 
     expect(estadoDe(ticketId)).toBe(estado)
   })
@@ -350,8 +381,87 @@ describe('atencion.service · cambiarEstado', () => {
   })
 
   it('no toca la bitácora', async () => {
-    await cambiarEstado(EN_ATENCION, { estado: 'en_espera' }, JULIO)
+    await cambiarEstado(EN_ATENCION, { estado: 'en_espera', ...ESPERA }, JULIO)
 
     expect(bitacoraRepository.findAll()).toHaveLength(44)
+  })
+})
+
+describe('atencion.service · cambiarEstado a en espera', () => {
+  it('guarda el motivo y la fecha estimada de retorno como el fin de ese día en Lima', async () => {
+    const { ticket, espera } = await cambiarEstado(
+      EN_ATENCION,
+      { estado: 'en_espera', motivo: '  Tomacorriente solicitado al almacén.  ', retornoEstimado: '2026-10-05' },
+      JULIO,
+    )
+
+    expect(ticket.estado).toBe('en_espera')
+    expect(espera).toEqual({
+      motivo: 'Tomacorriente solicitado al almacén.',
+      retornoEstimado: '2026-10-06T04:59:59.000Z',
+      desde: AHORA,
+      retornoVencido: false,
+    })
+    expect(historialDe('tck-00144').at(-1)).toMatchObject({
+      estado: 'en_espera',
+      motivo: 'Tomacorriente solicitado al almacén.',
+      retornoEstimado: '2026-10-06T04:59:59.000Z',
+      solucion: null,
+      autorId: JULIO,
+      creadoEn: AHORA,
+    })
+  })
+
+  it('admite el retorno para hoy mismo', async () => {
+    const { espera } = await cambiarEstado(EN_ATENCION, { estado: 'en_espera', ...ESPERA, retornoEstimado: '2026-10-01' }, JULIO)
+
+    expect(espera.retornoEstimado).toBe('2026-10-02T04:59:59.000Z')
+  })
+
+  it('sin motivo o sin una fecha válida de hoy en adelante responde 400 y no cambia el estado', async () => {
+    const vacio = await fallo(cambiarEstado(EN_ATENCION, { estado: 'en_espera' }, JULIO))
+    const pasado = await fallo(cambiarEstado(EN_ATENCION, { estado: 'en_espera', ...ESPERA, retornoEstimado: '2026-09-30' }, JULIO))
+    const invalida = await fallo(cambiarEstado(EN_ATENCION, { estado: 'en_espera', ...ESPERA, retornoEstimado: 'mañana' }, JULIO))
+    const largo = await fallo(cambiarEstado(EN_ATENCION, { estado: 'en_espera', ...ESPERA, motivo: 'a'.repeat(241) }, JULIO))
+
+    expect(vacio).toMatchObject({ status: 400, code: 'VALIDATION_ERROR' })
+    expect(vacio.fieldErrors).toEqual({
+      motivo: ATENCION_MESSAGES.motivoRequired,
+      retornoEstimado: ATENCION_MESSAGES.retornoRequired,
+    })
+    expect(pasado.fieldErrors).toEqual({ retornoEstimado: ATENCION_MESSAGES.retornoPasado })
+    expect(invalida.fieldErrors).toEqual({ retornoEstimado: ATENCION_MESSAGES.retornoInvalido })
+    expect(largo.fieldErrors).toEqual({ motivo: ATENCION_MESSAGES.motivoMax })
+    expect(estadoDe('tck-00144')).toBe('en_atencion')
+    expect(historialRepository.findAll()).toHaveLength(66)
+  })
+
+  it('en cualquier otro estado ignora el motivo y la fecha', async () => {
+    const { espera } = await cambiarEstado(EN_ATENCION, { estado: 'resuelto', ...ESPERA }, JULIO)
+
+    expect(espera).toBeNull()
+    expect(historialDe('tck-00144').at(-1)).toMatchObject({ estado: 'resuelto', motivo: null, retornoEstimado: null })
+  })
+
+  it('al retomar la atención la espera termina, pero su motivo sigue en el historial', async () => {
+    const { ticket, espera } = await cambiarEstado(EN_ESPERA, { estado: 'en_atencion' }, JULIO)
+
+    expect(ticket.estado).toBe('en_atencion')
+    expect(espera).toBeNull()
+    expect(historialDe('tck-00143').map(({ estado, motivo }) => [estado, motivo])).toEqual([
+      ['abierto', null],
+      [null, null],
+      ['en_atencion', null],
+      ['en_espera', 'Se solicitó al proveedor un filtro de línea para el amplificador.'],
+      ['en_atencion', null],
+    ])
+  })
+
+  it('una nueva espera reemplaza a la anterior como la espera en curso', async () => {
+    await cambiarEstado(EN_ESPERA, { estado: 'en_atencion' }, JULIO)
+    vi.setSystemTime('2026-10-02T15:00:00.000Z')
+    const { espera } = await cambiarEstado(EN_ESPERA, { estado: 'en_espera', motivo: 'El filtro llegó fallado.', retornoEstimado: '2026-10-09' }, JULIO)
+
+    expect(espera).toMatchObject({ motivo: 'El filtro llegó fallado.', desde: '2026-10-02T15:00:00.000Z' })
   })
 })

@@ -63,3 +63,8 @@
 .estado-opciones + .field__message {
   margin-top: var(--space-2);
 }
+
+/* Motivo y fecha de retorno, que solo se piden al dejar el ticket en espera (p26). */
+.estado-espera {
+  margin-top: var(--space-5);
+}
