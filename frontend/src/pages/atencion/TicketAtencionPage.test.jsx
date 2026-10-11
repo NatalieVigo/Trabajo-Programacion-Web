@@ -455,3 +455,142 @@ describe('TicketAtencionPage · espera', () => {
     expect(screen.queryByText('Ticket en espera')).not.toBeInTheDocument()
   })
 })
+
+describe('TicketAtencionPage · cierre', () => {
+  const DIALOGO = 'Cerrar TCK-2026-00144'
+  const SOLUCION = 'Se reemplazó el tomacorriente del rack y se verificó el enlace del laboratorio.'
+  const cerrarEnElDialogo = () => within(dialogo(DIALOGO)).getByRole('button', { name: 'Cerrar ticket' })
+  const desenlace = () => screen.getByRole('region', { name: 'Desenlace' })
+
+  it('ofrece «Cerrar ticket» al técnico asignado mientras atiende el ticket o cuando ya lo resolvió', async () => {
+    const enAtencion = await renderTicket(EN_ATENCION)
+    expect(boton('Cambiar estado')).toBeInTheDocument()
+    expect(boton('Cerrar ticket')).toBeInTheDocument()
+    enAtencion.unmount()
+
+    const resuelto = await renderTicket(RESUELTO)
+    expect(boton('Cerrar ticket')).toBeInTheDocument()
+    resuelto.unmount()
+
+    const enEspera = await renderTicket(EN_ESPERA)
+    expect(boton('Cambiar estado')).toBeInTheDocument()
+    expect(boton('Cerrar ticket')).not.toBeInTheDocument()
+    enEspera.unmount()
+
+    await renderTicket(EN_ATENCION, 'supervisor')
+    expect(boton('Cerrar ticket')).not.toBeInTheDocument()
+  })
+
+  it('el diálogo muestra el tiempo total de atención, el plazo y lo que significa cerrar (p26)', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cerrar ticket'))
+
+    expect(dialogo(DIALOGO)).toHaveAccessibleDescription('Punto de red caído en laboratorio')
+    expect(campo('Solución aplicada')).toHaveFocus()
+    expect(campo('Solución aplicada')).toBeRequired()
+    expect(within(dialogo(DIALOGO)).getByText('Tiempo total de atención').closest('div')).toHaveTextContent(
+      'Tiempo total de atención1 d 18 h 20 minFuera del tiempo esperado (2 h)',
+    )
+    expect(within(dialogo(DIALOGO)).getByText('Estado final').closest('div')).toHaveTextContent('Estado finalCerrado')
+    expect(
+      within(dialogo(DIALOGO)).getByText(
+        'Al cerrar, Camila Quispe Ramos recibirá la encuesta de satisfacción y podrá reabrir el ticket dentro de 7 días.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('cierra el ticket con su solución, lo notifica y muestra el desenlace', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cerrar ticket'))
+    await user.type(campo('Solución aplicada'), SOLUCION)
+    await user.click(cerrarEnElDialogo())
+
+    expect(
+      await screen.findByText('Ticket TCK-2026-00144 cerrado. Camila Quispe Ramos ya puede calificar la atención.'),
+    ).toBeInTheDocument()
+    expect(dialogo(DIALOGO)).not.toBeInTheDocument()
+    expect(etiquetas()).toHaveTextContent('Estado: Cerrado')
+    expect(desenlace()).toHaveTextContent(`Solución aplicada${SOLUCION}`)
+    expect(desenlace()).toHaveTextContent('Cerrado01/10/2026 10:00 · Julio Paredes Soto')
+    expect(desenlace()).toHaveTextContent('Tiempo total de atención1 d 18 h 20 minFuera del tiempo esperado (2 h)')
+    expect(boton('Cambiar estado')).not.toBeInTheDocument()
+    expect(boton('Cerrar ticket')).not.toBeInTheDocument()
+    expect(formulario()).not.toBeInTheDocument()
+    expect(ticketsRepository.findById('tck-00144')).toMatchObject({ estado: 'cerrado', cerradoEn: AHORA })
+    expect(historialRepository.findAll({ ticketId: 'tck-00144' }).at(-1)).toMatchObject({
+      estado: 'cerrado',
+      solucion: SOLUCION,
+      autorId: DEMO.tecnico,
+    })
+  })
+
+  it('sin una solución suficiente señala el error junto al campo y no cierra el ticket', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cerrar ticket'))
+    await user.click(cerrarEnElDialogo())
+    expect(campo('Solución aplicada')).toHaveAccessibleDescription('Describe la solución aplicada.')
+    expect(campo('Solución aplicada')).toHaveFocus()
+
+    await user.type(campo('Solución aplicada'), 'Listo.')
+    await user.click(cerrarEnElDialogo())
+    expect(campo('Solución aplicada')).toHaveAccessibleDescription('Describe la solución con al menos 10 caracteres.')
+    expect(ticketsRepository.findById('tck-00144')).toMatchObject({ estado: 'en_atencion', cerradoEn: null })
+  })
+
+  it('cancelar con la solución escrita pide confirmación antes de descartarla', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cerrar ticket'))
+    await user.type(campo('Solución aplicada'), SOLUCION)
+    await user.click(boton('Cancelar'))
+    await user.click(
+      within(await screen.findByRole('alertdialog', { name: '¿Descartar el cierre?' })).getByRole('button', {
+        name: 'Descartar',
+      }),
+    )
+
+    expect(dialogo(DIALOGO)).not.toBeInTheDocument()
+    expect(etiquetas()).toHaveTextContent('Estado: En atención')
+    expect(ticketsRepository.findById('tck-00144').estado).toBe('en_atencion')
+  })
+
+  it('un ticket cerrado muestra su desenlace, con la espera descontada del tiempo de atención', async () => {
+    const conEspera = await renderTicket('TCK-2026-00130')
+    expect(desenlace()).toHaveTextContent(
+      'Se retiró la extensión dañada y se instaló una canaleta con dos tomacorrientes fijos junto al podio.',
+    )
+    expect(desenlace()).toHaveTextContent('Cerrado01/09/2026 15:16 · Iván Zegarra Pinto')
+    expect(desenlace()).toHaveTextContent('1 d 6 h 12 minFuera del tiempo esperado (8 h)')
+    expect(desenlace()).toHaveTextContent('Sin contar 18 h 30 min en espera: 11 h 42 min de atención.')
+    conEspera.unmount()
+
+    await renderTicket('TCK-2026-00118')
+    expect(desenlace()).toHaveTextContent('1 d 1 h 35 minDentro del tiempo esperado (4 h)')
+    expect(desenlace()).toHaveTextContent('Sin contar 23 h 30 min en espera: 2 h 05 min de atención.')
+  })
+
+  it('un ticket que no está cerrado no tiene desenlace', async () => {
+    await renderTicket(RESUELTO)
+
+    expect(screen.queryByRole('region', { name: 'Desenlace' })).not.toBeInTheDocument()
+  })
+
+  it('si el ticket dejó de estar en atención mientras tanto, lo avisa y vuelve a cargarlo', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cerrar ticket'))
+    modificarTicket('tck-00144', { estado: 'abierto' })
+    await user.type(campo('Solución aplicada'), SOLUCION)
+    await user.click(cerrarEnElDialogo())
+
+    expect(
+      await screen.findByText('El ticket está abierto: solo se cierra un ticket en atención o resuelto.'),
+    ).toBeInTheDocument()
+    await waitFor(() => expect(etiquetas()).toHaveTextContent('Estado: Abierto'))
+    expect(dialogo(DIALOGO)).not.toBeInTheDocument()
+    expect(boton('Cerrar ticket')).not.toBeInTheDocument()
+  })
+})

@@ -1,9 +1,16 @@
 import { bitacoraRepository, estadoDeTicketRepository, historialRepository } from '../repositories/atencion.repository.js'
-import { ambientesRepository, categoriasRepository } from '../repositories/catalogo.repository.js'
+import { ambientesRepository, categoriasRepository, subcategoriasRepository } from '../repositories/catalogo.repository.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { normalizeTexto, validateCambioEstado, validateEntrada, validateNuevoEstado } from '../utils/atencionValidators.js'
-import { esTransicionValida, transicionesDesde } from '../utils/estadosTicket.js'
+import {
+  normalizeTexto,
+  validateCambioEstado,
+  validateCierre,
+  validateEntrada,
+  validateNuevoEstado,
+} from '../utils/atencionValidators.js'
+import { HORA_MS } from '../utils/duracion.js'
+import { esTransicionValida, sePuedeCerrar, transicionesDesde } from '../utils/estadosTicket.js'
 import { finDelDiaEnLima } from '../utils/fechaLima.js'
 import { formatEstado } from '../utils/format.js'
 import { nextId } from '../utils/ids.js'
@@ -11,6 +18,7 @@ import { hasErrors } from '../utils/validators.js'
 import { esSuTecnico, exigirCuentaActiva, permisosSobre } from './atencionAcceso.js'
 import { simulateRequest } from './request.js'
 import { ServiceError, validationError } from './ServiceError.js'
+import { tiemposDe } from './tiemposDeAtencion.js'
 
 /** De la más antigua a la más reciente; si coinciden en el momento, en el orden en que se registraron. */
 const porAntiguedad = (a, b) => a.creadoEn.localeCompare(b.creadoEn) || a.id.localeCompare(b.id)
@@ -70,8 +78,38 @@ function estadosDe(ticket) {
  */
 function leerEspera(ticket, ahora = Date.now()) {
   if (ticket.estado !== 'en_espera') return null
-  const { motivo, retornoEstimado, creadoEn } = estadosDe(ticket).findLast((evento) => evento.estado === 'en_espera')
+  const espera = estadosDe(ticket).findLast((evento) => evento.estado === 'en_espera')
+  if (!espera) return null
+  const { motivo, retornoEstimado, creadoEn } = espera
   return { motivo, retornoEstimado, desde: creadoEn, retornoVencido: Date.parse(retornoEstimado) < ahora }
+}
+
+/**
+ * Horas de atención esperadas para el ticket: las de su subcategoría, si HU-3 la registró en `subcategoriaId`, o las
+ * de su categoría (catálogo de HU-2).
+ */
+function tiempoEsperadoDe(ticket) {
+  const subcategoria = subcategoriasRepository.findById(ticket.subcategoriaId)
+  return (subcategoria ?? categoriasRepository.findById(ticket.categoriaId)).tiempoEsperadoHoras
+}
+
+/**
+ * Tiempos de la atención hasta el cierre, o hasta ahora si sigue en curso: { totalMs, enEsperaMs, atencionMs,
+ * esperadoHoras, dentroDelPlazo }. El plazo se compara con el tiempo de atención, que no cuenta las esperas.
+ */
+function leerTiempos(ticket) {
+  const tiempos = tiemposDe(estadosDe(ticket))
+  const esperadoHoras = tiempoEsperadoDe(ticket)
+  return { ...tiempos, esperadoHoras, dentroDelPlazo: tiempos.atencionMs <= esperadoHoras * HORA_MS }
+}
+
+/** Cómo terminó un ticket que cerró su técnico: { solucion, cerradoEn, cerradoPor }. Si no, null. */
+function leerDesenlace(ticket) {
+  if (ticket.estado !== 'cerrado') return null
+  const cierre = estadosDe(ticket).findLast((evento) => evento.estado === 'cerrado')
+  // Sin cierre en el historial no hay desenlace que mostrar: lo cerró otra historia, sin solución.
+  if (!cierre) return null
+  return { solucion: cierre.solucion, cerradoEn: cierre.creadoEn, cerradoPor: persona(cierre.autorId) }
 }
 
 /** La atención del ticket tal como la ve `usuario`: 403 FORBIDDEN si no es del equipo ni quien lo reportó. */
@@ -80,16 +118,21 @@ function leerAtencion(ticket, usuario) {
   return {
     ticket: resumirTicket(ticket),
     espera: leerEspera(ticket),
+    tiempos: leerTiempos(ticket),
+    desenlace: leerDesenlace(ticket),
     bitacora: leerBitacora(ticket, permisos),
     permisos,
   }
 }
 
 /**
- * Atención de un ticket (HU-5 · 5.1, p25): { ticket, espera, bitacora: [{ id, tipo, mensaje, creadoEn, autor }],
- * permisos: { verInternas, comentar, notaInterna, transiciones } }. `espera` es { motivo, retornoEstimado, desde,
- * retornoVencido } mientras el ticket está en espera y null si no. El equipo de atención lee toda la bitácora; quien
- * reportó el ticket solo recibe los comentarios públicos. Falla con 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
+ * Atención de un ticket (HU-5 · 5.1, p25): { ticket, espera, tiempos, desenlace, bitacora: [{ id, tipo, mensaje,
+ * creadoEn, autor }], permisos: { verInternas, comentar, notaInterna, transiciones, cerrar } }.
+ * - `espera`: { motivo, retornoEstimado, desde, retornoVencido } mientras el ticket está en espera; si no, null.
+ * - `tiempos`: { totalMs, enEsperaMs, atencionMs, esperadoHoras, dentroDelPlazo }, hasta el cierre o hasta ahora.
+ * - `desenlace`: { solucion, cerradoEn, cerradoPor } de un ticket cerrado; si no, null.
+ * El equipo de atención lee toda la bitácora; quien reportó el ticket solo recibe los comentarios públicos. Falla con
+ * 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
  */
 export function obtenerAtencion(codigo, usuarioId) {
   return simulateRequest(() => {
@@ -149,10 +192,11 @@ function transicionInvalida(ticket, estado) {
 }
 
 /**
- * Deja el nuevo estado en el historial, con su autor, su momento y, si es una espera, su motivo y su fecha estimada de
- * retorno, y en el ticket. Devuelve el ticket actualizado.
+ * Deja el nuevo estado en el historial, con su autor, su momento y lo propio de ese estado (el motivo y la fecha
+ * estimada de retorno de una espera, o la solución de un cierre), y en el ticket, que al cerrarse toma esa misma fecha
+ * de cierre. Devuelve el ticket actualizado.
  */
-function registrarEstado(ticket, estado, usuario, { motivo = null, retornoEstimado = null } = {}) {
+function registrarEstado(ticket, estado, usuario, { motivo = null, retornoEstimado = null, solucion = null } = {}) {
   const ahora = new Date().toISOString()
   historialRepository.insert({
     id: nextId('his', historialRepository.findAll()),
@@ -163,10 +207,10 @@ function registrarEstado(ticket, estado, usuario, { motivo = null, retornoEstima
     autorId: usuario.id,
     motivo,
     retornoEstimado,
-    solucion: null,
+    solucion,
     creadoEn: ahora,
   })
-  return estadoDeTicketRepository.guardar(ticket.id, { estado })
+  return estadoDeTicketRepository.guardar(ticket.id, { estado, cerradoEn: estado === 'cerrado' ? ahora : null })
 }
 
 /**
@@ -197,5 +241,36 @@ export function cambiarEstado(codigo, datos, usuarioId) {
         ? { motivo: normalizeTexto(datos.motivo), retornoEstimado: finDelDiaEnLima(datos.retornoEstimado) }
         : {}
     return leerAtencion(registrarEstado(ticket, datos.estado, usuario, detalle), usuario)
+  })
+}
+
+/**
+ * Cierra el ticket (HU-5 · 5.4, p26): `datos` es { solucion }, la descripción de la solución aplicada. Solo lo hace
+ * el técnico que lo tiene asignado, con el ticket en atención o resuelto. Falla con 403 FORBIDDEN, 409
+ * INVALID_TRANSITION o 400 VALIDATION_ERROR. El ticket queda cerrado con su fecha de cierre y la respuesta trae su
+ * desenlace y el tiempo total de atención; desde entonces quien lo reportó puede responder la encuesta (HU-6).
+ */
+export function cerrarTicket(codigo, datos, usuarioId) {
+  return simulateRequest(() => {
+    const usuario = exigirCuentaActiva(usuarioId)
+    const ticket = buscarTicket(codigo)
+    permisosSobre(ticket, usuario)
+    if (!esSuTecnico(ticket, usuario)) {
+      throw new ServiceError(403, 'FORBIDDEN', 'Solo el técnico que tiene asignado el ticket lo cierra.')
+    }
+    if (!sePuedeCerrar(ticket.estado)) {
+      throw new ServiceError(
+        409,
+        'INVALID_TRANSITION',
+        `El ticket está ${formatEstado(ticket.estado).toLowerCase()}: solo se cierra un ticket en atención o resuelto.`,
+        null,
+        { details: { estado: ticket.estado, permitidas: [...transicionesDesde(ticket.estado)] } },
+      )
+    }
+    const errores = validateCierre(datos ?? {})
+    if (hasErrors(errores)) throw validationError(errores)
+
+    const cerrado = registrarEstado(ticket, 'cerrado', usuario, { solucion: normalizeTexto(datos.solucion) })
+    return leerAtencion(cerrado, usuario)
   })
 }

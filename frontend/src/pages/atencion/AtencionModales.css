@@ -68,3 +68,39 @@
 .estado-espera {
   margin-top: var(--space-5);
 }
+
+/* Cierre del ticket (p26): la solución y, debajo, el tiempo total de atención junto al estado final. */
+.cierre {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cierre__resumen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.cierre__dato {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.cierre__tiempo {
+  font-size: var(--font-size-section);
+  line-height: var(--line-height-section);
+  font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 480px) {
+  .cierre__resumen {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

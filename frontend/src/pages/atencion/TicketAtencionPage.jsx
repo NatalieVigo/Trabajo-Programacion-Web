@@ -7,6 +7,8 @@ import { obtenerAtencion } from '../../services/atencion.service.js'
 import { Alert, Button, Card, MessageCard } from '../../shared/components'
 import BitacoraPanel from './BitacoraPanel.jsx'
 import CambiarEstadoModal from './CambiarEstadoModal.jsx'
+import CerrarTicketModal from './CerrarTicketModal.jsx'
+import Desenlace from './Desenlace.jsx'
 import EsperaAviso from './EsperaAviso.jsx'
 import { origenDelTicket } from './origenDelTicket.js'
 import TicketCabecera from './TicketCabecera.jsx'
@@ -21,15 +23,17 @@ function EstadoDeLaPagina({ titulo, children }) {
 /** El ticket ya cargado: la ruta de navegación, su cabecera con las acciones de quien lo atiende y la bitácora. */
 function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
   const { usuario } = useAuth()
-  const { ticket, espera, permisos } = atencion
+  const { ticket, espera, tiempos, desenlace, permisos } = atencion
   const origen = origenDelTicket(usuario.rol)
-  const [cambiandoEstado, setCambiandoEstado] = useState(false)
+  // Diálogo abierto: 'estado' (cambiar estado), 'cierre' (cerrar ticket) o null.
+  const [dialogo, setDialogo] = useState(null)
+  const cerrarDialogo = () => setDialogo(null)
   useDocumentTitle(ticket.codigo)
 
   /** Cierra el diálogo y aplica `siguiente` a la página: la atención actualizada o la orden de volver a cargarla. */
   function alTerminar(siguiente) {
     return (...args) => {
-      setCambiandoEstado(false)
+      cerrarDialogo()
       siguiente(...args)
     }
   }
@@ -46,17 +50,36 @@ function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
       <TicketCabecera
         ticket={ticket}
         acciones={
-          permisos.transiciones.length > 0 && <Button onClick={() => setCambiandoEstado(true)}>Cambiar estado</Button>
+          (permisos.transiciones.length > 0 || permisos.cerrar) && (
+            <>
+              {permisos.transiciones.length > 0 && <Button onClick={() => setDialogo('estado')}>Cambiar estado</Button>}
+              {permisos.cerrar && (
+                <Button variant="secondary" onClick={() => setDialogo('cierre')}>
+                  Cerrar ticket
+                </Button>
+              )}
+            </>
+          )
         }
       />
-      {espera && <EsperaAviso espera={espera} className="ticket-atencion__espera" />}
+      {espera && <EsperaAviso espera={espera} className="ticket-atencion__aviso" />}
+      {desenlace && <Desenlace desenlace={desenlace} tiempos={tiempos} className="ticket-atencion__aviso" />}
       <BitacoraPanel atencion={atencion} onActualizada={onActualizada} onDesactualizada={onDesactualizada} />
-      {cambiandoEstado && (
+      {dialogo === 'estado' && (
         <CambiarEstadoModal
           ticket={ticket}
           transiciones={permisos.transiciones}
-          onClose={() => setCambiandoEstado(false)}
+          onClose={cerrarDialogo}
           onCambiado={alTerminar(onActualizada)}
+          onDesactualizada={alTerminar(onDesactualizada)}
+        />
+      )}
+      {dialogo === 'cierre' && (
+        <CerrarTicketModal
+          ticket={ticket}
+          tiempos={tiempos}
+          onClose={cerrarDialogo}
+          onCerrado={alTerminar(onActualizada)}
           onDesactualizada={alTerminar(onDesactualizada)}
         />
       )}

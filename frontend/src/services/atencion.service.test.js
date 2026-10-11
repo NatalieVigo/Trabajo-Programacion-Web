@@ -3,7 +3,9 @@ import { bitacoraRepository, historialRepository } from '../repositories/atencio
 import { readTable, writeTable } from '../repositories/db.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { ATENCION_MESSAGES } from '../utils/atencionValidators.js'
-import { agregarEntrada, cambiarEstado, obtenerAtencion } from './atencion.service.js'
+import { HORA_MS, MINUTO_MS } from '../utils/duracion.js'
+import { agregarEntrada, cambiarEstado, cerrarTicket, obtenerAtencion } from './atencion.service.js'
+import { obtenerContadores } from './resumen.service.js'
 
 const CAMILA = 'usr-001'
 const JULIO = 'usr-002'
@@ -121,7 +123,7 @@ describe('atencion.service · obtenerAtencion', () => {
 
     expect(bitacora.map(({ id }) => id)).toEqual(['bit-039', 'bit-040', 'bit-042'])
     expect(bitacora.every(({ tipo }) => tipo === 'publico')).toBe(true)
-    expect(permisos).toEqual({ verInternas: false, comentar: true, notaInterna: false, transiciones: [] })
+    expect(permisos).toEqual({ verInternas: false, comentar: true, notaInterna: false, transiciones: [], cerrar: false })
   })
 
   it('el técnico asignado y el supervisor escriben; otro técnico solo lee', async () => {
@@ -463,5 +465,185 @@ describe('atencion.service · cambiarEstado a en espera', () => {
     const { espera } = await cambiarEstado(EN_ESPERA, { estado: 'en_espera', motivo: 'El filtro llegó fallado.', retornoEstimado: '2026-10-09' }, JULIO)
 
     expect(espera).toMatchObject({ motivo: 'El filtro llegó fallado.', desde: '2026-10-02T15:00:00.000Z' })
+  })
+})
+
+describe('atencion.service · tiempos y desenlace', () => {
+  it('el tiempo total de un ticket en curso llega hasta ahora y se compara con el esperado de su categoría', async () => {
+    const { tiempos, desenlace } = await obtenerAtencion(EN_ATENCION, JULIO)
+
+    expect(tiempos).toEqual({
+      totalMs: 42 * HORA_MS + 20 * MINUTO_MS,
+      enEsperaMs: 0,
+      atencionMs: 42 * HORA_MS + 20 * MINUTO_MS,
+      esperadoHoras: 2,
+      dentroDelPlazo: false,
+    })
+    expect(desenlace).toBeNull()
+  })
+
+  it('la espera, también la que sigue en curso, no cuenta para el tiempo esperado', async () => {
+    const { tiempos } = await obtenerAtencion(EN_ESPERA, JULIO)
+
+    expect(tiempos).toEqual({
+      totalMs: 46 * HORA_MS + 40 * MINUTO_MS,
+      enEsperaMs: 24 * HORA_MS + 30 * MINUTO_MS,
+      atencionMs: 22 * HORA_MS + 10 * MINUTO_MS,
+      esperadoHoras: 4,
+      dentroDelPlazo: false,
+    })
+  })
+
+  it('los tiempos de un ticket cerrado van del registro al cierre y ya no cambian', async () => {
+    const fueraDePlazo = await obtenerAtencion('TCK-2026-00130', JULIO)
+    const dentroDePlazo = await obtenerAtencion('TCK-2026-00118', JULIO)
+
+    expect(fueraDePlazo.tiempos).toEqual({
+      totalMs: 30 * HORA_MS + 12 * MINUTO_MS,
+      enEsperaMs: 18 * HORA_MS + 30 * MINUTO_MS,
+      atencionMs: 11 * HORA_MS + 42 * MINUTO_MS,
+      esperadoHoras: 8,
+      dentroDelPlazo: false,
+    })
+    expect(dentroDePlazo.tiempos).toMatchObject({
+      totalMs: 25 * HORA_MS + 35 * MINUTO_MS,
+      atencionMs: 2 * HORA_MS + 5 * MINUTO_MS,
+      esperadoHoras: 4,
+      dentroDelPlazo: true,
+    })
+  })
+
+  it('usa el tiempo esperado de la subcategoría cuando el ticket la tiene', async () => {
+    // «Proyector no enciende» (sub-01) espera 2 h; su categoría, Audiovisuales, 4 h.
+    modificarTicket('tck-00118', { subcategoriaId: 'sub-01' })
+
+    const { tiempos } = await obtenerAtencion('TCK-2026-00118', JULIO)
+
+    expect(tiempos).toMatchObject({ esperadoHoras: 2, dentroDelPlazo: false })
+  })
+
+  it('un ticket cerrado trae su desenlace: la solución, cuándo se cerró y quién lo cerró', async () => {
+    const { desenlace } = await obtenerAtencion(CERRADO, CAMILA)
+
+    expect(desenlace).toEqual({
+      solucion: 'El proveedor reemplazó el receptor inalámbrico. Se sincronizaron los dos micrófonos en una frecuencia libre.',
+      cerradoEn: '2026-09-28T22:20:00.000Z',
+      cerradoPor: { id: JULIO, nombres: 'Julio César', apellidos: 'Paredes Soto', rol: 'tecnico' },
+    })
+  })
+
+  it('ofrece cerrar solo al técnico asignado, con el ticket en atención o resuelto', async () => {
+    expect((await permisosDe(EN_ATENCION, JULIO)).cerrar).toBe(true)
+    expect((await permisosDe(RESUELTO, JULIO)).cerrar).toBe(true)
+    expect((await permisosDe(EN_ESPERA, JULIO)).cerrar).toBe(false)
+    expect((await permisosDe(CERRADO, JULIO)).cerrar).toBe(false)
+    expect((await permisosDe(DE_SANDRA, JULIO)).cerrar).toBe(false)
+    expect((await permisosDe(EN_ATENCION, LUCIA)).cerrar).toBe(false)
+    expect((await permisosDe(EN_ATENCION, CAMILA)).cerrar).toBe(false)
+  })
+})
+
+describe('atencion.service · cerrarTicket', () => {
+  const SOLUCION = 'Se reemplazó el tomacorriente del rack y se verificó el enlace del laboratorio.'
+
+  it('cierra un ticket en atención con su solución y su fecha de cierre', async () => {
+    const { ticket, desenlace, tiempos, permisos } = await cerrarTicket(EN_ATENCION, { solucion: `  ${SOLUCION}  ` }, JULIO)
+
+    expect(ticket).toMatchObject({ codigo: EN_ATENCION, estado: 'cerrado', cerradoEn: AHORA })
+    expect(desenlace).toEqual({
+      solucion: SOLUCION,
+      cerradoEn: AHORA,
+      cerradoPor: { id: JULIO, nombres: 'Julio César', apellidos: 'Paredes Soto', rol: 'tecnico' },
+    })
+    expect(tiempos).toMatchObject({ totalMs: 42 * HORA_MS + 20 * MINUTO_MS, esperadoHoras: 2, dentroDelPlazo: false })
+    expect(permisos).toEqual({ verInternas: true, comentar: false, notaInterna: false, transiciones: [], cerrar: false })
+    expect(ticketsRepository.findById('tck-00144')).toMatchObject({ estado: 'cerrado', cerradoEn: AHORA, asignadoA: JULIO })
+  })
+
+  it('deja el cierre en el historial con la solución, su autor y su momento', async () => {
+    await cerrarTicket(EN_ATENCION, { solucion: SOLUCION }, JULIO)
+
+    expect(historialDe('tck-00144').at(-1)).toEqual({
+      id: 'his-067',
+      ticketId: 'tck-00144',
+      tipo: 'estado',
+      estado: 'cerrado',
+      asignadoA: null,
+      autorId: JULIO,
+      motivo: null,
+      retornoEstimado: null,
+      solucion: SOLUCION,
+      creadoEn: AHORA,
+    })
+  })
+
+  it('también cierra un ticket ya resuelto, y el tiempo total deja de avanzar', async () => {
+    const { ticket, tiempos } = await cerrarTicket(RESUELTO, { solucion: SOLUCION }, JULIO)
+    vi.setSystemTime('2026-10-09T15:00:00.000Z')
+    const despues = await obtenerAtencion(RESUELTO, JULIO)
+
+    expect(ticket.estado).toBe('cerrado')
+    expect(tiempos.totalMs).toBe(97 * HORA_MS)
+    expect(despues.tiempos).toEqual(tiempos)
+  })
+
+  it('al cerrarlo, quien lo reportó tiene un ticket abierto menos y una encuesta pendiente más (HU-6)', async () => {
+    const camila = { id: CAMILA, rol: 'usuario' }
+    const antes = await obtenerContadores(camila)
+
+    await cerrarTicket(EN_ATENCION, { solucion: SOLUCION }, JULIO)
+
+    expect(antes).toMatchObject({ ticketsAbiertos: 3, encuestasPendientes: 1 })
+    expect(await obtenerContadores(camila)).toMatchObject({ ticketsAbiertos: 2, encuestasPendientes: 2 })
+  })
+
+  it('no cierra un ticket en espera, en cola ni ya cerrado', async () => {
+    modificarTicket('tck-00147', { asignadoA: JULIO })
+    const enEspera = await fallo(cerrarTicket(EN_ESPERA, { solucion: SOLUCION }, JULIO))
+    const abierto = await fallo(cerrarTicket(SIN_ASIGNAR, { solucion: SOLUCION }, JULIO))
+    const cerrado = await fallo(cerrarTicket(CERRADO, { solucion: SOLUCION }, JULIO))
+
+    expect(enEspera).toMatchObject({
+      status: 409,
+      code: 'INVALID_TRANSITION',
+      message: 'El ticket está en espera: solo se cierra un ticket en atención o resuelto.',
+      details: { estado: 'en_espera', permitidas: ['en_atencion', 'resuelto'] },
+    })
+    expect(abierto).toMatchObject({ status: 409, code: 'INVALID_TRANSITION' })
+    expect(cerrado).toMatchObject({ status: 409, code: 'INVALID_TRANSITION' })
+    expect(estadoDe('tck-00143')).toBe('en_espera')
+    expect(ticketsRepository.findById('tck-00131').cerradoEn).toBe('2026-09-28T22:20:00.000Z')
+    expect(historialRepository.findAll()).toHaveLength(66)
+  })
+
+  it('solo el técnico que tiene asignado el ticket lo cierra', async () => {
+    const datos = { solucion: SOLUCION }
+
+    expect(await fallo(cerrarTicket(EN_ATENCION, datos, LUCIA))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
+    expect(await fallo(cerrarTicket(EN_ATENCION, datos, CAMILA))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
+    expect(await fallo(cerrarTicket(DE_SANDRA, datos, JULIO))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
+    expect(estadoDe('tck-00144')).toBe('en_atencion')
+  })
+
+  it('exige la descripción de la solución', async () => {
+    const vacia = await fallo(cerrarTicket(EN_ATENCION, { solucion: '  ' }, JULIO))
+    const corta = await fallo(cerrarTicket(EN_ATENCION, { solucion: 'Listo.' }, JULIO))
+    const larga = await fallo(cerrarTicket(EN_ATENCION, { solucion: 'a'.repeat(601) }, JULIO))
+    const sinDatos = await fallo(cerrarTicket(EN_ATENCION, undefined, JULIO))
+
+    expect(vacia).toMatchObject({ status: 400, code: 'VALIDATION_ERROR' })
+    expect(vacia.fieldErrors).toEqual({ solucion: ATENCION_MESSAGES.solucionRequired })
+    expect(corta.fieldErrors).toEqual({ solucion: ATENCION_MESSAGES.solucionMin })
+    expect(larga.fieldErrors).toEqual({ solucion: ATENCION_MESSAGES.solucionMax })
+    expect(sinDatos.fieldErrors).toEqual({ solucion: ATENCION_MESSAGES.solucionRequired })
+    expect(ticketsRepository.findById('tck-00144')).toMatchObject({ estado: 'en_atencion', cerradoEn: null })
+  })
+
+  it('exige una cuenta activa y un ticket que exista', async () => {
+    const datos = { solucion: SOLUCION }
+
+    expect(await fallo(cerrarTicket(EN_ATENCION, datos, 'usr-999'))).toMatchObject({ status: 401 })
+    expect(await fallo(cerrarTicket(EN_ATENCION, datos, RENZO))).toMatchObject({ status: 403 })
+    expect(await fallo(cerrarTicket('TCK-2026-99999', datos, JULIO))).toMatchObject({ status: 404 })
   })
 })
