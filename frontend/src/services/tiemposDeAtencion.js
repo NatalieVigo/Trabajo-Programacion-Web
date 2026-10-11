@@ -36,3 +36,18 @@ export function tiemposDe(estados, ahora = Date.now()) {
   const enEsperaMs = sumar(etapas.filter(({ estado }) => estado === 'en_espera'))
   return { totalMs, enEsperaMs, atencionMs: totalMs - enEsperaMs }
 }
+
+/** Orden en que se muestran las etapas de la atención. El cierre no es una etapa: no acumula tiempo. */
+const ORDEN_DE_ETAPAS = Object.freeze(['abierto', 'reabierto', 'en_atencion', 'en_espera', 'resuelto'])
+
+/**
+ * Tiempo total que el ticket pasó en cada estado, sumando todas las veces que estuvo en él: [{ estado, ms }], solo
+ * con los estados por los que pasó.
+ */
+export function tiempoPorEstado(estados, ahora = Date.now()) {
+  const etapas = etapasDe(estados, ahora)
+  return ORDEN_DE_ETAPAS.filter((estado) => etapas.some((etapa) => etapa.estado === estado)).map((estado) => ({
+    estado,
+    ms: etapas.filter((etapa) => etapa.estado === estado).reduce((total, { ms }) => total + ms, 0),
+  }))
+}

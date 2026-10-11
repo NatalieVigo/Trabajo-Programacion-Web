@@ -18,10 +18,12 @@ export const ROUTES = Object.freeze({
   tecnicoBandeja: '/tecnico',
   tecnicoHistorial: '/tecnico/historial',
   tecnicoTicket: '/tecnico/tickets/:codigo',
+  tecnicoTicketHistorial: '/tecnico/tickets/:codigo/historial',
 
   supervisorTablero: '/supervisor',
   supervisorCola: '/supervisor/cola',
   supervisorTicket: '/supervisor/tickets/:codigo',
+  supervisorTicketHistorial: '/supervisor/tickets/:codigo/historial',
   supervisorCategorias: '/supervisor/categorias',
   supervisorCategoriaNueva: '/supervisor/categorias/nueva',
   supervisorCategoriaEditar: '/supervisor/categorias/:id/editar',
@@ -54,6 +56,10 @@ export const categoriaEditarPath = (id) => generatePath(ROUTES.supervisorCategor
 /** Atención de un ticket (HU-5) en el panel del rol: /tecnico/tickets/TCK-2026-00144 o /supervisor/tickets/TCK-2026-00144. */
 export const ticketAtencionPath = (rol, codigo) =>
   generatePath(rol === 'supervisor' ? ROUTES.supervisorTicket : ROUTES.tecnicoTicket, { codigo })
+
+/** Historial de cambios de un ticket (HU-5) en el panel del rol: /tecnico/tickets/TCK-2026-00130/historial. */
+export const ticketHistorialPath = (rol, codigo) =>
+  generatePath(rol === 'supervisor' ? ROUTES.supervisorTicketHistorial : ROUTES.tecnicoTicketHistorial, { codigo })
 
 /** Recuperación de contraseña con el correo precargado: /recuperar-contrasena?correo=… (sin correo, sin búsqueda). */
 export const recuperarContrasenaPath = (correo) => ({

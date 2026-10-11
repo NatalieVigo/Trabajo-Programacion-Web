@@ -1,0 +1,166 @@
+/* Historial de cambios (p27): la línea de tiempo y, a la derecha, el tiempo por etapa. */
+.historial-cambios__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+/* Línea de tiempo: un punto del color del estado por evento, unidos por una línea vertical. */
+.linea-tiempo {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.linea-tiempo__evento {
+  --linea-tiempo-color: var(--color-primary-dark);
+  position: relative;
+  padding: 0 0 var(--space-5) var(--space-6);
+}
+
+.linea-tiempo__evento:last-child {
+  padding-bottom: 0;
+}
+
+.linea-tiempo__evento::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--linea-tiempo-color);
+}
+
+.linea-tiempo__evento:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.linea-tiempo__evento--abierto {
+  --linea-tiempo-color: var(--color-status-abierto);
+}
+
+.linea-tiempo__evento--en_atencion {
+  --linea-tiempo-color: var(--color-status-en-atencion);
+}
+
+.linea-tiempo__evento--en_espera {
+  --linea-tiempo-color: var(--color-status-en-espera);
+}
+
+.linea-tiempo__evento--resuelto {
+  --linea-tiempo-color: var(--color-status-resuelto);
+}
+
+.linea-tiempo__evento--cerrado {
+  --linea-tiempo-color: var(--color-status-cerrado);
+}
+
+.linea-tiempo__evento--reabierto {
+  --linea-tiempo-color: var(--color-status-reabierto);
+}
+
+.linea-tiempo__titulo {
+  font-weight: var(--font-weight-semibold);
+}
+
+.linea-tiempo__detalle {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.linea-tiempo__nota {
+  margin-block: var(--space-1);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+  overflow-wrap: anywhere;
+}
+
+/* Tiempo por etapa: nombre a la izquierda, duración a la derecha y la barra debajo, del color del estado. */
+.tiempo-etapas__titulo {
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-subtitle);
+}
+
+.tiempo-etapas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tiempo-etapa {
+  --tiempo-etapa-color: var(--color-primary);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.tiempo-etapa--abierto,
+.tiempo-etapa--reabierto {
+  --tiempo-etapa-color: var(--color-status-abierto);
+}
+
+.tiempo-etapa--en_atencion {
+  --tiempo-etapa-color: var(--color-status-en-atencion);
+}
+
+.tiempo-etapa--en_espera {
+  --tiempo-etapa-color: var(--color-status-en-espera);
+}
+
+.tiempo-etapa--resuelto {
+  --tiempo-etapa-color: var(--color-status-resuelto);
+}
+
+.tiempo-etapa__duracion {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tiempo-etapa__barra {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.tiempo-etapa__valor {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: var(--radius);
+  background: var(--tiempo-etapa-color);
+}
+
+.tiempo-etapas__nota {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-warning);
+  border-radius: var(--radius);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-text);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+@media (max-width: 1023px) {
+  .historial-cambios__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
