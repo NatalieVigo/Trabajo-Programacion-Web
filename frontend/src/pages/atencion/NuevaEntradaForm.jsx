@@ -6,14 +6,12 @@ import { MENSAJE_MAX_LENGTH, validateEntrada } from '../../utils/atencionValidat
 import { cx } from '../../utils/classNames.js'
 import { getDisplayName } from '../../utils/format.js'
 import TextArea from '../catalogo/TextArea.jsx'
+import { esTicketDesactualizado } from './erroresDeAtencion.js'
 
 const TIPOS = [
   { value: 'publico', label: 'Comentario público' },
   { value: 'interno', label: 'Nota interna' },
 ]
-
-/** Estados del servicio que indican que el ticket cambió mientras se escribía: ya no existe, se cerró o se reasignó. */
-const TICKET_DESACTUALIZADO = [403, 404, 409]
 
 /**
  * Nueva entrada de la bitácora (HU-5 · 5.1, p25): un comentario público, que también lee quien reportó el ticket, o
@@ -36,7 +34,7 @@ export default function NuevaEntradaForm({ ticket, permisos, onGuardada, onDesac
     } catch (error) {
       if (error.fieldErrors) return error.fieldErrors
       toast.error(error.message)
-      if (TICKET_DESACTUALIZADO.includes(error.status)) onDesactualizada()
+      if (esTicketDesactualizado(error)) onDesactualizada()
     }
   }
 

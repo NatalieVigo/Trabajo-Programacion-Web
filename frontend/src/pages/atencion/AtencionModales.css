@@ -1,0 +1,65 @@
+/* Diálogos de la atención de un ticket (p26). Cada estado es un radio con su explicación en una fila completa. */
+.estado-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.estado-opciones > legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+}
+
+.estado-opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.estado-opcion:hover {
+  border-color: var(--color-primary);
+}
+
+.estado-opcion:has(:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.estado-opcion:has(:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.estado-opcion__radio {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 3px 0 0;
+  accent-color: var(--color-primary);
+}
+
+.estado-opcion__radio:focus-visible {
+  outline: none;
+}
+
+/* Un estado al que el actual no puede pasar (p26): se ve, pero no se elige. */
+.estado-opcion.is-disabled,
+.estado-opcion.is-disabled:hover {
+  border-color: var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.estado-opciones--error .estado-opcion:not(.is-disabled) {
+  border-color: var(--color-danger);
+}
+
+.estado-opciones + .field__message {
+  margin-top: var(--space-2);
+}
