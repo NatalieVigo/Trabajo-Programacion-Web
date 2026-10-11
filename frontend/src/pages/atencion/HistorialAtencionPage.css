@@ -1,0 +1,245 @@
+/* «Historial» del técnico: búsqueda, filtro por estado y los tickets en filas compactas (p24). */
+.historial-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.historial-filtros__busqueda {
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
+.historial-filtros__estado {
+  flex: 0 1 220px;
+}
+
+.historial-conteo {
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+/* Tabla de tickets: por debajo de 768 px cada fila se apila como una tarjeta. */
+.tickets-table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.tickets-table__scroll {
+  overflow-x: auto;
+}
+
+.tickets-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+}
+
+.tickets-table thead th {
+  height: 36px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tickets-table tbody th,
+.tickets-table tbody td {
+  height: var(--table-row-height);
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  font-weight: var(--font-weight-regular);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.tickets-table thead tr,
+.tickets-table tbody tr {
+  background: var(--color-surface);
+}
+
+.tickets-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.tickets-table tbody tr:hover {
+  background: var(--color-bg);
+}
+
+/* Las acciones quedan fijas a la derecha cuando el resto de la tabla se desplaza. */
+.tickets-table .tickets-table__acciones,
+.tickets-table thead th:last-child {
+  position: sticky;
+  right: 0;
+  background: inherit;
+}
+
+/* Prioridad como barra lateral de la fila (p02). */
+.tickets-table__fila {
+  --tickets-table-prioridad: var(--color-border);
+}
+
+.tickets-table__fila > :first-child {
+  box-shadow: inset 3px 0 0 var(--tickets-table-prioridad);
+}
+
+.tickets-table__fila--critica {
+  --tickets-table-prioridad: var(--color-priority-critica);
+}
+
+.tickets-table__fila--alta {
+  --tickets-table-prioridad: var(--color-priority-alta);
+}
+
+.tickets-table__fila--media {
+  --tickets-table-prioridad: var(--color-priority-media);
+}
+
+.tickets-table__fila--baja {
+  --tickets-table-prioridad: var(--color-priority-baja);
+}
+
+.tickets-table__codigo {
+  font-family: var(--font-mono);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+
+.tickets-table__codigo:hover {
+  text-decoration: underline;
+}
+
+.tickets-table .tickets-table__asunto {
+  min-width: 220px;
+  white-space: normal;
+}
+
+.tickets-table__categoria {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.tickets-table__acciones .btn + .btn {
+  margin-left: var(--space-1);
+}
+
+@media (max-width: 767px) {
+  .historial-filtros__busqueda,
+  .historial-filtros__estado {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .tickets-table {
+    border: 0;
+    background: none;
+  }
+
+  .tickets-table__scroll {
+    overflow: visible;
+  }
+
+  .tickets-table table,
+  .tickets-table tbody,
+  .tickets-table tbody tr,
+  .tickets-table tbody th,
+  .tickets-table tbody td {
+    display: block;
+  }
+
+  .tickets-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .tickets-table tbody tr {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--tickets-table-prioridad);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+  }
+
+  .tickets-table tbody tr + tr {
+    margin-top: var(--space-2);
+  }
+
+  .tickets-table tbody tr:hover {
+    background: var(--color-surface);
+  }
+
+  .tickets-table tbody th,
+  .tickets-table tbody td {
+    height: auto;
+    padding: var(--space-1) 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .tickets-table__fila > :first-child {
+    box-shadow: none;
+  }
+
+  .tickets-table td[data-label] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+
+  /* Con dos líneas (asunto y categoría), la etiqueta va arriba y el contenido ocupa todo el ancho. */
+  .tickets-table td.tickets-table__asunto {
+    display: block;
+    text-align: left;
+  }
+
+  .tickets-table td.tickets-table__asunto::before {
+    display: block;
+  }
+
+  .tickets-table td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--color-text-muted);
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+  }
+
+  .tickets-table .tickets-table__acciones {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .tickets-table__acciones .btn + .btn {
+    margin-left: 0;
+  }
+}

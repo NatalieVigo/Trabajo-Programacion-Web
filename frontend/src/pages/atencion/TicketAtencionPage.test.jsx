@@ -594,3 +594,101 @@ describe('TicketAtencionPage · cierre', () => {
     expect(boton('Cerrar ticket')).not.toBeInTheDocument()
   })
 })
+
+describe('TicketAtencionPage · vista consolidada', () => {
+  const seccion = (nombre) => screen.getByRole('region', { name: nombre })
+  const recientes = () =>
+    within(seccion('Historial reciente'))
+      .getAllByRole('listitem')
+      .map((evento) => evento.textContent)
+
+  it('reúne junto a la bitácora los datos del reporte, el ambiente y el historial reciente (p25)', async () => {
+    await renderTicket(EN_ATENCION)
+
+    expect(within(seccion('Datos del reporte')).getAllByRole('term').map((termino) => termino.textContent)).toEqual([
+      'Solicitante',
+      'Teléfono',
+      'Categoría',
+      'Registrado',
+      'Técnico asignado',
+      'Atención esperada',
+    ])
+    expect(within(seccion('Datos del reporte')).getAllByRole('definition').map((dato) => dato.textContent)).toEqual([
+      'Camila Quispe Ramos',
+      '987 654 321',
+      'Redes y conectividad',
+      '29/09/2026 15:40',
+      'Julio Paredes Soto',
+      '2 h',
+    ])
+    expect(seccion('Ambiente')).toHaveTextContent('H-210')
+    expect(seccion('Ambiente')).toHaveTextContent('Laboratorio de Redes')
+    expect(seccion('Ambiente')).toHaveTextContent('Laboratorio · Pabellón H · piso 2 · capacidad 28 · Campus Monterrico')
+    expect(seccion('Ambiente')).toHaveTextContent('2 tickets en curso en este ambiente · sin cierres anteriores')
+    expect(recientes()).toEqual([
+      'Abierto 29/09/2026 15:40',
+      'Asignado a Julio Paredes Soto 29/09/2026 15:50',
+      'En atención 29/09/2026 16:10',
+    ])
+    expect(seccion('Historial reciente')).toHaveTextContent('1 d 18 h 20 min transcurridos')
+    expect(screen.getByRole('link', { name: 'Ver el historial completo' })).toHaveAttribute(
+      'href',
+      '/tecnico/tickets/TCK-2026-00144/historial',
+    )
+    expect(entradas()).toHaveLength(4)
+  })
+
+  it('un ticket en cola indica que no tiene técnico y cuándo fue el último cierre en su ambiente', async () => {
+    await renderTicket(SIN_ASIGNAR, 'supervisor')
+
+    expect(seccion('Datos del reporte')).toHaveTextContent('Técnico asignadoSin asignar')
+    expect(seccion('Ambiente')).toHaveTextContent('A-201')
+    expect(seccion('Ambiente')).toHaveTextContent('Aula · Pabellón A · piso 2 · capacidad 68 · Campus Monterrico')
+    expect(seccion('Ambiente')).toHaveTextContent('1 ticket en curso en este ambiente · último cierre 21/08/2026')
+    expect(recientes()).toEqual(['Abierto 30/09/2026 08:12'])
+  })
+
+  it('muestra la subcategoría y la descripción cuando el registro del ticket las tiene', async () => {
+    modificarTicket('tck-00144', {
+      subcategoriaId: 'sub-05',
+      descripcion: 'No hay red en ninguna computadora del laboratorio.',
+    })
+    await renderTicket(EN_ATENCION)
+
+    expect(seccion('Datos del reporte')).toHaveTextContent('SubcategoríaPunto de red caído')
+    expect(seccion('Datos del reporte')).toHaveTextContent('«No hay red en ninguna computadora del laboratorio.»')
+  })
+
+  it('un ticket cerrado reúne el reporte, la bitácora y el desenlace, y solo se consulta', async () => {
+    await renderTicket(CERRADO)
+
+    expect(seccion('Desenlace')).toHaveTextContent(
+      'El proveedor reemplazó el receptor inalámbrico. Se sincronizaron los dos micrófonos en una frecuencia libre.',
+    )
+    expect(seccion('Datos del reporte')).toHaveTextContent('CategoríaAudiovisuales')
+    expect(seccion('Ambiente')).toHaveTextContent('AUD-CEN')
+    expect(entradas()).toHaveLength(4)
+    expect(recientes()).toEqual([
+      'En espera 24/09/2026 11:30',
+      'En atención 28/09/2026 15:00',
+      'Resuelto 28/09/2026 16:40',
+      'Cerrado 28/09/2026 17:20',
+    ])
+    expect(seccion('Historial reciente')).toHaveTextContent('4 d 8 h 50 min de atención en total')
+    expect(formulario()).not.toBeInTheDocument()
+    expect(boton('Cambiar estado')).not.toBeInTheDocument()
+  })
+
+  it('el historial reciente y el desenlace se actualizan al cerrar el ticket', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cerrar ticket'))
+    await user.type(campo('Solución aplicada'), 'Se reemplazó el tomacorriente del rack.')
+    await user.click(within(dialogo('Cerrar TCK-2026-00144')).getByRole('button', { name: 'Cerrar ticket' }))
+
+    expect(await screen.findByRole('region', { name: 'Desenlace' })).toBeInTheDocument()
+    expect(recientes().at(-1)).toBe('Cerrado 01/10/2026 10:00')
+    expect(seccion('Historial reciente')).toHaveTextContent('1 d 18 h 20 min de atención en total')
+    expect(seccion('Ambiente')).toHaveTextContent('1 ticket en curso en este ambiente · último cierre 01/10/2026')
+  })
+})

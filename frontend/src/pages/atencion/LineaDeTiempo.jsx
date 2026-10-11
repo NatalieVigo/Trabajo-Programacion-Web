@@ -1,14 +1,7 @@
 import { cx } from '../../utils/classNames.js'
 import { formatDuracion } from '../../utils/duracion.js'
-import { formatDate, formatDateTime, formatEstado, formatRol, getDisplayName } from '../../utils/format.js'
-
-/** Título del evento: el estado al que pasó el ticket o a quién se asignó. */
-function tituloDe(evento) {
-  if (evento.tipo === 'asignacion') {
-    return evento.asignadoA ? `Asignado a ${getDisplayName(evento.asignadoA)}` : 'Devuelto a la cola'
-  }
-  return formatEstado(evento.estado)
-}
+import { formatDate, formatDateTime, formatRol, getDisplayName } from '../../utils/format.js'
+import { tituloDeEvento } from './eventoDelHistorial.js'
 
 /** Quién lo hizo, con su rol: «Lucía Mendoza Ríos (supervisor)». */
 function autorDe({ autor }) {
@@ -37,7 +30,7 @@ export default function LineaDeTiempo({ eventos, ...rest }) {
             key={evento.id}
             className={cx('linea-tiempo__evento', `linea-tiempo__evento--${evento.estado ?? 'asignacion'}`)}
           >
-            <p className="linea-tiempo__titulo">{tituloDe(evento)}</p>
+            <p className="linea-tiempo__titulo">{tituloDeEvento(evento)}</p>
             <p className="linea-tiempo__detalle">
               <time dateTime={evento.creadoEn}>{formatDateTime(evento.creadoEn)}</time> · {autorDe(evento)}
             </p>

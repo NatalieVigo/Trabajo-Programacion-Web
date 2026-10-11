@@ -4,7 +4,14 @@ import { readTable, writeTable } from '../repositories/db.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { ATENCION_MESSAGES } from '../utils/atencionValidators.js'
 import { HORA_MS, MINUTO_MS } from '../utils/duracion.js'
-import { agregarEntrada, cambiarEstado, cerrarTicket, obtenerAtencion, obtenerHistorial } from './atencion.service.js'
+import {
+  agregarEntrada,
+  cambiarEstado,
+  cerrarTicket,
+  listarAtendidos,
+  obtenerAtencion,
+  obtenerHistorial,
+} from './atencion.service.js'
 import { obtenerContadores } from './resumen.service.js'
 
 const CAMILA = 'usr-001'
@@ -48,22 +55,73 @@ afterEach(() => {
 })
 
 describe('atencion.service · obtenerAtencion', () => {
-  it('devuelve el ticket con los nombres de su categoría, su ambiente y las personas', async () => {
+  it('devuelve los datos del reporte con su categoría, su ambiente y las personas', async () => {
     const { ticket } = await obtenerAtencion(EN_ATENCION, JULIO)
 
     expect(ticket).toEqual({
       id: 'tck-00144',
       codigo: 'TCK-2026-00144',
       asunto: 'Punto de red caído en laboratorio',
+      descripcion: null,
       estado: 'en_atencion',
       prioridad: 'critica',
       creadoEn: '2026-09-29T20:40:00.000Z',
       cerradoEn: null,
       categoria: { id: 'cat-02', nombre: 'Redes y conectividad' },
-      ambiente: { id: 'amb-05', codigo: 'H-210', nombre: 'Laboratorio de Redes' },
-      solicitante: { id: CAMILA, nombres: 'Camila Alejandra', apellidos: 'Quispe Ramos', rol: 'usuario' },
+      subcategoria: null,
+      ambiente: {
+        id: 'amb-05',
+        codigo: 'H-210',
+        nombre: 'Laboratorio de Redes',
+        tipo: 'laboratorio',
+        piso: 2,
+        capacidad: 28,
+        pabellon: 'H',
+        sede: 'Campus Monterrico',
+        ticketsEnCurso: 2,
+        ultimoCierre: null,
+      },
+      solicitante: {
+        id: CAMILA,
+        nombres: 'Camila Alejandra',
+        apellidos: 'Quispe Ramos',
+        rol: 'usuario',
+        telefono: '987654321',
+      },
       tecnico: { id: JULIO, nombres: 'Julio César', apellidos: 'Paredes Soto', rol: 'tecnico' },
     })
+  })
+
+  it('el ambiente indica cuántos tickets siguen en curso en él y cuándo se cerró el último', async () => {
+    const { ticket } = await obtenerAtencion(SIN_ASIGNAR, LUCIA)
+
+    expect(ticket.ambiente).toMatchObject({
+      codigo: 'A-201',
+      tipo: 'aula',
+      pabellon: 'A',
+      ticketsEnCurso: 1,
+      ultimoCierre: '2026-08-21T14:30:00.000Z',
+    })
+  })
+
+  it('incluye la subcategoría y la descripción cuando el registro del ticket (HU-3) las tiene', async () => {
+    modificarTicket('tck-00144', { subcategoriaId: 'sub-05', descripcion: 'No hay red en ninguna computadora.' })
+
+    const { ticket } = await obtenerAtencion(EN_ATENCION, JULIO)
+
+    expect(ticket.subcategoria).toEqual({ id: 'sub-05', nombre: 'Punto de red caído' })
+    expect(ticket.descripcion).toBe('No hay red en ninguna computadora.')
+  })
+
+  it('trae también el historial del ticket, para el resumen de sus últimos cambios', async () => {
+    const { eventos } = await obtenerAtencion(EN_ATENCION, JULIO)
+
+    expect(eventos.map(({ tipo, estado, creadoEn }) => [tipo, estado, creadoEn])).toEqual([
+      ['estado', 'abierto', '2026-09-29T20:40:00.000Z'],
+      ['asignacion', null, '2026-09-29T20:50:00.000Z'],
+      ['estado', 'en_atencion', '2026-09-29T21:10:00.000Z'],
+    ])
+    expect(eventos[1].asignadoA).toMatchObject({ id: JULIO })
   })
 
   it('un ticket en espera trae su motivo, desde cuándo espera y la fecha estimada de retorno', async () => {
@@ -726,5 +784,58 @@ describe('atencion.service · obtenerHistorial', () => {
     expect(await fallo(obtenerHistorial(EN_ATENCION, 'usr-999'))).toMatchObject({ status: 401 })
     expect(await fallo(obtenerHistorial(EN_ATENCION, BLOQUEADO))).toMatchObject({ status: 403 })
     expect(await fallo(obtenerHistorial('TCK-2026-99999', JULIO))).toMatchObject({ status: 404, code: 'TICKET_NOT_FOUND' })
+  })
+})
+
+describe('atencion.service · listarAtendidos', () => {
+  it('devuelve los tickets a cargo del técnico, del de actividad más reciente al más antiguo', async () => {
+    const tickets = await listarAtendidos(JULIO)
+
+    expect(tickets.map(({ codigo, actualizadoEn }) => [codigo, actualizadoEn])).toEqual([
+      ['TCK-2026-00143', '2026-09-30T14:35:00.000Z'],
+      ['TCK-2026-00144', '2026-09-29T21:45:00.000Z'],
+      ['TCK-2026-00141', '2026-09-29T21:12:00.000Z'],
+      ['TCK-2026-00131', '2026-09-28T22:20:00.000Z'],
+      ['TCK-2026-00126', '2026-08-30T15:05:00.000Z'],
+      ['TCK-2026-00118', '2026-08-21T14:30:00.000Z'],
+      ['TCK-2026-00114', '2026-08-18T17:10:00.000Z'],
+      ['TCK-2026-00103', '2026-08-05T16:45:00.000Z'],
+    ])
+    expect(tickets[0]).toEqual({
+      id: 'tck-00143',
+      codigo: 'TCK-2026-00143',
+      asunto: 'Parlantes del auditorio con ruido',
+      estado: 'en_espera',
+      prioridad: 'media',
+      creadoEn: '2026-09-29T16:20:00.000Z',
+      cerradoEn: null,
+      actualizadoEn: '2026-09-30T14:35:00.000Z',
+      categoria: { id: 'cat-01', nombre: 'Audiovisuales' },
+      ambiente: { id: 'amb-09', codigo: 'AUD-CEN' },
+      solicitante: { id: 'usr-006', nombres: 'Milagros', apellidos: 'Ccahuana Ríos', rol: 'usuario' },
+    })
+  })
+
+  it('una entrada de bitácora o un cambio de estado llevan el ticket al inicio de la lista', async () => {
+    await agregarEntrada(RESUELTO, { tipo: 'interno', mensaje: 'Confirmado con la docente.' }, JULIO)
+    expect((await listarAtendidos(JULIO))[0]).toMatchObject({ codigo: RESUELTO, actualizadoEn: AHORA })
+
+    vi.setSystemTime('2026-10-01T16:00:00.000Z')
+    await cambiarEstado(EN_ATENCION, { estado: 'resuelto' }, JULIO)
+    expect((await listarAtendidos(JULIO))[0]).toMatchObject({ codigo: EN_ATENCION, estado: 'resuelto' })
+  })
+
+  it('solo incluye los tickets asignados a ese técnico', async () => {
+    const deSandra = await listarAtendidos('usr-010')
+
+    expect(deSandra.map(({ codigo }) => codigo)).toEqual(['TCK-2026-00138', 'TCK-2026-00122'])
+    modificarTicket('tck-00138', { asignadoA: null })
+    expect(await listarAtendidos('usr-010')).toHaveLength(1)
+  })
+
+  it('solo los técnicos tienen un historial de atención', async () => {
+    expect(await fallo(listarAtendidos(LUCIA))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
+    expect(await fallo(listarAtendidos(CAMILA))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
+    expect(await fallo(listarAtendidos('usr-999'))).toMatchObject({ status: 401, code: 'UNAUTHENTICATED' })
   })
 })
