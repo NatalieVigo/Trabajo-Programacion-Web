@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -6,6 +6,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { obtenerAtencion } from '../../services/atencion.service.js'
 import { Alert, Button, Card, MessageCard } from '../../shared/components'
 import BitacoraPanel from './BitacoraPanel.jsx'
+import CambiarEstadoModal from './CambiarEstadoModal.jsx'
 import { origenDelTicket } from './origenDelTicket.js'
 import TicketCabecera from './TicketCabecera.jsx'
 import './TicketAtencionPage.css'
@@ -16,12 +17,21 @@ function EstadoDeLaPagina({ titulo, children }) {
   return children
 }
 
-/** El ticket ya cargado: la ruta de navegación, su cabecera y la bitácora. */
+/** El ticket ya cargado: la ruta de navegación, su cabecera con las acciones de quien lo atiende y la bitácora. */
 function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
   const { usuario } = useAuth()
-  const { ticket } = atencion
+  const { ticket, permisos } = atencion
   const origen = origenDelTicket(usuario.rol)
+  const [cambiandoEstado, setCambiandoEstado] = useState(false)
   useDocumentTitle(ticket.codigo)
+
+  /** Cierra el diálogo y aplica `siguiente` a la página: la atención actualizada o la orden de volver a cargarla. */
+  function alTerminar(siguiente) {
+    return (...args) => {
+      setCambiandoEstado(false)
+      siguiente(...args)
+    }
+  }
 
   return (
     <div className="ticket-atencion">
@@ -32,8 +42,22 @@ function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
           {ticket.codigo}
         </span>
       </nav>
-      <TicketCabecera ticket={ticket} />
+      <TicketCabecera
+        ticket={ticket}
+        acciones={
+          permisos.transiciones.length > 0 && <Button onClick={() => setCambiandoEstado(true)}>Cambiar estado</Button>
+        }
+      />
       <BitacoraPanel atencion={atencion} onActualizada={onActualizada} onDesactualizada={onDesactualizada} />
+      {cambiandoEstado && (
+        <CambiarEstadoModal
+          ticket={ticket}
+          transiciones={permisos.transiciones}
+          onClose={() => setCambiandoEstado(false)}
+          onCambiado={alTerminar(onActualizada)}
+          onDesactualizada={alTerminar(onDesactualizada)}
+        />
+      )}
     </div>
   )
 }

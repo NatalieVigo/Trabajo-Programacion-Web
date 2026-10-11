@@ -1,7 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { bitacoraRepository } from '../../repositories/atencion.repository.js'
+import { bitacoraRepository, historialRepository } from '../../repositories/atencion.repository.js'
 import { readTable, writeTable } from '../../repositories/db.js'
+import { ticketsRepository } from '../../repositories/tickets.repository.js'
 import { DEMO, renderApp } from '../../test/test-utils.jsx'
 
 const AHORA = '2026-10-01T15:00:00.000Z'
@@ -9,6 +10,7 @@ const PILDORA = { usuario: 'Mis tickets abiertos', tecnico: 'Asignados a mí', s
 
 /** Lo reportó Camila y lo atiende Julio. */
 const EN_ATENCION = 'TCK-2026-00144'
+const RESUELTO = 'TCK-2026-00141'
 const DE_SANDRA = 'TCK-2026-00138'
 const SIN_ASIGNAR = 'TCK-2026-00147'
 const CERRADO = 'TCK-2026-00131'
@@ -18,6 +20,10 @@ const entradas = () => within(lista()).getAllByRole('listitem')
 const formulario = () => screen.queryByRole('form', { name: 'Nueva entrada de la bitácora' })
 const campo = (nombre) => screen.getByRole('textbox', { name: nombre })
 const filtro = () => screen.getByRole('combobox', { name: 'Entradas que se muestran' })
+const etiquetas = () => screen.getByText('Prioridad:').closest('p')
+const boton = (nombre) => screen.queryByRole('button', { name: nombre })
+const dialogo = (nombre) => screen.queryByRole('dialog', { name: nombre })
+const opcion = (nombre) => screen.getByRole('radio', { name: nombre })
 
 /** Abre el ticket en el panel del rol y espera su cabecera y el contador de la cabecera de la aplicación. */
 async function renderTicket(codigo, rol = 'tecnico') {
@@ -27,10 +33,11 @@ async function renderTicket(codigo, rol = 'tecnico') {
   return view
 }
 
-function cerrarTicketEnLaBase(ticketId) {
+/** Cambia un ticket directamente en la base, como si lo hubiera hecho otra persona mientras la página está abierta. */
+function modificarTicket(ticketId, cambios) {
   writeTable(
     'tickets',
-    readTable('tickets').map((ticket) => (ticket.id === ticketId ? { ...ticket, estado: 'cerrado', cerradoEn: AHORA } : ticket)),
+    readTable('tickets').map((ticket) => (ticket.id === ticketId ? { ...ticket, ...cambios } : ticket)),
   )
 }
 
@@ -48,7 +55,7 @@ describe('TicketAtencionPage · bitácora', () => {
     await renderTicket(EN_ATENCION)
 
     expect(screen.getByText('Punto de red caído en laboratorio · Redes y conectividad')).toBeInTheDocument()
-    expect(screen.getByText('Prioridad:').closest('p')).toHaveTextContent('Prioridad: Crítica. Estado: En atención')
+    expect(etiquetas()).toHaveTextContent('Prioridad: Crítica. Estado: En atención')
     expect(screen.getByRole('heading', { level: 2, name: 'Bitácora · 4 entradas' })).toBeInTheDocument()
     expect(entradas()).toHaveLength(4)
     expect(entradas()[0]).toHaveTextContent('Camila Quispe Ramos Usuario · 29/09/2026 15:40')
@@ -139,7 +146,7 @@ describe('TicketAtencionPage · bitácora', () => {
   it('un ticket cerrado solo se lee', async () => {
     await renderTicket(CERRADO)
 
-    expect(screen.getByText('Prioridad:').closest('p')).toHaveTextContent('Estado: Cerrado')
+    expect(etiquetas()).toHaveTextContent('Estado: Cerrado')
     expect(entradas()).toHaveLength(4)
     expect(formulario()).not.toBeInTheDocument()
     expect(screen.getByText('El ticket está cerrado: su bitácora ya no admite entradas.')).toBeInTheDocument()
@@ -182,7 +189,7 @@ describe('TicketAtencionPage · bitácora', () => {
     const { user } = await renderTicket(EN_ATENCION)
 
     await user.type(campo('Comentario público'), 'Ya llegó energía al gabinete.')
-    cerrarTicketEnLaBase('tck-00144')
+    modificarTicket('tck-00144', { estado: 'cerrado', cerradoEn: AHORA })
     await user.click(screen.getByRole('button', { name: 'Publicar comentario' }))
 
     // El mismo mensaje llega como notificación y, ya recargado el ticket, como motivo de la bitácora de solo lectura.
@@ -190,7 +197,7 @@ describe('TicketAtencionPage · bitácora', () => {
       expect(screen.getAllByText('El ticket está cerrado: su bitácora ya no admite entradas.')).toHaveLength(2),
     )
     expect(formulario()).not.toBeInTheDocument()
-    expect(screen.getByText('Prioridad:').closest('p')).toHaveTextContent('Estado: Cerrado')
+    expect(etiquetas()).toHaveTextContent('Estado: Cerrado')
     expect(bitacoraRepository.findAll()).toHaveLength(44)
   })
 
@@ -208,5 +215,136 @@ describe('TicketAtencionPage · bitácora', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'No tienes permiso para ver la atención del ticket' }),
     ).toBeInTheDocument()
+  })
+})
+
+describe('TicketAtencionPage · cambio de estado', () => {
+  const DIALOGO = 'Cambiar estado de TCK-2026-00144'
+
+  it('ofrece «Cambiar estado» solo al técnico que tiene asignado el ticket', async () => {
+    const propio = await renderTicket(EN_ATENCION)
+    expect(boton('Cambiar estado')).toBeInTheDocument()
+    propio.unmount()
+
+    const ajeno = await renderTicket(DE_SANDRA)
+    expect(boton('Cambiar estado')).not.toBeInTheDocument()
+    ajeno.unmount()
+
+    const cerrado = await renderTicket(CERRADO)
+    expect(boton('Cambiar estado')).not.toBeInTheDocument()
+    cerrado.unmount()
+
+    await renderTicket(EN_ATENCION, 'supervisor')
+    expect(boton('Cambiar estado')).not.toBeInTheDocument()
+  })
+
+  it('el diálogo ofrece los cambios que el estado actual admite y deshabilita los demás (p26)', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+
+    expect(dialogo(DIALOGO)).toHaveAccessibleDescription('Estado actual: En atención. Solo se ofrecen los cambios permitidos.')
+    expect(within(dialogo(DIALOGO)).getAllByRole('radio')).toHaveLength(3)
+    expect(opcion('En espera · falta un repuesto o depende de un tercero')).toBeEnabled()
+    expect(opcion('En espera · falta un repuesto o depende de un tercero')).toHaveFocus()
+    expect(opcion('Resuelto · la falla ya no se presenta')).toBeEnabled()
+    expect(opcion('Abierto · no disponible desde En atención')).toBeDisabled()
+    within(dialogo(DIALOGO))
+      .getAllByRole('radio')
+      .forEach((radio) => expect(radio).not.toBeChecked())
+  })
+
+  it('guarda el nuevo estado, lo muestra en la cabecera y lo notifica', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+    await user.click(opcion('Resuelto · la falla ya no se presenta'))
+    await user.click(boton('Guardar estado'))
+
+    expect(await screen.findByText('Estado actualizado: Resuelto.')).toBeInTheDocument()
+    expect(dialogo(DIALOGO)).not.toBeInTheDocument()
+    expect(etiquetas()).toHaveTextContent('Estado: Resuelto')
+    expect(ticketsRepository.findById('tck-00144')).toMatchObject({ estado: 'resuelto', cerradoEn: null })
+    expect(historialRepository.findAll({ ticketId: 'tck-00144' }).at(-1)).toMatchObject({
+      tipo: 'estado',
+      estado: 'resuelto',
+      autorId: DEMO.tecnico,
+      creadoEn: AHORA,
+    })
+  })
+
+  it('sin elegir un estado lo señala y no cambia nada', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+    await user.click(boton('Guardar estado'))
+
+    expect(within(dialogo(DIALOGO)).getByRole('group', { name: 'Nuevo estado' })).toHaveAccessibleDescription(
+      'Elige el nuevo estado.',
+    )
+    expect(opcion('En espera · falta un repuesto o depende de un tercero')).toHaveFocus()
+    expect(ticketsRepository.findById('tck-00144').estado).toBe('en_atencion')
+    expect(historialRepository.findAll()).toHaveLength(66)
+  })
+
+  it('con un solo cambio posible ya viene elegido', async () => {
+    const { user } = await renderTicket(RESUELTO)
+
+    await user.click(boton('Cambiar estado'))
+    expect(opcion('En atención · estás trabajando en la falla')).toBeChecked()
+    expect(opcion('En espera · no disponible desde Resuelto')).toBeDisabled()
+    await user.click(boton('Guardar estado'))
+
+    expect(await screen.findByText('Estado actualizado: En atención.')).toBeInTheDocument()
+    expect(etiquetas()).toHaveTextContent('Estado: En atención')
+  })
+
+  it('cancelar con un estado elegido pide confirmación antes de descartarlo', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+    await user.click(opcion('Resuelto · la falla ya no se presenta'))
+    await user.click(boton('Cancelar'))
+    await user.click(
+      within(await screen.findByRole('alertdialog', { name: '¿Descartar los cambios?' })).getByRole('button', {
+        name: 'Seguir editando',
+      }),
+    )
+    expect(opcion('Resuelto · la falla ya no se presenta')).toBeChecked()
+
+    await user.click(boton('Cancelar'))
+    await user.click(
+      within(await screen.findByRole('alertdialog', { name: '¿Descartar los cambios?' })).getByRole('button', {
+        name: 'Descartar',
+      }),
+    )
+    expect(dialogo(DIALOGO)).not.toBeInTheDocument()
+    expect(etiquetas()).toHaveTextContent('Estado: En atención')
+    expect(ticketsRepository.findById('tck-00144').estado).toBe('en_atencion')
+  })
+
+  it('sin nada elegido se cierra sin preguntar', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+    await user.click(boton('Cancelar'))
+
+    expect(dialogo(DIALOGO)).not.toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(boton('Cambiar estado')).toHaveFocus()
+  })
+
+  it('si el ticket cambió de estado mientras tanto, lo avisa y vuelve a cargarlo', async () => {
+    const { user } = await renderTicket(EN_ATENCION)
+
+    await user.click(boton('Cambiar estado'))
+    modificarTicket('tck-00144', { estado: 'resuelto' })
+    await user.click(opcion('En espera · falta un repuesto o depende de un tercero'))
+    await user.click(boton('Guardar estado'))
+
+    expect(await screen.findByText('El ticket está resuelto y no admite el cambio a «En espera».')).toBeInTheDocument()
+    await waitFor(() => expect(etiquetas()).toHaveTextContent('Estado: Resuelto'))
+    expect(dialogo(DIALOGO)).not.toBeInTheDocument()
+    expect(historialRepository.findAll()).toHaveLength(66)
   })
 })

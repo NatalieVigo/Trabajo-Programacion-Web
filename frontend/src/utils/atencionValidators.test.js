@@ -3,6 +3,7 @@ import {
   ATENCION_MESSAGES,
   MENSAJE_MAX_LENGTH,
   normalizeTexto,
+  validateCambioEstado,
   validateEntrada,
   validateMensaje,
   validateTipoEntrada,
@@ -42,5 +43,15 @@ describe('atencionValidators · entrada de la bitácora', () => {
       tipo: ATENCION_MESSAGES.tipoRequired,
       mensaje: ATENCION_MESSAGES.mensajeRequired,
     })
+  })
+})
+
+describe('atencionValidators · cambio de estado', () => {
+  it('exige elegir un estado que exista', () => {
+    expect(validateCambioEstado({ estado: 'en_espera' })).toEqual({})
+    expect(validateCambioEstado({ estado: 'cerrado' })).toEqual({})
+    expect(validateCambioEstado({ estado: '' })).toEqual({ estado: ATENCION_MESSAGES.estadoRequired })
+    expect(validateCambioEstado({ estado: 'archivado' })).toEqual({ estado: 'Elige el nuevo estado.' })
+    expect(validateCambioEstado({})).toEqual({ estado: ATENCION_MESSAGES.estadoRequired })
   })
 })

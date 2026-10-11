@@ -2,6 +2,7 @@
  * Reglas de validación de la atención de tickets (HU-5). Igual que validators.js, la interfaz las aplica campo a campo
  * y los servicios las vuelven a aplicar antes de escribir. Cada función devuelve el mensaje de error o null.
  */
+import { ESTADOS } from './estadosTicket.js'
 
 /** Tipos de entrada de la bitácora: comentario público (lo ve quien reportó) o nota interna (solo el equipo). */
 export const TIPOS_ENTRADA = Object.freeze(['publico', 'interno'])
@@ -12,6 +13,7 @@ export const ATENCION_MESSAGES = Object.freeze({
   tipoRequired: 'Elige si es un comentario público o una nota interna.',
   mensajeRequired: 'Escribe un mensaje antes de guardar.',
   mensajeMax: `Usa como máximo ${MENSAJE_MAX_LENGTH} caracteres.`,
+  estadoRequired: 'Elige el nuevo estado.',
 })
 
 const asText = (value) => (typeof value === 'string' ? value : '')
@@ -42,4 +44,13 @@ export function validateEntrada(values) {
     tipo: validateTipoEntrada(values.tipo),
     mensaje: validateMensaje(values.mensaje),
   })
+}
+
+export function validateNuevoEstado(value) {
+  return ESTADOS.includes(value) ? null : ATENCION_MESSAGES.estadoRequired
+}
+
+/** Valida un cambio de estado (p26): el estado al que pasa el ticket. Si el actual lo admite lo decide el servicio. */
+export function validateCambioEstado(values) {
+  return soloErrores({ estado: validateNuevoEstado(values.estado) })
 }

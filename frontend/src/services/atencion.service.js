@@ -1,11 +1,13 @@
-import { bitacoraRepository } from '../repositories/atencion.repository.js'
+import { bitacoraRepository, estadoDeTicketRepository, historialRepository } from '../repositories/atencion.repository.js'
 import { ambientesRepository, categoriasRepository } from '../repositories/catalogo.repository.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
-import { normalizeTexto, validateEntrada } from '../utils/atencionValidators.js'
+import { normalizeTexto, validateCambioEstado, validateEntrada } from '../utils/atencionValidators.js'
+import { esTransicionValida, transicionesDesde } from '../utils/estadosTicket.js'
+import { formatEstado } from '../utils/format.js'
 import { nextId } from '../utils/ids.js'
 import { hasErrors } from '../utils/validators.js'
-import { exigirCuentaActiva, permisosSobre } from './atencionAcceso.js'
+import { esSuTecnico, exigirCuentaActiva, permisosSobre } from './atencionAcceso.js'
 import { simulateRequest } from './request.js'
 import { ServiceError, validationError } from './ServiceError.js'
 
@@ -64,8 +66,8 @@ function leerAtencion(ticket, usuario) {
 
 /**
  * Atención de un ticket (HU-5 · 5.1, p25): { ticket, bitacora: [{ id, tipo, mensaje, creadoEn, autor }], permisos:
- * { verInternas, comentar, notaInterna } }. El equipo de atención lee toda la bitácora; quien reportó el ticket solo
- * recibe los comentarios públicos. Falla con 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
+ * { verInternas, comentar, notaInterna, transiciones } }. El equipo de atención lee toda la bitácora; quien reportó
+ * el ticket solo recibe los comentarios públicos. Falla con 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
  */
 export function obtenerAtencion(codigo, usuarioId) {
   return simulateRequest(() => {
@@ -110,5 +112,56 @@ export function agregarEntrada(codigo, datos, usuarioId) {
       creadoEn: new Date().toISOString(),
     })
     return leerAtencion(ticket, usuario)
+  })
+}
+
+/** 409 del cambio de estado que el estado actual del ticket no admite; `details` trae los que sí admite. */
+function transicionInvalida(ticket, estado) {
+  return new ServiceError(
+    409,
+    'INVALID_TRANSITION',
+    `El ticket está ${formatEstado(ticket.estado).toLowerCase()} y no admite el cambio a «${formatEstado(estado)}».`,
+    null,
+    { details: { estado: ticket.estado, permitidas: [...transicionesDesde(ticket.estado)] } },
+  )
+}
+
+/** Deja el nuevo estado en el historial, con su autor y su momento, y en el ticket. Devuelve el ticket actualizado. */
+function registrarEstado(ticket, estado, usuario) {
+  const ahora = new Date().toISOString()
+  historialRepository.insert({
+    id: nextId('his', historialRepository.findAll()),
+    ticketId: ticket.id,
+    tipo: 'estado',
+    estado,
+    asignadoA: null,
+    autorId: usuario.id,
+    motivo: null,
+    retornoEstimado: null,
+    solucion: null,
+    creadoEn: ahora,
+  })
+  return estadoDeTicketRepository.guardar(ticket.id, { estado })
+}
+
+/**
+ * Cambia el estado del ticket (HU-5 · 5.2, p26): `datos` es { estado }. Solo lo hace el técnico que lo tiene asignado
+ * y solo a un estado que el actual admita (utils/estadosTicket.js). Falla con 403 FORBIDDEN, 400 VALIDATION_ERROR o
+ * 409 INVALID_TRANSITION, con details: { estado, permitidas }. El cambio queda en el historial y se devuelve la
+ * atención actualizada.
+ */
+export function cambiarEstado(codigo, datos, usuarioId) {
+  return simulateRequest(() => {
+    const usuario = exigirCuentaActiva(usuarioId)
+    const ticket = buscarTicket(codigo)
+    permisosSobre(ticket, usuario)
+    if (!esSuTecnico(ticket, usuario)) {
+      throw new ServiceError(403, 'FORBIDDEN', 'Solo el técnico que tiene asignado el ticket cambia su estado.')
+    }
+    const errores = validateCambioEstado(datos ?? {})
+    if (hasErrors(errores)) throw validationError(errores)
+    if (!esTransicionValida(ticket.estado, datos.estado)) throw transicionInvalida(ticket, datos.estado)
+
+    return leerAtencion(registrarEstado(ticket, datos.estado, usuario), usuario)
   })
 }
