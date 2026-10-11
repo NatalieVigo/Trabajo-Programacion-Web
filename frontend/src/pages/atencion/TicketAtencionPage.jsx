@@ -3,22 +3,18 @@ import { Link, useParams } from 'react-router-dom'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
+import { ticketHistorialPath } from '../../routes/routePaths.js'
 import { obtenerAtencion } from '../../services/atencion.service.js'
-import { Alert, Button, Card, MessageCard } from '../../shared/components'
+import { Button } from '../../shared/components'
 import BitacoraPanel from './BitacoraPanel.jsx'
 import CambiarEstadoModal from './CambiarEstadoModal.jsx'
+import CargaDelTicket from './CargaDelTicket.jsx'
 import CerrarTicketModal from './CerrarTicketModal.jsx'
 import Desenlace from './Desenlace.jsx'
 import EsperaAviso from './EsperaAviso.jsx'
 import { origenDelTicket } from './origenDelTicket.js'
 import TicketCabecera from './TicketCabecera.jsx'
 import './TicketAtencionPage.css'
-
-/** Contenido mientras no hay ticket que mostrar, con el título de pestaña que le corresponde. */
-function EstadoDeLaPagina({ titulo, children }) {
-  useDocumentTitle(titulo)
-  return children
-}
 
 /** El ticket ya cargado: la ruta de navegación, su cabecera con las acciones de quien lo atiende y la bitácora. */
 function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
@@ -50,16 +46,17 @@ function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
       <TicketCabecera
         ticket={ticket}
         acciones={
-          (permisos.transiciones.length > 0 || permisos.cerrar) && (
-            <>
-              {permisos.transiciones.length > 0 && <Button onClick={() => setDialogo('estado')}>Cambiar estado</Button>}
-              {permisos.cerrar && (
-                <Button variant="secondary" onClick={() => setDialogo('cierre')}>
-                  Cerrar ticket
-                </Button>
-              )}
-            </>
-          )
+          <>
+            {permisos.transiciones.length > 0 && <Button onClick={() => setDialogo('estado')}>Cambiar estado</Button>}
+            {permisos.cerrar && (
+              <Button variant="secondary" onClick={() => setDialogo('cierre')}>
+                Cerrar ticket
+              </Button>
+            )}
+            <Button variant="tertiary" to={ticketHistorialPath(usuario.rol, ticket.codigo)}>
+              Historial
+            </Button>
+          </>
         }
       />
       {espera && <EsperaAviso espera={espera} className="ticket-atencion__aviso" />}
@@ -96,47 +93,9 @@ export default function TicketAtencionPage() {
   const { usuario } = useAuth()
   const cargar = useCallback(() => obtenerAtencion(codigo, usuario.id), [codigo, usuario.id])
   const { status, data, error, reload, updateData } = useAsyncData(cargar)
-  const origen = origenDelTicket(usuario.rol)
 
-  if (status === 'loading') {
-    return (
-      <EstadoDeLaPagina titulo="Ticket">
-        <Card aria-busy="true">
-          <p role="status" className="text-muted">
-            Cargando el ticket…
-          </p>
-        </Card>
-      </EstadoDeLaPagina>
-    )
-  }
-  if (status === 'error' && error.code === 'TICKET_NOT_FOUND') {
-    return (
-      <EstadoDeLaPagina titulo="Ticket no encontrado">
-        <MessageCard
-          code="404"
-          title={`No encontramos el ticket ${codigo.toUpperCase()}`}
-          description="Revisa el código: los tickets se identifican como TCK-2026-00147."
-          actions={<Button to={origen.to}>Ir a {origen.label}</Button>}
-          focusTitle
-        />
-      </EstadoDeLaPagina>
-    )
-  }
-  if (status === 'error') {
-    return (
-      <EstadoDeLaPagina titulo="Ticket">
-        <Alert
-          variant="error"
-          actions={
-            <Button variant="secondary" size="sm" onClick={reload}>
-              Reintentar
-            </Button>
-          }
-        >
-          No pudimos cargar el ticket.
-        </Alert>
-      </EstadoDeLaPagina>
-    )
+  if (status !== 'success') {
+    return <CargaDelTicket status={status} error={error} codigo={codigo} onReintentar={reload} />
   }
   return (
     <AtencionDeTicket

@@ -22,10 +22,12 @@ export const PRIVATE_ROUTES = Object.freeze(
     { path: ROUTES.tecnicoBandeja, roles: TECNICO, recurso: 'la bandeja del técnico' },
     { path: ROUTES.tecnicoHistorial, roles: TECNICO, recurso: 'el historial de atención' },
     { path: ROUTES.tecnicoTicket, roles: TECNICO, recurso: 'la atención del ticket' },
+    { path: ROUTES.tecnicoTicketHistorial, roles: TECNICO, recurso: 'el historial del ticket' },
 
     { path: ROUTES.supervisorTablero, roles: SUPERVISOR, recurso: 'el tablero de métricas' },
     { path: ROUTES.supervisorCola, roles: SUPERVISOR, recurso: 'la cola de atención' },
     { path: ROUTES.supervisorTicket, roles: SUPERVISOR, recurso: 'la atención del ticket' },
+    { path: ROUTES.supervisorTicketHistorial, roles: SUPERVISOR, recurso: 'el historial del ticket' },
     { path: ROUTES.supervisorCategorias, roles: SUPERVISOR, recurso: 'las categorías de servicio' },
     { path: ROUTES.supervisorCategoriaNueva, roles: SUPERVISOR, recurso: 'el registro de categorías' },
     { path: ROUTES.supervisorCategoriaEditar, roles: SUPERVISOR, recurso: 'la edición de categorías' },

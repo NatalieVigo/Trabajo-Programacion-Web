@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { HORA_MS, MINUTO_MS } from '../utils/duracion.js'
-import { etapasDe, tiemposDe } from './tiemposDeAtencion.js'
+import { etapasDe, tiempoPorEstado, tiemposDe } from './tiemposDeAtencion.js'
 
 const estado = (nombre, creadoEn) => ({ estado: nombre, creadoEn })
 
@@ -77,5 +77,34 @@ describe('tiemposDeAtencion · tiemposDe', () => {
     ]
 
     expect(tiemposDe(reabierto, AHORA).totalMs).toBe(3 * HORA_MS)
+  })
+})
+
+describe('tiemposDeAtencion · tiempoPorEstado', () => {
+  it('da el tiempo en cada estado por el que pasó el ticket, sin el cierre', () => {
+    expect(tiempoPorEstado(CERRADO, AHORA)).toEqual([
+      { estado: 'abierto', ms: 68 * MINUTO_MS },
+      { estado: 'en_atencion', ms: 5 * HORA_MS + 48 * MINUTO_MS },
+      { estado: 'en_espera', ms: 18 * HORA_MS + 30 * MINUTO_MS },
+      { estado: 'resuelto', ms: 4 * HORA_MS + 46 * MINUTO_MS },
+    ])
+    expect(tiempoPorEstado(EN_CURSO, AHORA).map(({ estado }) => estado)).toEqual(['abierto', 'en_atencion'])
+  })
+
+  it('suma las veces que el ticket volvió al mismo estado', () => {
+    const conVueltas = [
+      estado('abierto', '2026-10-01T10:00:00.000Z'),
+      estado('en_atencion', '2026-10-01T11:00:00.000Z'),
+      estado('en_espera', '2026-10-01T12:00:00.000Z'),
+      estado('en_atencion', '2026-10-01T13:00:00.000Z'),
+      estado('resuelto', '2026-10-01T14:30:00.000Z'),
+    ]
+
+    expect(tiempoPorEstado(conVueltas, AHORA)).toEqual([
+      { estado: 'abierto', ms: HORA_MS },
+      { estado: 'en_atencion', ms: 2 * HORA_MS + 30 * MINUTO_MS },
+      { estado: 'en_espera', ms: HORA_MS },
+      { estado: 'resuelto', ms: 30 * MINUTO_MS },
+    ])
   })
 })

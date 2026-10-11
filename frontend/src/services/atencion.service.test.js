@@ -4,7 +4,7 @@ import { readTable, writeTable } from '../repositories/db.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { ATENCION_MESSAGES } from '../utils/atencionValidators.js'
 import { HORA_MS, MINUTO_MS } from '../utils/duracion.js'
-import { agregarEntrada, cambiarEstado, cerrarTicket, obtenerAtencion } from './atencion.service.js'
+import { agregarEntrada, cambiarEstado, cerrarTicket, obtenerAtencion, obtenerHistorial } from './atencion.service.js'
 import { obtenerContadores } from './resumen.service.js'
 
 const CAMILA = 'usr-001'
@@ -645,5 +645,86 @@ describe('atencion.service · cerrarTicket', () => {
     expect(await fallo(cerrarTicket(EN_ATENCION, datos, 'usr-999'))).toMatchObject({ status: 401 })
     expect(await fallo(cerrarTicket(EN_ATENCION, datos, RENZO))).toMatchObject({ status: 403 })
     expect(await fallo(cerrarTicket('TCK-2026-99999', datos, JULIO))).toMatchObject({ status: 404 })
+  })
+})
+
+describe('atencion.service · obtenerHistorial', () => {
+  const IVAN = 'usr-009'
+
+  it('devuelve cada cambio de estado y cada asignación con su autor, su momento y su duración', async () => {
+    const { ticket, eventos } = await obtenerHistorial('TCK-2026-00130', LUCIA)
+
+    expect(ticket).toMatchObject({ codigo: 'TCK-2026-00130', estado: 'cerrado', ambiente: { codigo: 'E-304' } })
+    expect(eventos.map(({ id, tipo, estado, autor, duracionMs, enCurso }) => [id, tipo, estado, autor.id, duracionMs, enCurso])).toEqual([
+      ['his-037', 'estado', 'abierto', CAMILA, 68 * MINUTO_MS, false],
+      ['his-038', 'asignacion', null, LUCIA, null, false],
+      ['his-039', 'estado', 'en_atencion', IVAN, 5 * HORA_MS + 48 * MINUTO_MS, false],
+      ['his-040', 'estado', 'en_espera', IVAN, 18 * HORA_MS + 30 * MINUTO_MS, false],
+      ['his-041', 'estado', 'resuelto', IVAN, 4 * HORA_MS + 46 * MINUTO_MS, false],
+      ['his-042', 'estado', 'cerrado', IVAN, 0, false],
+    ])
+    expect(eventos[1]).toMatchObject({
+      creadoEn: '2026-08-31T14:50:00.000Z',
+      autor: { id: LUCIA, rol: 'supervisor' },
+      asignadoA: { id: IVAN, apellidos: 'Zegarra Pinto', rol: 'tecnico' },
+    })
+    expect(eventos[3]).toMatchObject({
+      motivo: 'Repuesto de canaleta: el almacén lo entrega al día siguiente.',
+      retornoEstimado: '2026-09-02T04:59:59.000Z',
+      asignadoA: null,
+    })
+    expect(eventos[5].solucion).toBe(
+      'Se retiró la extensión dañada y se instaló una canaleta con dos tomacorrientes fijos junto al podio.',
+    )
+  })
+
+  it('resume el tiempo por etapa y los tiempos de la atención', async () => {
+    const { etapas, tiempos } = await obtenerHistorial('TCK-2026-00130', LUCIA)
+
+    expect(etapas).toEqual([
+      { estado: 'abierto', ms: 68 * MINUTO_MS },
+      { estado: 'en_atencion', ms: 5 * HORA_MS + 48 * MINUTO_MS },
+      { estado: 'en_espera', ms: 18 * HORA_MS + 30 * MINUTO_MS },
+      { estado: 'resuelto', ms: 4 * HORA_MS + 46 * MINUTO_MS },
+    ])
+    expect(tiempos).toMatchObject({ totalMs: 30 * HORA_MS + 12 * MINUTO_MS, esperadoHoras: 8, dentroDelPlazo: false })
+  })
+
+  it('en un ticket en curso el estado actual dura hasta ahora', async () => {
+    const { eventos, etapas } = await obtenerHistorial(EN_ATENCION, JULIO)
+
+    expect(eventos.at(-1)).toMatchObject({ estado: 'en_atencion', duracionMs: 41 * HORA_MS + 50 * MINUTO_MS, enCurso: true })
+    expect(etapas).toEqual([
+      { estado: 'abierto', ms: 30 * MINUTO_MS },
+      { estado: 'en_atencion', ms: 41 * HORA_MS + 50 * MINUTO_MS },
+    ])
+  })
+
+  it('incluye los cambios recién hechos, también el cierre con su solución', async () => {
+    await cambiarEstado(EN_ATENCION, { estado: 'resuelto' }, JULIO)
+    vi.setSystemTime('2026-10-01T16:00:00.000Z')
+    await cerrarTicket(EN_ATENCION, { solucion: 'Se reemplazó el tomacorriente del rack.' }, JULIO)
+
+    const { eventos } = await obtenerHistorial(EN_ATENCION, LUCIA)
+
+    expect(eventos.slice(-2).map(({ estado, creadoEn, autor, duracionMs, solucion }) => [estado, creadoEn, autor.id, duracionMs, solucion])).toEqual([
+      ['resuelto', AHORA, JULIO, HORA_MS, null],
+      ['cerrado', '2026-10-01T16:00:00.000Z', JULIO, 0, 'Se reemplazó el tomacorriente del rack.'],
+    ])
+  })
+
+  it('lo consultan el equipo y quien reportó el ticket, sin exponer correos', async () => {
+    const paraQuienReporto = await obtenerHistorial('TCK-2026-00130', CAMILA)
+
+    expect(paraQuienReporto.eventos).toHaveLength(6)
+    expect(JSON.stringify(paraQuienReporto)).not.toContain('ulima.edu.pe')
+    expect((await obtenerHistorial('TCK-2026-00130', JULIO)).eventos).toHaveLength(6)
+    expect(await fallo(obtenerHistorial('TCK-2026-00130', RENZO))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
+  })
+
+  it('exige una cuenta activa y un ticket que exista', async () => {
+    expect(await fallo(obtenerHistorial(EN_ATENCION, 'usr-999'))).toMatchObject({ status: 401 })
+    expect(await fallo(obtenerHistorial(EN_ATENCION, BLOQUEADO))).toMatchObject({ status: 403 })
+    expect(await fallo(obtenerHistorial('TCK-2026-99999', JULIO))).toMatchObject({ status: 404, code: 'TICKET_NOT_FOUND' })
   })
 })

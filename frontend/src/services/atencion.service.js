@@ -18,7 +18,7 @@ import { hasErrors } from '../utils/validators.js'
 import { esSuTecnico, exigirCuentaActiva, permisosSobre } from './atencionAcceso.js'
 import { simulateRequest } from './request.js'
 import { ServiceError, validationError } from './ServiceError.js'
-import { tiemposDe } from './tiemposDeAtencion.js'
+import { etapasDe, tiempoPorEstado, tiemposDe } from './tiemposDeAtencion.js'
 
 /** De la más antigua a la más reciente; si coinciden en el momento, en el orden en que se registraron. */
 const porAntiguedad = (a, b) => a.creadoEn.localeCompare(b.creadoEn) || a.id.localeCompare(b.id)
@@ -272,5 +272,54 @@ export function cerrarTicket(codigo, datos, usuarioId) {
 
     const cerrado = registrarEstado(ticket, 'cerrado', usuario, { solucion: normalizeTexto(datos.solucion) })
     return leerAtencion(cerrado, usuario)
+  })
+}
+
+/**
+ * Eventos del historial con las personas que nombran y, en cada cambio de estado, cuánto estuvo el ticket en ese
+ * estado (`duracionMs`) y si es el actual (`enCurso`). Las asignaciones (HU-4) no tienen duración.
+ */
+function leerEventos(ticket) {
+  const estados = estadosDe(ticket)
+  const etapas = etapasDe(estados)
+  const etapaDe = new Map(estados.map((evento, indice) => [evento.id, etapas[indice]]))
+
+  return historialRepository
+    .findAll({ ticketId: ticket.id })
+    .sort(porAntiguedad)
+    .map((evento) => ({
+      id: evento.id,
+      tipo: evento.tipo,
+      estado: evento.estado,
+      creadoEn: evento.creadoEn,
+      autor: persona(evento.autorId),
+      asignadoA: persona(evento.asignadoA),
+      motivo: evento.motivo,
+      retornoEstimado: evento.retornoEstimado,
+      solucion: evento.solucion,
+      duracionMs: etapaDe.get(evento.id)?.ms ?? null,
+      enCurso: etapaDe.get(evento.id)?.enCurso ?? false,
+    }))
+}
+
+/**
+ * Historial completo de un ticket (HU-5 · 5.5, p27): { ticket, eventos, etapas, tiempos }.
+ * - `eventos`: cada cambio de estado y cada asignación, del más antiguo al más reciente: { id, tipo, estado, creadoEn,
+ *   autor, asignadoA, motivo, retornoEstimado, solucion, duracionMs, enCurso }.
+ * - `etapas`: el tiempo total en cada estado, [{ estado, ms }].
+ * - `tiempos`: los mismos de obtenerAtencion.
+ * Lo consultan el equipo de atención y quien reportó el ticket. Falla con 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
+ */
+export function obtenerHistorial(codigo, usuarioId) {
+  return simulateRequest(() => {
+    const usuario = exigirCuentaActiva(usuarioId)
+    const ticket = buscarTicket(codigo)
+    permisosSobre(ticket, usuario)
+    return {
+      ticket: resumirTicket(ticket),
+      eventos: leerEventos(ticket),
+      etapas: tiempoPorEstado(estadosDe(ticket)),
+      tiempos: leerTiempos(ticket),
+    }
   })
 }
