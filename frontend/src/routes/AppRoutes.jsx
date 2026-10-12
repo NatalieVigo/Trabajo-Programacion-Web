@@ -9,6 +9,7 @@ import CategoriaFormPage from '../pages/catalogo/CategoriaFormPage.jsx'
 import CategoriasPage from '../pages/catalogo/CategoriasPage.jsx'
 import TecnicosCategoriaPage from '../pages/catalogo/TecnicosCategoriaPage.jsx'
 import UbicacionesPage from '../pages/catalogo/UbicacionesPage.jsx'
+import ColaPage from '../pages/cola/ColaPage.jsx'
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage.jsx'
 import InvitationPage from '../pages/auth/InvitationPage.jsx'
 import LoginPage from '../pages/auth/LoginPage.jsx'
@@ -45,7 +46,7 @@ const PRIVATE_PAGES = {
   [ROUTES.tecnicoTicketHistorial]: <HistorialCambiosPage />,
 
   [ROUTES.supervisorTablero]: <SupervisorHomePage />,
-  [ROUTES.supervisorCola]: pendiente('Cola de atención', HISTORIAS.cola),
+  [ROUTES.supervisorCola]: <ColaPage />,
   [ROUTES.supervisorTicket]: <TicketAtencionPage />,
   [ROUTES.supervisorTicketHistorial]: <HistorialCambiosPage />,
   [ROUTES.supervisorCategorias]: <CategoriasPage />,

@@ -32,7 +32,7 @@ export const NAVIGATION = Object.freeze({
     pill: { label: 'Cola sin asignar', contador: 'colaSinAsignar' },
     items: [
       { label: 'Tablero', to: ROUTES.supervisorTablero, end: true },
-      { label: 'Cola de atención', to: ROUTES.supervisorCola },
+      { label: 'Cola de atención', to: ROUTES.supervisorCola, contador: 'colaTotal' },
       { label: 'Categorías', to: ROUTES.supervisorCategorias },
       { label: 'Sedes y ambientes', to: ROUTES.supervisorAmbientes },
       { label: 'Técnicos por categoría', to: ROUTES.supervisorTecnicos },
