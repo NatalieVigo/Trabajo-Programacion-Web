@@ -32,3 +32,12 @@
 .cola-tabla__codigo:hover { text-decoration: underline; }
 .cola-tabla .cola-tabla__asunto { min-width: 190px; }
 .cola-tabla .cola-tabla__categoria { min-width: 155px; color: var(--color-text-muted); }
+.cola-modal { display: grid; gap: var(--space-5); }
+.cola-modal__fieldset { min-width: 0; display: grid; gap: var(--space-2); border: 0; }
+.cola-modal__fieldset legend { margin-bottom: var(--space-2); }
+.cola-modal__tecnico { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 56px; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius); cursor: pointer; }
+.cola-modal__tecnico.is-selected, .cola-modal__prioridad.is-selected { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary); }
+.cola-modal__tecnico:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.cola-modal__tecnico input, .cola-modal__prioridad input { accent-color: var(--color-primary); }
+.cola-modal__carga { margin-left: auto; color: var(--color-text-muted); font-size: var(--font-size-aux); }
+.cola-modal__sin-tecnicos { padding: var(--space-3); color: var(--color-warning-text); }

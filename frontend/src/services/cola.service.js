@@ -1,13 +1,16 @@
 import { categoriasRepository, ambientesRepository, habilitacionesRepository, subcategoriasRepository } from '../repositories/catalogo.repository.js'
+import { updateTables } from '../repositories/db.js'
 import { historialRepository } from '../repositories/atencion.repository.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { HORA_MS } from '../utils/duracion.js'
+import { nextId } from '../utils/ids.js'
 import { getDisplayName } from '../utils/format.js'
 import { esTicketEnCurso } from './ticketsEnCurso.js'
 import { tiemposDe } from './tiemposDeAtencion.js'
 import { simulateRequest } from './request.js'
-import { ServiceError } from './ServiceError.js'
+import { ServiceError, validationError } from './ServiceError.js'
+import { exigirSupervisorActivo } from './supervisorActivo.js'
 
 export const HORAS_POR_PRIORIDAD = Object.freeze({ critica: 2, alta: 8, media: 24, baja: 72 })
 const ESTADOS_COLA = new Set(['abierto', 'reabierto', 'en_atencion', 'en_espera', 'resuelto'])
@@ -87,5 +90,63 @@ export function listarCola(usuarioId) {
       categorias: categoriasRepository.findAll().map(({ id, nombre }) => ({ id, nombre })),
       ambientes: ambientesRepository.findAll().map(({ id, codigo, nombre }) => ({ id, nombre: codigo ?? nombre })),
     }
+  })
+}
+
+function idsValidos(ids) {
+  if (!Array.isArray(ids) || ids.length === 0 || new Set(ids).size !== ids.length) {
+    throw validationError({ tickets: 'Selecciona al menos un ticket, sin repetirlo.' })
+  }
+  return ids
+}
+
+function ticketsDe(db, ids) {
+  return idsValidos(ids).map((id) => {
+    const ticket = db.tickets.find((fila) => fila.id === id)
+    if (!ticket) throw new ServiceError(404, 'TICKET_NOT_FOUND', 'Uno de los tickets ya no existe.')
+    if (!ESTADOS_COLA.has(ticket.estado)) throw new ServiceError(409, 'TICKET_NOT_IN_QUEUE', 'Un ticket seleccionado ya no está en la cola.')
+    return ticket
+  })
+}
+
+function evento(db, ticket, tipo, supervisorId, datos = {}) {
+  db.historial.push({
+    id: nextId('his', db.historial), ticketId: ticket.id, tipo, estado: null,
+    asignadoA: null, autorId: supervisorId, motivo: null, retornoEstimado: null,
+    solucion: null, creadoEn: new Date().toISOString(), ...datos,
+  })
+}
+
+function avisarCambio() {
+  window.dispatchEvent(new Event('mesa-ayuda:datos-actualizados'))
+}
+
+export function asignarTickets(ids, tecnicoId, nota, supervisorId) {
+  return simulateRequest(() => {
+    exigirSupervisorActivo(supervisorId)
+    if (typeof nota !== 'string' || nota.trim().length > 240) throw validationError({ nota: 'La nota debe tener como máximo 240 caracteres.' })
+    const resultado = updateTables(['tickets', 'historial', 'bitacora'], (db) => {
+      const seleccion = ticketsDe(db, ids)
+      const tecnico = db.usuarios.find(({ id }) => id === tecnicoId)
+      if (tecnico?.rol !== 'tecnico' || tecnico.estado !== 'activo') throw validationError({ tecnico: 'Elige un técnico activo.' })
+      const habilitadas = new Set(db.habilitaciones.filter(({ tecnicoId: id }) => id === tecnicoId).map(({ categoriaId }) => categoriaId))
+      if (seleccion.some(({ categoriaId }) => !habilitadas.has(categoriaId))) {
+        throw validationError({ tecnico: 'El técnico no está habilitado para todas las categorías seleccionadas.' })
+      }
+      if (seleccion.some(({ asignadoA }) => asignadoA === tecnicoId)) {
+        throw new ServiceError(409, 'ALREADY_ASSIGNED', 'Uno de los tickets ya está asignado a este técnico.')
+      }
+      for (const ticket of seleccion) {
+        ticket.asignadoA = tecnicoId
+        evento(db, ticket, 'asignacion', supervisorId, { asignadoA: tecnicoId })
+        if (nota.trim()) db.bitacora.push({
+          id: nextId('bit', db.bitacora), ticketId: ticket.id, autorId: supervisorId,
+          tipo: 'interno', mensaje: nota.trim(), creadoEn: new Date().toISOString(),
+        })
+      }
+      return seleccion.length
+    })
+    avisarCambio()
+    return resultado
   })
 }
