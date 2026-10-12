@@ -4,8 +4,8 @@ import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { ticketAtencionPath } from '../../routes/routePaths.js'
-import { asignarTickets, cambiarPrioridadTickets, listarCola } from '../../services/cola.service.js'
-import { Alert, Button, Card, EmptyState, PageHeader, PriorityBadge, SearchIcon, SelectInput, StatusBadge, TextInput, useToast } from '../../shared/components'
+import { asignarTickets, cambiarPrioridadTickets, devolverTickets, listarCola } from '../../services/cola.service.js'
+import { Alert, Button, Card, EmptyState, PageHeader, PriorityBadge, SearchIcon, SelectInput, StatusBadge, TextInput, useConfirm, useToast } from '../../shared/components'
 import { formatEstado, formatPrioridad, pluralize } from '../../utils/format.js'
 import AsignarTecnicoModal from './AsignarTecnicoModal.jsx'
 import CambiarPrioridadModal from './CambiarPrioridadModal.jsx'
@@ -64,22 +64,26 @@ function ResumenEstados({ resumen, filtros, onChange }) {
   )
 }
 
-function TablaCola({ tickets, onAsignar, onPrioridad }) {
+function TablaCola({ tickets, seleccionados, onSeleccion, onAsignar }) {
+  const visibles = tickets.map(({ id }) => id)
+  const todos = visibles.length > 0 && visibles.every((id) => seleccionados.includes(id))
   return (
     <div className="cola-tabla__scroll">
       <table className="cola-tabla" aria-label="Tickets de la cola de atención">
         <thead><tr>
+          <th scope="col"><input type="checkbox" aria-label="Seleccionar todos los tickets visibles" checked={todos} onChange={(event) => onSeleccion(event.target.checked ? [...new Set([...seleccionados, ...visibles])] : seleccionados.filter((id) => !visibles.includes(id)))} /></th>
           <th scope="col">Código</th><th scope="col">Asunto</th><th scope="col">Categoría</th><th scope="col">Ambiente</th><th scope="col">Solicitante</th><th scope="col">Antigüedad</th><th scope="col">Prioridad</th><th scope="col">Estado</th><th scope="col">Técnico</th>
         </tr></thead>
         <tbody>{tickets.map((ticket) => (
           <tr key={ticket.id} className={`cola-tabla__fila cola-tabla__fila--${ticket.prioridad}`}>
+            <td><input type="checkbox" aria-label={`Seleccionar ${ticket.codigo}`} checked={seleccionados.includes(ticket.id)} onChange={(event) => onSeleccion(event.target.checked ? [...seleccionados, ticket.id] : seleccionados.filter((id) => id !== ticket.id))} /></td>
             <th scope="row"><Link className="cola-tabla__codigo" to={ticketAtencionPath('supervisor', ticket.codigo)}>{ticket.codigo}</Link></th>
             <td className="cola-tabla__asunto">{ticket.asunto}</td>
             <td className="cola-tabla__categoria">{ticket.categoria}{ticket.subcategoria && <> · {ticket.subcategoria}</>}</td>
             <td className="text-mono">{ticket.ambiente}</td>
             <td>{ticket.solicitante}</td>
             <td>{antiguedad(ticket.antiguedadMs)}</td>
-            <td><PriorityBadge prioridad={ticket.prioridad} /> <Button variant="tertiary" size="sm" onClick={() => onPrioridad(ticket.id)}>Cambiar prioridad</Button></td>
+            <td><PriorityBadge prioridad={ticket.prioridad} /></td>
             <td><StatusBadge estado={ticket.estado} /></td>
             <td>{ticket.tecnico ?? <Button variant="tertiary" size="sm" onClick={() => onAsignar(ticket.id)} aria-label={`Asignar ${ticket.codigo}`}>Sin asignar</Button>}</td>
           </tr>
@@ -94,17 +98,37 @@ export default function ColaPage() {
   const cargar = useCallback(() => listarCola(usuario.id), [usuario.id])
   const { status, data, reload } = useAsyncData(cargar)
   const toast = useToast()
+  const confirm = useConfirm()
   const [filtros, setFiltros] = useState(FILTROS_COLA)
-  const [ticketAsignar, setTicketAsignar] = useState(null)
-  const [ticketPrioridad, setTicketPrioridad] = useState(null)
+  const [seleccionados, setSeleccionados] = useState([])
+  const [dialogo, setDialogo] = useState(null)
   useDocumentTitle('Cola de atención')
 
   const tickets = data?.tickets ?? []
   const resumen = resumirCola(tickets)
   const visibles = filtrarCola(tickets, filtros)
-  const elegidos = tickets.filter(({ id }) => id === ticketAsignar)
-  const prioridadElegida = tickets.filter(({ id }) => id === ticketPrioridad)
+  const elegidos = tickets.filter(({ id }) => seleccionados.includes(id))
   const activos = filtros.busqueda || filtros.prioridades.length || filtros.estados.length || filtros.soloResueltosHoy || filtros.categoriaId || filtros.ambienteId
+  const cerrar = () => setDialogo(null)
+
+  async function aplicar(accion, mensaje) {
+    const total = await accion()
+    cerrar()
+    setSeleccionados([])
+    reload()
+    toast.success(`${pluralize(total, 'ticket', 'tickets')} ${mensaje(total)}.`)
+  }
+
+  async function devolver() {
+    const ok = await confirm({
+      title: `¿Devolver ${pluralize(elegidos.length, 'ticket', 'tickets')} a la cola?`,
+      message: 'Se quitará el técnico asignado y los tickets volverán al estado Abierto. La bitácora conserva el historial.',
+      confirmText: 'Devolver a la cola', variant: 'destructive',
+    })
+    if (!ok) return
+    try { await aplicar(() => devolverTickets(seleccionados, usuario.id), (total) => total === 1 ? 'devuelto a la cola' : 'devueltos a la cola') }
+    catch (error) { toast.error(error.message); reload() }
+  }
 
   return (
     <div className="cola-page">
@@ -121,20 +145,17 @@ export default function ColaPage() {
           {activos && <Button variant="tertiary" size="sm" onClick={() => setFiltros(FILTROS_COLA)}>Limpiar filtros</Button>}
           <label className="cola-filtros__orden"><span className="visually-hidden">Orden de la cola</span><SelectInput value={filtros.orden} onChange={(event) => setFiltros({ ...filtros, orden: event.target.value })} options={[{ value: 'antiguedad', label: 'Orden: antigüedad' }, { value: 'prioridad', label: 'Orden: prioridad' }, { value: 'recientes', label: 'Orden: recientes' }]} /></label>
         </div>
-        {visibles.length ? <TablaCola tickets={visibles} onAsignar={setTicketAsignar} onPrioridad={setTicketPrioridad} /> : <Card><EmptyState icon={<SearchIcon size={24} />} title={tickets.length ? 'No hay tickets con estos filtros' : 'No hay tickets en la cola'} description={tickets.length ? 'La cola está al día para los filtros seleccionados.' : 'Los tickets nuevos aparecerán aquí.'} action={tickets.length ? <Button onClick={() => setFiltros(FILTROS_COLA)}>Quitar filtros</Button> : undefined} /></Card>}
+        {visibles.length ? <TablaCola tickets={visibles} seleccionados={seleccionados} onSeleccion={setSeleccionados} onAsignar={(id) => { setSeleccionados([id]); setDialogo('asignar') }} /> : <Card><EmptyState icon={<SearchIcon size={24} />} title={tickets.length ? 'No hay tickets con estos filtros' : 'No hay tickets en la cola'} description={tickets.length ? 'La cola está al día para los filtros seleccionados.' : 'Los tickets nuevos aparecerán aquí.'} action={tickets.length ? <Button onClick={() => setFiltros(FILTROS_COLA)}>Quitar filtros</Button> : undefined} /></Card>}
+        {elegidos.length > 0 && <div className="cola-lote" role="region" aria-label="Acciones en lote">
+          <strong>{pluralize(elegidos.length, 'ticket seleccionado', 'tickets seleccionados')}</strong>
+          <Button variant="secondary" size="sm" onClick={() => setDialogo('asignar')}>Asignar a técnico</Button>
+          <Button variant="secondary" size="sm" onClick={() => setDialogo('prioridad')}>Cambiar prioridad</Button>
+          <Button variant="secondary" size="sm" onClick={devolver} disabled={elegidos.some(({ tecnicoId }) => !tecnicoId)} title={elegidos.some(({ tecnicoId }) => !tecnicoId) ? 'Selecciona solo tickets que tengan un técnico asignado' : undefined}>Devolver a la cola</Button>
+          <Button variant="tertiary" size="sm" onClick={() => setSeleccionados([])}>Quitar selección</Button>
+        </div>}
       </>}
-      {ticketAsignar && <AsignarTecnicoModal tickets={elegidos} tecnicos={data.tecnicos} onClose={() => setTicketAsignar(null)} onAsignar={async (tecnicoId, nota) => {
-        const total = await asignarTickets([ticketAsignar], tecnicoId, nota, usuario.id)
-        setTicketAsignar(null)
-        reload()
-        toast.success(`${pluralize(total, 'ticket', 'tickets')} asignado correctamente.`)
-      }} />}
-      {ticketPrioridad && <CambiarPrioridadModal tickets={prioridadElegida} onClose={() => setTicketPrioridad(null)} onGuardar={async (prioridad, motivo) => {
-        await cambiarPrioridadTickets([ticketPrioridad], prioridad, motivo, usuario.id)
-        setTicketPrioridad(null)
-        reload()
-        toast.success('Ticket con prioridad actualizada.')
-      }} />}
+      {dialogo === 'asignar' && <AsignarTecnicoModal tickets={elegidos} tecnicos={data.tecnicos} onClose={cerrar} onAsignar={(tecnicoId, nota) => aplicar(() => asignarTickets(seleccionados, tecnicoId, nota, usuario.id), (total) => total === 1 ? 'asignado correctamente' : 'asignados correctamente')} />}
+      {dialogo === 'prioridad' && <CambiarPrioridadModal tickets={elegidos} onClose={cerrar} onGuardar={(prioridad, motivo) => aplicar(() => cambiarPrioridadTickets(seleccionados, prioridad, motivo, usuario.id), () => 'con prioridad actualizada')} />}
     </div>
   )
 }

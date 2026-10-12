@@ -180,3 +180,25 @@ export function cambiarPrioridadTickets(ids, prioridad, motivo, supervisorId) {
     return resultado
   })
 }
+
+export function devolverTickets(ids, supervisorId) {
+  return simulateRequest(() => {
+    exigirSupervisorActivo(supervisorId)
+    const resultado = updateTables(['tickets', 'historial'], (db) => {
+      const seleccion = ticketsDe(db, ids)
+      if (seleccion.some(({ asignadoA }) => !asignadoA)) {
+        throw new ServiceError(409, 'TICKET_UNASSIGNED', 'Selecciona solo tickets que tengan un técnico asignado.')
+      }
+      for (const ticket of seleccion) {
+        ticket.asignadoA = null
+        ticket.estado = 'abierto'
+        ticket.cerradoEn = null
+        evento(db, ticket, 'asignacion', supervisorId)
+        evento(db, ticket, 'estado', supervisorId, { estado: 'abierto' })
+      }
+      return seleccion.length
+    })
+    avisarCambio()
+    return resultado
+  })
+}
