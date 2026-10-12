@@ -69,6 +69,15 @@ export function writeTable(name, rows) {
   saveDb(db)
 }
 
+/** Guarda varias tablas juntas: una operación en lote no deja cambios parciales. */
+export function updateTables(names, operation) {
+  names.forEach(assertTable)
+  const db = loadDb()
+  const result = operation(db)
+  saveDb(db)
+  return result
+}
+
 export function resetDb() {
   saveDb(createSeedDb())
 }

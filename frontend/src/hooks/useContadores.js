@@ -13,14 +13,17 @@ export function useContadores(usuario) {
 
   useEffect(() => {
     let activo = true
-    obtenerContadores(usuario).then(
+    const actualizar = () => obtenerContadores(usuario).then(
       (resultado) => {
         if (activo) setContadores(resultado)
       },
       () => {},
     )
+    actualizar()
+    window.addEventListener('mesa-ayuda:datos-actualizados', actualizar)
     return () => {
       activo = false
+      window.removeEventListener('mesa-ayuda:datos-actualizados', actualizar)
     }
   }, [usuario, pathname])
 
