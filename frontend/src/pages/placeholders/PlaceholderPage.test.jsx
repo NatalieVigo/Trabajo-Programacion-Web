@@ -17,7 +17,6 @@ describe('PlaceholderPage', () => {
     ['/usuario/tickets', 'usuario', 'Mis tickets', deOtroIntegrante('HU-3 (Registro de tickets)')],
     ['/usuario/encuestas/pendiente', 'usuario', 'Encuesta pendiente', deOtroIntegrante('HU-6 (Encuesta de satisfacción)')],
     ['/usuario/encuestas', 'usuario', 'Mis encuestas', deOtroIntegrante('HU-6 (Encuesta de satisfacción)')],
-    ['/supervisor/cola', 'supervisor', 'Cola de atención', deOtroIntegrante('HU-4 (Cola y asignación)')],
     ['/supervisor/usuarios', 'supervisor', 'Usuarios', deOtroIntegrante('HU-7 (Métricas y usuarios)')],
   ])('%s indica que la sección pendiente corresponde a su historia', async (ruta, rol, titulo, descripcion) => {
     await renderSeccion(ruta, rol)
@@ -30,7 +29,7 @@ describe('PlaceholderPage', () => {
   })
 
   it('ofrece volver a la vista principal del rol', async () => {
-    const { user } = await renderSeccion('/supervisor/cola', 'supervisor')
+    const { user } = await renderSeccion('/supervisor/usuarios', 'supervisor')
 
     await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Ir a Tablero' }))
 

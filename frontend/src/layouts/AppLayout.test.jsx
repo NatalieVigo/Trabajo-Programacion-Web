@@ -101,7 +101,7 @@ describe('AppLayout · menú lateral', () => {
     const menu = screen.getByRole('navigation', { name: 'Supervisión' })
     expect(enlacesDe(menu)).toEqual([
       ['Tablero', '/supervisor'],
-      ['Cola de atención', '/supervisor/cola'],
+      ['Cola de atención 6', '/supervisor/cola'],
       ['Categorías', '/supervisor/categorias'],
       ['Sedes y ambientes', '/supervisor/ambientes'],
       ['Técnicos por categoría', '/supervisor/tecnicos'],

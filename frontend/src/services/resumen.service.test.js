@@ -78,10 +78,10 @@ describe('resumen.service · obtenerContadores', () => {
   })
 
   it('supervisor: tickets de la cola sin asignar', async () => {
-    await expect(obtenerContadores(usuario('usr-003'))).resolves.toEqual({ colaSinAsignar: 2 })
+    await expect(obtenerContadores(usuario('usr-003'))).resolves.toEqual({ colaSinAsignar: 2, colaTotal: 6 })
 
     cambiarTicket('tck-00146', { asignadoA: 'usr-009', estado: 'en_atencion' })
-    await expect(obtenerContadores(usuario('usr-003'))).resolves.toEqual({ colaSinAsignar: 1 })
+    await expect(obtenerContadores(usuario('usr-003'))).resolves.toEqual({ colaSinAsignar: 1, colaTotal: 6 })
   })
 
   it('responde 401 sin un usuario con rol', async () => {

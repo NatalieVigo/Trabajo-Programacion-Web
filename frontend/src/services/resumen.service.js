@@ -50,7 +50,7 @@ const CONTADORES_POR_ROL = {
   },
   supervisor() {
     const enCola = ticketsRepository.findAll((ticket) => ticket.asignadoA === null && ESTADOS_EN_COLA.has(ticket.estado))
-    return { colaSinAsignar: enCola.length }
+    return { colaSinAsignar: enCola.length, colaTotal: ticketsRepository.findAll((ticket) => ticket.estado !== 'cerrado').length }
   },
 }
 
