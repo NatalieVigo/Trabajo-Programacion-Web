@@ -130,6 +130,7 @@ function leerEspera(ticket, ahora = Date.now()) {
  * de su categoría (catálogo de HU-2).
  */
 function tiempoEsperadoDe(ticket) {
+  if (Number.isFinite(ticket.tiempoEsperadoHoras)) return ticket.tiempoEsperadoHoras
   const subcategoria = subcategoriasRepository.findById(ticket.subcategoriaId)
   return (subcategoria ?? categoriasRepository.findById(ticket.categoriaId)).tiempoEsperadoHoras
 }
@@ -340,6 +341,8 @@ function leerEventos(ticket) {
       autor: persona(evento.autorId),
       asignadoA: persona(evento.asignadoA),
       motivo: evento.motivo,
+      prioridadAnterior: evento.prioridadAnterior ?? null,
+      prioridadNueva: evento.prioridadNueva ?? null,
       retornoEstimado: evento.retornoEstimado,
       solucion: evento.solucion,
       duracionMs: etapaDe.get(evento.id)?.ms ?? null,

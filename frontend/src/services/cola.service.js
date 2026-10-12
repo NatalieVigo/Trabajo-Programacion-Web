@@ -150,3 +150,33 @@ export function asignarTickets(ids, tecnicoId, nota, supervisorId) {
     return resultado
   })
 }
+
+export function cambiarPrioridadTickets(ids, prioridad, motivo, supervisorId) {
+  return simulateRequest(() => {
+    exigirSupervisorActivo(supervisorId)
+    if (!Object.hasOwn(HORAS_POR_PRIORIDAD, prioridad)) throw validationError({ prioridad: 'Elige una prioridad válida.' })
+    if (typeof motivo !== 'string' || motivo.trim().length < 10 || motivo.trim().length > 240) {
+      throw validationError({ motivo: 'Explica el motivo con entre 10 y 240 caracteres.' })
+    }
+    const resultado = updateTables(['tickets', 'historial'], (db) => {
+      const seleccion = ticketsDe(db, ids)
+      if (seleccion.every(({ prioridad: actual }) => actual === prioridad)) {
+        throw validationError({ prioridad: 'La nueva prioridad debe ser diferente de la actual.' })
+      }
+      let actualizados = 0
+      for (const ticket of seleccion) {
+        if (ticket.prioridad === prioridad) continue
+        actualizados += 1
+        const anterior = ticket.prioridad
+        ticket.prioridad = prioridad
+        ticket.tiempoEsperadoHoras = HORAS_POR_PRIORIDAD[prioridad]
+        evento(db, ticket, 'prioridad', supervisorId, {
+          prioridadAnterior: anterior, prioridadNueva: prioridad, motivo: motivo.trim(),
+        })
+      }
+      return actualizados
+    })
+    avisarCambio()
+    return resultado
+  })
+}
