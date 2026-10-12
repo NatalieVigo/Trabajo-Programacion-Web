@@ -93,6 +93,17 @@ export function listarCola(usuarioId) {
   })
 }
 
+export function listarBandeja(usuarioId) {
+  return simulateRequest(() => {
+    const tecnico = cuentaActiva(usuarioId, 'tecnico')
+    const ahora = Date.now()
+    return {
+      tecnico: { nombre: nombre(tecnico), especialidades: (tecnico.especialidades ?? []).map((id) => categoriasRepository.findById(id)?.nombre).filter(Boolean) },
+      tickets: ticketsRepository.findAll({ asignadoA: tecnico.id }).map((ticket) => detalle(ticket, ahora)),
+    }
+  })
+}
+
 function idsValidos(ids) {
   if (!Array.isArray(ids) || ids.length === 0 || new Set(ids).size !== ids.length) {
     throw validationError({ tickets: 'Selecciona al menos un ticket, sin repetirlo.' })

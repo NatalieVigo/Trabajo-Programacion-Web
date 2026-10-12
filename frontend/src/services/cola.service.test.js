@@ -3,19 +3,28 @@ import { historialRepository, bitacoraRepository } from '../repositories/atencio
 import { DB_STORAGE_KEY } from '../repositories/db.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { obtenerAtencion } from './atencion.service.js'
-import { asignarTickets, cambiarPrioridadTickets, devolverTickets } from './cola.service.js'
+import { asignarTickets, cambiarPrioridadTickets, devolverTickets, listarBandeja, listarCola } from './cola.service.js'
 
 const SUPERVISOR = 'usr-003'
 const JULIO = 'usr-002'
 const TICKET = 'tck-00147'
 
 describe('cola.service · HU-4', () => {
+  it('la cola es del supervisor y la bandeja solo muestra los tickets del técnico', async () => {
+    const cola = await listarCola(SUPERVISOR)
+    expect(cola.tickets.some(({ id, tecnicoId }) => id === TICKET && tecnicoId === null)).toBe(true)
+    expect((await listarBandeja(JULIO)).tickets).toHaveLength(8)
+    await expect(listarCola(JULIO)).rejects.toMatchObject({ status: 403 })
+    await expect(listarBandeja(SUPERVISOR)).rejects.toMatchObject({ status: 403 })
+  })
+
   it('asigna un ticket habilitado, persiste en localStorage y deja historial y nota interna', async () => {
     await asignarTickets([TICKET], JULIO, 'Hay clase de 10:00 a 13:00.', SUPERVISOR)
     expect(ticketsRepository.findById(TICKET).asignadoA).toBe(JULIO)
     expect(JSON.parse(localStorage.getItem(DB_STORAGE_KEY)).tickets.find(({ id }) => id === TICKET).asignadoA).toBe(JULIO)
     expect(historialRepository.findAll({ ticketId: TICKET }).at(-1)).toMatchObject({ tipo: 'asignacion', asignadoA: JULIO, autorId: SUPERVISOR })
     expect(bitacoraRepository.findAll({ ticketId: TICKET }).at(-1)).toMatchObject({ tipo: 'interno', mensaje: 'Hay clase de 10:00 a 13:00.' })
+    expect((await listarBandeja(JULIO)).tickets.some(({ id }) => id === TICKET)).toBe(true)
   })
 
   it('rechaza un lote sin técnico habilitado para todas las categorías sin guardar cambios parciales', async () => {

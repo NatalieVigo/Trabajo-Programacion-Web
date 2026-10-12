@@ -73,8 +73,8 @@ describe('resumen.service · obtenerContadores', () => {
   })
 
   it('técnico: tickets asignados a él (Julio tiene 8)', async () => {
-    await expect(obtenerContadores(usuario('usr-002'))).resolves.toEqual({ asignados: 8 })
-    await expect(obtenerContadores(usuario('usr-009'))).resolves.toEqual({ asignados: 1 })
+    await expect(obtenerContadores(usuario('usr-002'))).resolves.toEqual({ asignados: 8, enAtencion: 1, enEspera: 1, resueltosHoy: 0 })
+    await expect(obtenerContadores(usuario('usr-009'))).resolves.toEqual({ asignados: 1, enAtencion: 0, enEspera: 0, resueltosHoy: 0 })
   })
 
   it('supervisor: tickets de la cola sin asignar', async () => {
