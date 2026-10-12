@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { ROUTES } from '../routes/routePaths.js'
 import { Badge } from '../shared/components'
 import { cx } from '../utils/classNames.js'
@@ -16,6 +16,7 @@ export default function Sidebar({ id, rol, contadores, open, onClose, menuButton
   const { title, items } = NAVIGATION[rol]
   const panelRef = useRef(null)
   const titleId = useId()
+  const location = useLocation()
 
   useEffect(() => {
     if (!open) return undefined
@@ -44,21 +45,16 @@ export default function Sidebar({ id, rol, contadores, open, onClose, menuButton
           <ul className="app-sidebar__list">
             {items.map((item) => {
               const total = item.contador ? contadores?.[item.contador] : undefined
+              const [path, search = ''] = item.to.split('?')
+              const esFiltroTecnico = rol === 'tecnico' && path === ROUTES.tecnicoBandeja
+              const activoTecnico = location.pathname === path && (search ? location.search === `?${search}` : !location.search)
+              const contenido = <>
+                {item.label}
+                {total > 0 && <>{' '}<Badge className="app-sidebar__badge">{total}</Badge></>}
+              </>
               return (
                 <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    end={item.end}
-                    className={({ isActive }) => cx('app-sidebar__link', isActive && 'is-active')}
-                  >
-                    {item.label}
-                    {total > 0 && (
-                      <>
-                        {' '}
-                        <Badge className="app-sidebar__badge">{total}</Badge>
-                      </>
-                    )}
-                  </NavLink>
+                  {esFiltroTecnico ? <Link to={item.to} aria-current={activoTecnico ? 'page' : undefined} className={cx('app-sidebar__link', activoTecnico && 'is-active')}>{contenido}</Link> : <NavLink to={item.to} end={item.end} className={({ isActive }) => cx('app-sidebar__link', isActive && 'is-active')}>{contenido}</NavLink>}
                 </li>
               )
             })}

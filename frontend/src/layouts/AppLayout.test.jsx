@@ -92,6 +92,9 @@ describe('AppLayout · menú lateral', () => {
     const { unmount } = await renderPanel('/tecnico', 'tecnico')
     expect(enlacesDe(screen.getByRole('navigation', { name: 'Atención' }))).toEqual([
       ['Mi bandeja 8', '/tecnico'],
+      ['En atención 1', '/tecnico?vista=en_atencion'],
+      ['En espera 1', '/tecnico?vista=en_espera'],
+      ['Resueltos hoy', '/tecnico?vista=resueltos_hoy'],
       ['Historial', '/tecnico/historial'],
       ['Mi cuenta', '/mi-cuenta'],
     ])

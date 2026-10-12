@@ -36,15 +36,7 @@ describe('PlaceholderPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Tablero' })).toBeInTheDocument()
   })
 
-  it('las vistas principales del técnico y del supervisor dan la bienvenida sin enlace a sí mismas', async () => {
-    const { unmount } = await renderSeccion('/tecnico', 'tecnico')
-    expect(
-      screen.getByText('Te damos la bienvenida, Julio. Aquí verás los tickets que te asignen y su avance.'),
-    ).toBeInTheDocument()
-    expect(screen.getByText(deOtroIntegrante('HU-4 (Cola y asignación)'))).toBeInTheDocument()
-    expect(within(screen.getByRole('main')).queryByRole('link')).not.toBeInTheDocument()
-    unmount()
-
+  it('la vista principal pendiente del supervisor da la bienvenida sin enlace a sí misma', async () => {
     await renderSeccion('/supervisor', 'supervisor')
     expect(screen.getByText('Te damos la bienvenida, Lucía. Aquí verás las métricas de atención del área.')).toBeInTheDocument()
     expect(screen.getByText(deOtroIntegrante('HU-7 (Métricas y usuarios)'))).toBeInTheDocument()

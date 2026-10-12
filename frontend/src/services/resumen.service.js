@@ -1,5 +1,7 @@
 import { invitacionesRepository } from '../repositories/invitaciones.repository.js'
+import { historialRepository } from '../repositories/atencion.repository.js'
 import { encuestasRepository, ticketsRepository } from '../repositories/tickets.repository.js'
+import { fechaEnLima, hoyEnLima } from '../utils/fechaLima.js'
 import { estadoEfectivo } from './estadoInvitacion.js'
 import { simulateRequest } from './request.js'
 import { ServiceError } from './ServiceError.js'
@@ -46,7 +48,14 @@ const CONTADORES_POR_ROL = {
     }
   },
   tecnico(usuarioId) {
-    return { asignados: ticketsRepository.findAll({ asignadoA: usuarioId }).length }
+    const asignados = ticketsRepository.findAll({ asignadoA: usuarioId })
+    const hoy = hoyEnLima()
+    return {
+      asignados: asignados.length,
+      enAtencion: asignados.filter(({ estado }) => estado === 'en_atencion').length,
+      enEspera: asignados.filter(({ estado }) => estado === 'en_espera').length,
+      resueltosHoy: asignados.filter(({ id, estado }) => estado === 'resuelto' && historialRepository.findAll({ ticketId: id, tipo: 'estado' }).some((evento) => evento.estado === 'resuelto' && fechaEnLima(evento.creadoEn) === hoy)).length,
+    }
   },
   supervisor() {
     const enCola = ticketsRepository.findAll((ticket) => ticket.asignadoA === null && ESTADOS_EN_COLA.has(ticket.estado))

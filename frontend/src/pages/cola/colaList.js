@@ -35,3 +35,21 @@ export function resumirCola(tickets) {
     resueltosHoy: tickets.filter(({ estado, resueltoEn }) => estado === 'resuelto' && resueltoEn && fechaEnLima(resueltoEn) === hoyEnLima()).length,
   }
 }
+
+export function filtrarBandeja(tickets, vista, orden, ahora = Date.now()) {
+  const hoy = hoyEnLima(ahora)
+  const visibles = tickets.filter((ticket) => {
+    if (vista === 'abiertos') return ticket.estado === 'abierto' || ticket.estado === 'reabierto'
+    if (vista === 'criticos') return ticket.prioridad === 'critica'
+    if (vista === 'fuera') return ticket.fueraDePlazo
+    if (vista === 'hoy') return ticket.estado !== 'cerrado' && fechaEnLima(ticket.vencimientoEn) === hoy
+    if (vista === 'en_atencion' || vista === 'en_espera') return ticket.estado === vista
+    if (vista === 'resueltos_hoy') return ticket.estado === 'resuelto' && ticket.resueltoEn && fechaEnLima(ticket.resueltoEn) === hoy
+    return true
+  })
+  return visibles.sort((a, b) => {
+    if (orden === 'antiguedad') return a.creadoEn.localeCompare(b.creadoEn)
+    if (orden === 'recientes') return b.creadoEn.localeCompare(a.creadoEn)
+    return PRIORIDADES.indexOf(a.prioridad) - PRIORIDADES.indexOf(b.prioridad) || a.restanteMs - b.restanteMs
+  })
+}

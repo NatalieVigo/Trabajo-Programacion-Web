@@ -23,6 +23,9 @@ export const NAVIGATION = Object.freeze({
     pill: { label: 'Asignados a mí', contador: 'asignados' },
     items: [
       { label: 'Mi bandeja', to: ROUTES.tecnicoBandeja, end: true, contador: 'asignados' },
+      { label: 'En atención', to: `${ROUTES.tecnicoBandeja}?vista=en_atencion`, contador: 'enAtencion' },
+      { label: 'En espera', to: `${ROUTES.tecnicoBandeja}?vista=en_espera`, contador: 'enEspera' },
+      { label: 'Resueltos hoy', to: `${ROUTES.tecnicoBandeja}?vista=resueltos_hoy`, contador: 'resueltosHoy' },
       { label: 'Historial', to: ROUTES.tecnicoHistorial },
       { label: 'Mi cuenta', to: ROUTES.miCuenta },
     ],
