@@ -28,13 +28,16 @@ export default function LineaDeTiempo({ eventos, ...rest }) {
         return (
           <li
             key={evento.id}
-            className={cx('linea-tiempo__evento', `linea-tiempo__evento--${evento.estado ?? 'asignacion'}`)}
+            className={cx('linea-tiempo__evento', `linea-tiempo__evento--${evento.estado ?? evento.tipo}`)}
           >
             <p className="linea-tiempo__titulo">{tituloDeEvento(evento)}</p>
             <p className="linea-tiempo__detalle">
               <time dateTime={evento.creadoEn}>{formatDateTime(evento.creadoEn)}</time> · {autorDe(evento)}
             </p>
-            {evento.motivo && (
+            {evento.motivo && evento.tipo === 'prioridad' && (
+              <p className="linea-tiempo__nota">Motivo: {evento.motivo}</p>
+            )}
+            {evento.motivo && evento.tipo !== 'prioridad' && (
               <p className="linea-tiempo__nota">
                 Motivo: {evento.motivo} Retorno estimado: {formatDate(evento.retornoEstimado)}.
               </p>

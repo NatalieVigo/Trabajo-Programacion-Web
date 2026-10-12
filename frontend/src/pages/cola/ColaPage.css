@@ -41,3 +41,9 @@
 .cola-modal__tecnico input, .cola-modal__prioridad input { accent-color: var(--color-primary); }
 .cola-modal__carga { margin-left: auto; color: var(--color-text-muted); font-size: var(--font-size-aux); }
 .cola-modal__sin-tecnicos { padding: var(--space-3); color: var(--color-warning-text); }
+.cola-modal__comparacion { display: flex; align-items: end; gap: var(--space-5); }
+.cola-modal__comparacion > div > div { min-height: 30px; margin-top: var(--space-2); }
+.cola-modal__flecha { padding-bottom: var(--space-1); color: var(--color-text-muted); font-size: 24px; }
+.cola-modal__prioridades { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.cola-modal__prioridad { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius); cursor: pointer; }
+@media (max-width: 640px) { .cola-filtros__busqueda, .cola-filtros__select, .cola-filtros__orden { flex-basis: 100%; max-width: none; margin-left: 0; } .cola-lote { position: static; } .cola-modal__tecnico { flex-wrap: wrap; } }

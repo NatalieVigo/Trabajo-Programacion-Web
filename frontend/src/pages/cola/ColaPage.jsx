@@ -4,10 +4,11 @@ import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { ticketAtencionPath } from '../../routes/routePaths.js'
-import { asignarTickets, listarCola } from '../../services/cola.service.js'
+import { asignarTickets, cambiarPrioridadTickets, listarCola } from '../../services/cola.service.js'
 import { Alert, Button, Card, EmptyState, PageHeader, PriorityBadge, SearchIcon, SelectInput, StatusBadge, TextInput, useToast } from '../../shared/components'
 import { formatEstado, formatPrioridad, pluralize } from '../../utils/format.js'
 import AsignarTecnicoModal from './AsignarTecnicoModal.jsx'
+import CambiarPrioridadModal from './CambiarPrioridadModal.jsx'
 import { ESTADOS, FILTROS_COLA, PRIORIDADES, filtrarCola, resumirCola } from './colaList.js'
 import './ColaPage.css'
 
@@ -63,7 +64,7 @@ function ResumenEstados({ resumen, filtros, onChange }) {
   )
 }
 
-function TablaCola({ tickets, onAsignar }) {
+function TablaCola({ tickets, onAsignar, onPrioridad }) {
   return (
     <div className="cola-tabla__scroll">
       <table className="cola-tabla" aria-label="Tickets de la cola de atención">
@@ -78,7 +79,7 @@ function TablaCola({ tickets, onAsignar }) {
             <td className="text-mono">{ticket.ambiente}</td>
             <td>{ticket.solicitante}</td>
             <td>{antiguedad(ticket.antiguedadMs)}</td>
-            <td><PriorityBadge prioridad={ticket.prioridad} /></td>
+            <td><PriorityBadge prioridad={ticket.prioridad} /> <Button variant="tertiary" size="sm" onClick={() => onPrioridad(ticket.id)}>Cambiar prioridad</Button></td>
             <td><StatusBadge estado={ticket.estado} /></td>
             <td>{ticket.tecnico ?? <Button variant="tertiary" size="sm" onClick={() => onAsignar(ticket.id)} aria-label={`Asignar ${ticket.codigo}`}>Sin asignar</Button>}</td>
           </tr>
@@ -95,12 +96,14 @@ export default function ColaPage() {
   const toast = useToast()
   const [filtros, setFiltros] = useState(FILTROS_COLA)
   const [ticketAsignar, setTicketAsignar] = useState(null)
+  const [ticketPrioridad, setTicketPrioridad] = useState(null)
   useDocumentTitle('Cola de atención')
 
   const tickets = data?.tickets ?? []
   const resumen = resumirCola(tickets)
   const visibles = filtrarCola(tickets, filtros)
   const elegidos = tickets.filter(({ id }) => id === ticketAsignar)
+  const prioridadElegida = tickets.filter(({ id }) => id === ticketPrioridad)
   const activos = filtros.busqueda || filtros.prioridades.length || filtros.estados.length || filtros.soloResueltosHoy || filtros.categoriaId || filtros.ambienteId
 
   return (
@@ -118,13 +121,19 @@ export default function ColaPage() {
           {activos && <Button variant="tertiary" size="sm" onClick={() => setFiltros(FILTROS_COLA)}>Limpiar filtros</Button>}
           <label className="cola-filtros__orden"><span className="visually-hidden">Orden de la cola</span><SelectInput value={filtros.orden} onChange={(event) => setFiltros({ ...filtros, orden: event.target.value })} options={[{ value: 'antiguedad', label: 'Orden: antigüedad' }, { value: 'prioridad', label: 'Orden: prioridad' }, { value: 'recientes', label: 'Orden: recientes' }]} /></label>
         </div>
-        {visibles.length ? <TablaCola tickets={visibles} onAsignar={setTicketAsignar} /> : <Card><EmptyState icon={<SearchIcon size={24} />} title={tickets.length ? 'No hay tickets con estos filtros' : 'No hay tickets en la cola'} description={tickets.length ? 'La cola está al día para los filtros seleccionados.' : 'Los tickets nuevos aparecerán aquí.'} action={tickets.length ? <Button onClick={() => setFiltros(FILTROS_COLA)}>Quitar filtros</Button> : undefined} /></Card>}
+        {visibles.length ? <TablaCola tickets={visibles} onAsignar={setTicketAsignar} onPrioridad={setTicketPrioridad} /> : <Card><EmptyState icon={<SearchIcon size={24} />} title={tickets.length ? 'No hay tickets con estos filtros' : 'No hay tickets en la cola'} description={tickets.length ? 'La cola está al día para los filtros seleccionados.' : 'Los tickets nuevos aparecerán aquí.'} action={tickets.length ? <Button onClick={() => setFiltros(FILTROS_COLA)}>Quitar filtros</Button> : undefined} /></Card>}
       </>}
       {ticketAsignar && <AsignarTecnicoModal tickets={elegidos} tecnicos={data.tecnicos} onClose={() => setTicketAsignar(null)} onAsignar={async (tecnicoId, nota) => {
         const total = await asignarTickets([ticketAsignar], tecnicoId, nota, usuario.id)
         setTicketAsignar(null)
         reload()
         toast.success(`${pluralize(total, 'ticket', 'tickets')} asignado correctamente.`)
+      }} />}
+      {ticketPrioridad && <CambiarPrioridadModal tickets={prioridadElegida} onClose={() => setTicketPrioridad(null)} onGuardar={async (prioridad, motivo) => {
+        await cambiarPrioridadTickets([ticketPrioridad], prioridad, motivo, usuario.id)
+        setTicketPrioridad(null)
+        reload()
+        toast.success('Ticket con prioridad actualizada.')
       }} />}
     </div>
   )
