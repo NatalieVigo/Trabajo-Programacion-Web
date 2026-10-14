@@ -16,6 +16,10 @@ export const PRIVATE_ROUTES = Object.freeze(
     { path: ROUTES.usuarioInicio, roles: USUARIO, recurso: 'el inicio del usuario' },
     { path: ROUTES.usuarioNuevoTicket, roles: USUARIO, recurso: 'el registro de tickets' },
     { path: ROUTES.usuarioTickets, roles: USUARIO, recurso: 'los tickets del usuario' },
+    { path: ROUTES.usuarioTicketDetalle, roles: USUARIO, recurso: 'el detalle del ticket' },
+    { path: ROUTES.usuarioTicketConfirmacion, roles: USUARIO, recurso: 'la confirmación del ticket' },
+    
+  
     { path: ROUTES.usuarioEncuestaPendiente, roles: USUARIO, recurso: 'la encuesta pendiente' },
     { path: ROUTES.usuarioEncuestas, roles: USUARIO, recurso: 'las encuestas del usuario' },
 
