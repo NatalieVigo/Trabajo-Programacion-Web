@@ -29,14 +29,23 @@ import RequireAuth from './RequireAuth.jsx'
 import RequireRole from './RequireRole.jsx'
 import { PRIVATE_ROUTES } from './routeAccess.js'
 import { ROUTES } from './routePaths.js'
+/*h3-imports de tickets */
+import { MyTickets } from '../pages/tickets/MyTickets.jsx'   
+import { TicketDetail } from '../pages/tickets/TicketDetail.jsx' 
+import { NewTicket } from '../pages/tickets/NewTicket.jsx'
+import { TicketConfirmation } from '../pages/tickets/TicketConfirmation.jsx' 
 
 const pendiente = (title, historia) => <PlaceholderPage title={title} pendiente={historia} />
 
 /** Página de cada ruta privada. Quién puede verla lo define la tabla de routeAccess.js. */
 const PRIVATE_PAGES = {
   [ROUTES.usuarioInicio]: <UserHomePage />,
-  [ROUTES.usuarioNuevoTicket]: pendiente('Nuevo ticket', HISTORIAS.tickets),
-  [ROUTES.usuarioTickets]: pendiente('Mis tickets', HISTORIAS.tickets),
+
+  [ROUTES.usuarioNuevoTicket]: <NewTicket />,  // <-- Reemplazado-H3
+  [ROUTES.usuarioTickets]: <MyTickets />,      // <-- Reemplazadp-H3
+  [ROUTES.usuarioTicketDetalle]: <TicketDetail />,  //  <--Reemplazdo-H3
+  [ROUTES.usuarioTicketConfirmacion]: <TicketConfirmation />, //<--Reemplazado-H3
+
   [ROUTES.usuarioEncuestaPendiente]: pendiente('Encuesta pendiente', HISTORIAS.encuestas),
   [ROUTES.usuarioEncuestas]: pendiente('Mis encuestas', HISTORIAS.encuestas),
 

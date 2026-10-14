@@ -1,0 +1,315 @@
+/* Contenedor principal */
+.new-ticket-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Rejilla de 2 columnas */
+.new-ticket-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  margin-top: 20px;
+  align-items: start;
+}
+
+/* Tarjeta del formulario principal */
+.main-form-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.ticket-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Filas de 2 campos */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Grupos de entrada */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4b5563;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Campo de Búsqueda para Ambiente */
+.search-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-input-wrapper > *:first-child {
+  flex: 1;
+}
+
+/* Recuadro de Prioridad Sugerida */
+.priority-badge-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* Tags de prioridad */
+.priority-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.priority-tag.crítica,
+.priority-tag.critica {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+
+.priority-tag.alta {
+  background-color: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #ff2b00;
+}
+
+.priority-tag.media {
+  background-color: #fefce8;
+  color: #a16207;
+  border: 1px solid #fde047;
+}
+
+.priority-tag.baja {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.priority-label-text {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Area de texto de Descripción */
+.text-area-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1f2937;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 120px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.text-area-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* Textos de ayuda bajo los campos */
+.field-help-text {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.field-help-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Acciones del formulario (Botones) */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Panel lateral derecho (Sidebar) */
+.info-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.info-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.info-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-list li {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.time-card {
+  background-color: #f0f7ff;
+  border-left: 4px solid #0052cc;
+  border-top: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.time-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 0 0 6px 0;
+}
+
+.time-card p {
+  font-size: 13px;
+  color: #1e3a8a;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Responsivo para pantallas pequeñas */
+@media (max-width: 900px) {
+  .new-ticket-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Rejilla principal: Formulario a la izquierda, Sidebar a la derecha */
+.new-ticket-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px; /* Formulario toma el resto, Sidebar mide 320px */
+  gap: 24px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+/* Tarjeta del Formulario */
+.main-form-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+/* Estilos del Sidebar */
+.info-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.info-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.info-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-list li {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+/* Tarjeta azul inferior */
+.time-card {
+  background-color: #f0f7ff;
+  border-left: 4px solid #0052cc;
+}
+
+.time-card h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0052cc;
+  margin: 0 0 6px 0;
+}
+
+.time-card p {
+  font-size: 13px;
+  color: #1e3a8a;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.file-dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 6px;
+  padding: 18px;
+  text-align: center;
+  background-color: #fafafa;
+  color: #6b7280;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.file-dropzone:hover {
+  border-color: #0052cc;
+  background-color: #f0f7ff;
+}
