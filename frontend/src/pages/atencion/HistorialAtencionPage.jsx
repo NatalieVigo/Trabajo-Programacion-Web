@@ -49,18 +49,24 @@ function TablaDeTickets({ tickets }) {
                 <td data-label="Asunto" className="tickets-table__asunto">
                   {ticket.asunto}
                 </td>
-                <td data-label="Categoría">{ticket.categoria.nombre}</td>
+                <td data-label="Categoría" className="tickets-table__ajustable">
+                  {ticket.categoria.nombre}
+                </td>
                 <td data-label="Ambiente" className="text-mono">
                   {ticket.ambiente.codigo}
                 </td>
-                <td data-label="Solicitante">{getDisplayName(ticket.solicitante)}</td>
+                <td data-label="Solicitante" className="tickets-table__ajustable">
+                  {getDisplayName(ticket.solicitante)}
+                </td>
                 <td data-label="Prioridad">
                   <PriorityBadge prioridad={ticket.prioridad} />
                 </td>
                 <td data-label="Estado">
                   <StatusBadge estado={ticket.estado} />
                 </td>
-                <td data-label="Plazo">{plazoDe(ticket)}</td>
+                <td data-label="Plazo" className="tickets-table__ajustable">
+                  {plazoDe(ticket)}
+                </td>
                 <td className="tickets-table__acciones">
                   <Button
                     variant="tertiary"
