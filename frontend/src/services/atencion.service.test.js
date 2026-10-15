@@ -810,6 +810,7 @@ describe('atencion.service · listarAtendidos', () => {
       creadoEn: '2026-09-29T16:20:00.000Z',
       cerradoEn: null,
       actualizadoEn: '2026-09-30T14:35:00.000Z',
+      dentroDelPlazo: false,
       categoria: { id: 'cat-01', nombre: 'Audiovisuales' },
       ambiente: { id: 'amb-09', codigo: 'AUD-CEN' },
       solicitante: { id: 'usr-006', nombres: 'Milagros', apellidos: 'Ccahuana Ríos', rol: 'usuario' },
