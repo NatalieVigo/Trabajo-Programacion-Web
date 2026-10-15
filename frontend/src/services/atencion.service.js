@@ -383,8 +383,9 @@ function ultimaActividadDe(ticket) {
 
 /**
  * Historial de atención de un técnico (HU-5 · 5.6): los tickets que tiene o tuvo a su cargo, del de actividad más
- * reciente al más antiguo: [{ id, codigo, asunto, estado, prioridad, creadoEn, cerradoEn, actualizadoEn, categoria,
- * ambiente: { id, codigo }, solicitante }]. Falla con 401 o con 403 FORBIDDEN si la cuenta no es de un técnico.
+ * reciente al más antiguo: [{ id, codigo, asunto, estado, prioridad, creadoEn, cerradoEn, actualizadoEn,
+ * dentroDelPlazo, categoria, ambiente: { id, codigo }, solicitante }]. `dentroDelPlazo` indica si la atención no superó
+ * el tiempo esperado. Falla con 401 o con 403 FORBIDDEN si la cuenta no es de un técnico.
  */
 export function listarAtendidos(usuarioId) {
   return simulateRequest(() => {
@@ -405,6 +406,7 @@ export function listarAtendidos(usuarioId) {
           creadoEn: ticket.creadoEn,
           cerradoEn: ticket.cerradoEn,
           actualizadoEn: ultimaActividadDe(ticket),
+          dentroDelPlazo: leerTiempos(ticket).dentroDelPlazo,
           categoria: referencia(categoriasRepository.findById(ticket.categoriaId)),
           ambiente: { id: ambiente.id, codigo: ambiente.codigo },
           solicitante: persona(ticket.usuarioId),

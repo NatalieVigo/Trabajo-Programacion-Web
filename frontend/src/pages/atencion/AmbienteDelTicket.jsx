@@ -17,7 +17,7 @@ function ubicacionDe(ambiente) {
 }
 
 /**
- * Ambiente del ticket (HU-5 · 5.6, p25): su código, dónde queda y qué más pasa allí: los tickets en curso en el mismo
+ * Ambiente del ticket (HU-5 · 5.6, p25): su código, dónde queda y qué más pasa allí: los tickets abiertos en el mismo
  * ambiente y la fecha del último cierre.
  */
 export default function AmbienteDelTicket({ ambiente }) {
@@ -29,10 +29,9 @@ export default function AmbienteDelTicket({ ambiente }) {
         Ambiente
       </h2>
       <p className="ticket-ambiente__codigo">{ambiente.codigo}</p>
-      <p className="ticket-ambiente__nombre">{ambiente.nombre}</p>
       <p className="ticket-dato-card__nota">{ubicacionDe(ambiente)}</p>
       <p className="ticket-dato-card__nota">
-        {pluralize(ambiente.ticketsEnCurso, 'ticket en curso', 'tickets en curso')} en este ambiente ·{' '}
+        {pluralize(ambiente.ticketsEnCurso, 'ticket abierto', 'tickets abiertos')} en este ambiente ·{' '}
         {ambiente.ultimoCierre ? `último cierre ${formatDate(ambiente.ultimoCierre)}` : 'sin cierres anteriores'}
       </p>
     </Card>

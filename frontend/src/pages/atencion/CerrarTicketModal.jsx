@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth.js'
 import { useForm } from '../../hooks/useForm.js'
 import { cerrarTicket } from '../../services/atencion.service.js'
 import { Alert, Button, FormField, Modal, StatusBadge, useConfirm, useToast } from '../../shared/components'
-import { SOLUCION_MAX_LENGTH, validateCierre } from '../../utils/atencionValidators.js'
+import { validateCierre } from '../../utils/atencionValidators.js'
 import { formatDuracion } from '../../utils/duracion.js'
 import { getDisplayName } from '../../utils/format.js'
 import TextArea from '../catalogo/TextArea.jsx'
@@ -57,7 +57,6 @@ export default function CerrarTicketModal({ ticket, tiempos, onClose, onCerrado,
       open
       onClose={cancelar}
       title={`Cerrar ${ticket.codigo}`}
-      description={ticket.asunto}
       initialFocusRef={solucionRef}
       footer={
         <>
@@ -72,12 +71,7 @@ export default function CerrarTicketModal({ ticket, tiempos, onClose, onCerrado,
     >
       <form id={formId} onSubmit={form.handleSubmit(guardar)} noValidate>
         <fieldset disabled={form.isSubmitting} className="cierre">
-          <FormField
-            label="Solución aplicada"
-            required
-            hint={`Qué se hizo para resolver la falla. ${form.values.solucion.length} / ${SOLUCION_MAX_LENGTH} caracteres`}
-            error={form.errors.solucion}
-          >
+          <FormField label="Solución aplicada (obligatoria)" required error={form.errors.solucion}>
             <TextArea
               ref={solucionRef}
               {...form.getFieldProps('solucion')}
