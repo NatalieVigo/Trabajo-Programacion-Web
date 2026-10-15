@@ -14,8 +14,3 @@
 .plazo__resultado--fuera {
   color: var(--color-danger-text);
 }
-
-.plazo__detalle {
-  margin-top: var(--space-1);
-  color: var(--color-text-muted);
-}

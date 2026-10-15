@@ -1,90 +1,41 @@
-import { useCallback, useId, useState } from 'react'
+import { useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
-import { ticketAtencionPath, ticketHistorialPath } from '../../routes/routePaths.js'
+import { ticketAtencionPath } from '../../routes/routePaths.js'
 import { listarAtendidos } from '../../services/atencion.service.js'
-import {
-  Alert,
-  Button,
-  Card,
-  EmptyState,
-  PageHeader,
-  PriorityBadge,
-  SearchIcon,
-  SelectInput,
-  StatusBadge,
-  TextInput,
-} from '../../shared/components'
-import { formatDateTime, formatEstado, getDisplayName, pluralize } from '../../utils/format.js'
-import { HISTORIAL_SIN_FILTROS, contarPorEstado, filtrarAtendidos } from './historialAtencion.js'
+import { Alert, Button, Card, EmptyState, PageHeader, PriorityBadge, StatusBadge } from '../../shared/components'
+import { formatDate, getDisplayName } from '../../utils/format.js'
 import './HistorialAtencionPage.css'
 
 const TITULO = 'Historial'
+/** Estados con los que la atención ya terminó: los demás siguen en «Mi bandeja». */
+const TERMINADOS = new Set(['resuelto', 'cerrado'])
 
-/** «8 tickets a tu cargo · 3 sin cerrar». */
-function resumir(tickets) {
-  const sinCerrar = tickets.filter((ticket) => ticket.estado !== 'cerrado').length
-  return `${pluralize(tickets.length, 'ticket', 'tickets')} a tu cargo · ${sinCerrar} sin cerrar`
+/** Columna «Plazo» con los textos de p24: «Cerrado el 04/09/2026» o «Atendido a tiempo». */
+function plazoDe(ticket) {
+  if (ticket.estado === 'cerrado') return `Cerrado el ${formatDate(ticket.cerradoEn)}`
+  return ticket.dentroDelPlazo ? 'Atendido a tiempo' : 'Atendido fuera de plazo'
 }
 
-/** Búsqueda por código o asunto y filtro por estado, con los estados en los que el técnico tiene tickets. */
-function Filtros({ filtros, estados, onChange }) {
-  const id = useId()
-  const opciones = estados.map(({ estado, total }) => ({ value: estado, label: `${formatEstado(estado)} (${total})` }))
-
-  return (
-    <div className="historial-filtros">
-      <div className="historial-filtros__busqueda">
-        <label htmlFor={`${id}-busqueda`} className="visually-hidden">
-          Buscar por código o asunto
-        </label>
-        <TextInput
-          id={`${id}-busqueda`}
-          type="search"
-          value={filtros.busqueda}
-          onChange={(event) => onChange({ ...filtros, busqueda: event.target.value })}
-          placeholder="Buscar por código o asunto"
-          autoComplete="off"
-          spellCheck={false}
-        />
-      </div>
-      <div className="historial-filtros__estado">
-        <label htmlFor={`${id}-estado`} className="visually-hidden">
-          Estado
-        </label>
-        <SelectInput
-          id={`${id}-estado`}
-          value={filtros.estado}
-          onChange={(event) => onChange({ ...filtros, estado: event.target.value })}
-          options={opciones}
-          placeholder="Estado: todos"
-        />
-      </div>
-    </div>
-  )
-}
-
-/**
- * Los tickets en filas compactas (p24), con la barra de su prioridad y los accesos a su bitácora y a su historial. La
- * categoría va bajo el asunto para que la fila completa quepa en el ancho del contenido.
- */
+/** Los tickets en filas compactas, con las mismas columnas de la bandeja (p24) y la barra de su prioridad. */
 function TablaDeTickets({ tickets }) {
   return (
     <div className="tickets-table">
       <div className="tickets-table__scroll">
-        <table aria-label="Tickets a tu cargo">
+        <table aria-label="Tickets resueltos y cerrados">
           <thead>
             <tr>
               <th scope="col">Código</th>
-              <th scope="col">Asunto y categoría</th>
+              <th scope="col">Asunto</th>
+              <th scope="col">Categoría</th>
               <th scope="col">Ambiente</th>
               <th scope="col">Solicitante</th>
               <th scope="col">Prioridad</th>
               <th scope="col">Estado</th>
-              <th scope="col">Última actividad</th>
-              <th scope="col">Acciones</th>
+              <th scope="col">Plazo</th>
+              <th scope="col">Acción</th>
             </tr>
           </thead>
           <tbody>
@@ -95,10 +46,10 @@ function TablaDeTickets({ tickets }) {
                     {ticket.codigo}
                   </Link>
                 </th>
-                <td data-label="Asunto y categoría" className="tickets-table__asunto">
-                  <p>{ticket.asunto}</p>
-                  <p className="tickets-table__categoria">{ticket.categoria.nombre}</p>
+                <td data-label="Asunto" className="tickets-table__asunto">
+                  {ticket.asunto}
                 </td>
+                <td data-label="Categoría">{ticket.categoria.nombre}</td>
                 <td data-label="Ambiente" className="text-mono">
                   {ticket.ambiente.codigo}
                 </td>
@@ -109,9 +60,7 @@ function TablaDeTickets({ tickets }) {
                 <td data-label="Estado">
                   <StatusBadge estado={ticket.estado} />
                 </td>
-                <td data-label="Última actividad">
-                  <time dateTime={ticket.actualizadoEn}>{formatDateTime(ticket.actualizadoEn)}</time>
-                </td>
+                <td data-label="Plazo">{plazoDe(ticket)}</td>
                 <td className="tickets-table__acciones">
                   <Button
                     variant="tertiary"
@@ -120,14 +69,6 @@ function TablaDeTickets({ tickets }) {
                     aria-label={`Abrir bitácora de ${ticket.codigo}`}
                   >
                     Abrir bitácora
-                  </Button>
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    to={ticketHistorialPath('tecnico', ticket.codigo)}
-                    aria-label={`Historial de ${ticket.codigo}`}
-                  >
-                    Historial
                   </Button>
                 </td>
               </tr>
@@ -139,8 +80,8 @@ function TablaDeTickets({ tickets }) {
   )
 }
 
-/** Carga, error o historial vacío; con tickets muestra `children`. */
-function Contenido({ status, total, onRetry, children }) {
+/** Carga, error o historial vacío; con tickets muestra la tabla. */
+function Contenido({ status, tickets, onRetry }) {
   if (status === 'loading') {
     return (
       <Card aria-busy="true">
@@ -164,60 +105,36 @@ function Contenido({ status, total, onRetry, children }) {
       </Alert>
     )
   }
-  if (total === 0) {
+  if (tickets.length === 0) {
     return (
       <Card>
         <EmptyState
-          title="Aún no tienes tickets a tu cargo"
-          description="Cuando el supervisor te asigne un ticket aparecerá aquí, con su bitácora y su historial."
+          title="Aún no tienes tickets resueltos"
+          description="Cuando resuelvas o cierres un ticket aparecerá aquí."
         />
       </Card>
     )
   }
-  return children
+  return <TablaDeTickets tickets={tickets} />
 }
 
 /**
- * «Historial» del técnico (/tecnico/historial, HU-5 · 5.6): todos los tickets que tiene o tuvo a su cargo, del de
- * actividad más reciente al más antiguo, con búsqueda por código o asunto y filtro por estado. Cada fila lleva a la
- * vista consolidada del ticket y a su historial de cambios.
+ * «Historial» del técnico (/tecnico/historial, ítem del menú de p24, p25 y p27): los tickets que resolvió o cerró, del
+ * de actividad más reciente al más antiguo, con las columnas de la bandeja (p24). Cada fila lleva a la vista
+ * consolidada del ticket (p25).
  */
 export default function HistorialAtencionPage() {
   const { usuario } = useAuth()
   const cargar = useCallback(() => listarAtendidos(usuario.id), [usuario.id])
   const { status, data, reload } = useAsyncData(cargar)
-  const [filtros, setFiltros] = useState(HISTORIAL_SIN_FILTROS)
   useDocumentTitle(TITULO)
 
-  const tickets = data ?? []
-  const visibles = filtrarAtendidos(tickets, filtros)
+  const terminados = (data ?? []).filter((ticket) => TERMINADOS.has(ticket.estado))
 
   return (
     <>
-      <PageHeader title={TITULO} subtitle={status === 'success' && tickets.length > 0 ? resumir(tickets) : undefined} />
-      <Contenido status={status} total={tickets.length} onRetry={reload}>
-        <Filtros filtros={filtros} estados={contarPorEstado(tickets)} onChange={setFiltros} />
-        {visibles.length > 0 ? (
-          <TablaDeTickets tickets={visibles} />
-        ) : (
-          <Card>
-            <EmptyState
-              icon={<SearchIcon size={24} />}
-              title="Ningún ticket coincide con la búsqueda"
-              description="Prueba con otro código, otro asunto u otro estado."
-              action={
-                <Button variant="secondary" onClick={() => setFiltros(HISTORIAL_SIN_FILTROS)}>
-                  Ver todos los tickets
-                </Button>
-              }
-            />
-          </Card>
-        )}
-        {/* Fuera de la tabla, para anunciar también cuando ningún ticket coincide. */}
-        <p className="historial-conteo" role="status">
-          Mostrando {visibles.length} de {pluralize(tickets.length, 'ticket', 'tickets')}
-        </p>
-      </Contenido>
+      <PageHeader title={TITULO} />
+      <Contenido status={status} tickets={terminados} onRetry={reload} />
     </>
   )
 }

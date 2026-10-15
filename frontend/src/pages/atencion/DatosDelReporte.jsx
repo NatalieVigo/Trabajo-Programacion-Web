@@ -3,19 +3,16 @@ import { Card } from '../../shared/components'
 import { formatDateTime, formatTelefono, getDisplayName } from '../../utils/format.js'
 
 /**
- * Datos del reporte (HU-5 · 5.6, p25): quién reportó el ticket y cómo ubicarlo, qué reportó y quién lo atiende. La
- * subcategoría y la descripción se muestran cuando el ticket las tiene.
+ * Datos del reporte (HU-5 · 5.6, p25): quién reportó el ticket y cómo ubicarlo, la subcategoría, cuándo se registró y
+ * la descripción. La subcategoría y la descripción se muestran cuando el ticket las tiene.
  */
-export default function DatosDelReporte({ ticket, tiempos }) {
+export default function DatosDelReporte({ ticket }) {
   const tituloId = useId()
   const filas = [
     ['Solicitante', getDisplayName(ticket.solicitante)],
     ['Teléfono', formatTelefono(ticket.solicitante.telefono)],
-    ['Categoría', ticket.categoria.nombre],
     ticket.subcategoria && ['Subcategoría', ticket.subcategoria.nombre],
     ['Registrado', formatDateTime(ticket.creadoEn)],
-    ['Técnico asignado', ticket.tecnico ? getDisplayName(ticket.tecnico) : 'Sin asignar'],
-    ['Atención esperada', `${tiempos.esperadoHoras} h`],
   ].filter(Boolean)
 
   return (
