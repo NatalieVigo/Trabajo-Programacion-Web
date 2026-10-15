@@ -141,8 +141,8 @@ export function actualizarPerfil(id, cambios) {
 
 /**
  * Resumen de la cuenta en «Mi cuenta» (p10), según el rol de la persona. usuario: { ticketsReportados, abiertosAhora,
- * cuentaCreada, encuestaPendiente: { ticketCodigo, cerradoEn, fechaLimite } | null } · tecnico: { ticketsAsignados,
- * enAtencion, cuentaCreada } · supervisor: { invitacionesPendientes (las que envió y siguen vigentes), cuentaCreada }.
+ * cuentaCreada, encuestaPendiente: { ticketCodigo, cerradoEn, fechaLimite } | null } · tecnico y supervisor:
+ * { cuentaCreada }.
  * Falla con 404 USER_NOT_FOUND.
  */
 export function obtenerResumenCuenta(id) {

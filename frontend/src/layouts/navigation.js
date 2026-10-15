@@ -10,7 +10,8 @@ export const NAVIGATION = Object.freeze({
     title: 'Mis servicios',
     pill: { label: 'Mis tickets abiertos', contador: 'ticketsAbiertos' },
     items: [
-      { label: 'Inicio', to: ROUTES.usuarioInicio, end: true },
+      // «Inicio» es la landing (p03): el mapa de navegación de p02 no tiene otra pantalla de inicio para el usuario.
+      { label: 'Inicio', to: ROUTES.home, end: true },
       { label: 'Nuevo ticket', to: ROUTES.usuarioNuevoTicket },
       { label: 'Mis tickets', to: ROUTES.usuarioTickets, end: true, contador: 'ticketsReportados' },
       { label: 'Encuesta pendiente', to: ROUTES.usuarioEncuestaPendiente, contador: 'encuestasPendientes' },
@@ -33,6 +34,7 @@ export const NAVIGATION = Object.freeze({
   supervisor: {
     title: 'Supervisión',
     pill: { label: 'Cola sin asignar', contador: 'colaSinAsignar' },
+    // Como en p12 y p22, «Mi cuenta» no va en esta lista: queda solo en el bloque inferior del menú.
     items: [
       { label: 'Tablero', to: ROUTES.supervisorTablero, end: true },
       { label: 'Cola de atención', to: ROUTES.supervisorCola, contador: 'colaTotal' },
@@ -40,8 +42,6 @@ export const NAVIGATION = Object.freeze({
       { label: 'Sedes y ambientes', to: ROUTES.supervisorAmbientes },
       { label: 'Técnicos por categoría', to: ROUTES.supervisorTecnicos },
       { label: 'Usuarios', to: ROUTES.supervisorUsuarios },
-      { label: 'Invitaciones', to: ROUTES.supervisorInvitaciones },
-      { label: 'Mi cuenta', to: ROUTES.miCuenta },
     ],
   },
 })

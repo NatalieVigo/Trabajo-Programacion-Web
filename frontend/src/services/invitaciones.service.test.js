@@ -3,7 +3,7 @@ import { readTable, writeTable } from '../repositories/db.js'
 import { invitacionesRepository } from '../repositories/invitaciones.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { verifyPassword } from '../utils/password.js'
-import { aceptar, crear, listar, obtenerPorToken, rechazar, revocar } from './invitaciones.service.js'
+import { aceptar, crear, obtenerPorToken, rechazar } from './invitaciones.service.js'
 import { ServiceError } from './ServiceError.js'
 
 const AHORA = '2026-10-01T15:00:00.000Z'
@@ -292,37 +292,6 @@ describe('invitaciones.service · rechazar', () => {
   })
 })
 
-describe('invitaciones.service · listar', () => {
-  it('devuelve las invitaciones de la más reciente a la más antigua, con su estado efectivo', async () => {
-    const invitaciones = await listar()
-
-    expect(invitaciones.map(({ token, estadoEfectivo }) => [token, estadoEfectivo])).toEqual([
-      [SUPERVISOR, 'pendiente'],
-      [TECNICO, 'pendiente'],
-      [VENCIDA, 'vencida'],
-      [USADA, 'aceptada'],
-    ])
-    invitaciones.forEach((item) => expect(item.invitadoPorNombre).toBe('Lucía Mendoza Ríos'))
-  })
-
-  it('filtra por estado efectivo: las pendientes vencidas solo aparecen como vencidas', async () => {
-    const tokens = async (estado) => (await listar({ estado })).map((item) => item.token)
-
-    await expect(tokens('pendiente')).resolves.toEqual([SUPERVISOR, TECNICO])
-    await expect(tokens('vencida')).resolves.toEqual([VENCIDA])
-    await expect(tokens('aceptada')).resolves.toEqual([USADA])
-    await expect(tokens('rechazada')).resolves.toEqual([])
-  })
-
-  it('responde 400 si el estado no existe', async () => {
-    await expect(listar({ estado: 'archivada' })).rejects.toMatchObject({
-      status: 400,
-      code: 'VALIDATION_ERROR',
-      fieldErrors: { estado: 'Elige un estado de invitación válido.' },
-    })
-  })
-})
-
 describe('invitaciones.service · crear', () => {
   it('crea una invitación pendiente por 7 días, con un token aleatorio y los datos normalizados', async () => {
     const creada = await crear(nuevaInvitacion, 'usr-003')
@@ -434,24 +403,5 @@ describe('invitaciones.service · crear', () => {
     usuariosRepository.update('usr-003', { estado: 'bloqueado', motivoBloqueo: 'Prueba.' })
 
     await expect(crear(nuevaInvitacion, 'usr-003')).rejects.toMatchObject({ status: 403 })
-  })
-})
-
-describe('invitaciones.service · revocar', () => {
-  it('anula una invitación pendiente: el enlace deja de servir', async () => {
-    const revocada = await revocar('inv-001')
-
-    expect(revocada).toMatchObject({ id: 'inv-001', estado: 'revocada', estadoEfectivo: 'revocada', respondidaEn: null })
-    expect(invitacion(TECNICO).estado).toBe('revocada')
-    await expect(aceptar(TECNICO, activacion)).rejects.toMatchObject({ status: 409, details: { estado: 'revocada' } })
-  })
-
-  it('no revoca una invitación ya respondida (409) ni una vencida (410)', async () => {
-    await expect(revocar('inv-004')).rejects.toMatchObject({ status: 409, code: 'INVITATION_NOT_PENDING' })
-    await expect(revocar('inv-003')).rejects.toMatchObject({ status: 410, code: 'INVITATION_EXPIRED' })
-  })
-
-  it('responde 404 si la invitación no existe', async () => {
-    await expect(revocar('inv-999')).rejects.toMatchObject({ status: 404, code: 'INVITATION_NOT_FOUND' })
   })
 })

@@ -10,13 +10,12 @@ import {
   FormField,
   PageHeader,
   PasswordInput,
-  PasswordStrength,
   TextInput,
   useConfirm,
   useToast,
 } from '../../shared/components'
 import { formatDate, formatRol, formatTelefono, getFullName } from '../../utils/format.js'
-import { VALIDATION_MESSAGES, validateActivacion } from '../../utils/validators.js'
+import { validateActivacion } from '../../utils/validators.js'
 import EspecialidadesField from './EspecialidadesField.jsx'
 import './InvitationForm.css'
 
@@ -108,9 +107,8 @@ export default function InvitationForm({ invitacion, onInvitacionCambiada }) {
               <TextInput {...form.getFieldProps('telefono')} type="tel" autoComplete="tel-national" />
             </FormField>
 
-            <FormField label="Contraseña" required hint={VALIDATION_MESSAGES.passwordRule} error={form.errors.password}>
+            <FormField label="Contraseña" required error={form.errors.password}>
               <PasswordInput {...form.getFieldProps('password')} autoComplete="new-password" />
-              <PasswordStrength password={form.values.password} />
             </FormField>
             <FormField label="Confirmar contraseña" required error={form.errors.confirmacion}>
               <PasswordInput {...form.getFieldProps('confirmacion')} autoComplete="new-password" />
