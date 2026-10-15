@@ -1,8 +1,6 @@
-import { invitacionesRepository } from '../repositories/invitaciones.repository.js'
 import { historialRepository } from '../repositories/atencion.repository.js'
 import { encuestasRepository, ticketsRepository } from '../repositories/tickets.repository.js'
 import { fechaEnLima, hoyEnLima } from '../utils/fechaLima.js'
-import { estadoEfectivo } from './estadoInvitacion.js'
 import { simulateRequest } from './request.js'
 import { ServiceError } from './ServiceError.js'
 
@@ -86,25 +84,18 @@ const RESUMEN_DE_CUENTA_POR_ROL = {
       encuestaPendiente: pendientes[0] ?? null,
     }
   },
-  tecnico(usuarioId) {
-    const asignados = ticketsRepository.findAll({ asignadoA: usuarioId })
-    return {
-      ticketsAsignados: asignados.length,
-      enAtencion: asignados.filter((ticket) => ticket.estado === 'en_atencion').length,
-    }
+  // p10 solo dibuja el resumen del usuario: técnico y supervisor muestran únicamente la fecha de creación de la cuenta.
+  tecnico() {
+    return {}
   },
-  supervisor(usuarioId) {
-    const ahora = Date.now()
-    const enviadas = invitacionesRepository.findAll({ invitadoPor: usuarioId })
-    return {
-      invitacionesPendientes: enviadas.filter((invitacion) => estadoEfectivo(invitacion, ahora) === 'pendiente').length,
-    }
+  supervisor() {
+    return {}
   },
 }
 
 /**
  * Resumen de la cuenta para «Mi cuenta» (p10), según el rol. Paso interno de usuarios.service#obtenerResumenCuenta:
- * solo lee tickets, encuestas e invitaciones. La encuesta pendiente es la que vence primero.
+ * solo lee tickets y encuestas. La encuesta pendiente es la que vence primero.
  */
 export function resumenDeCuenta(usuario) {
   return { ...RESUMEN_DE_CUENTA_POR_ROL[usuario.rol](usuario.id), cuentaCreada: usuario.creadoEn }

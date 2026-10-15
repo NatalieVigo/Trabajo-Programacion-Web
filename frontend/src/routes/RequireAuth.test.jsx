@@ -39,7 +39,7 @@ describe('RequireAuth', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Mi bandeja' })).toBeInTheDocument()
     expect(ubicacionActual()).toBe('/tecnico')
     expect(screen.queryByText('403')).not.toBeInTheDocument()
-    expect(await screen.findByText('Te damos la bienvenida, Julio. Tienes 8 tickets asignados.')).toBeInTheDocument()
+    expect(await screen.findByText('Bienvenida, Julio. Tienes 8 tickets asignados.')).toBeInTheDocument()
     expect(await screen.findByText('Asignados a mí')).toBeInTheDocument()
   })
 

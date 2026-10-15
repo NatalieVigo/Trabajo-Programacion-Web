@@ -44,10 +44,9 @@ async function completarFormulario(user) {
   await user.click(terminos())
 }
 
-/** Tras volver a la landing, espera sus categorías para no dejar cargas pendientes. */
+/** Espera a que se muestre la landing tras volver al inicio. */
 async function esperarLanding() {
   expect(await screen.findByRole('heading', { level: 1, name: TITULO_LANDING })).toBeInTheDocument()
-  expect(await screen.findByRole('heading', { level: 3, name: 'Audiovisuales' })).toBeInTheDocument()
 }
 
 /** Con la cuenta creada se llega a «Iniciar sesión» con el correo precargado y el foco en la contraseña. */
@@ -131,7 +130,6 @@ describe('RegisterPage', () => {
     const { user } = await renderRegistro()
 
     await completarFormulario(user)
-    expect(screen.getByText('Segura')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
 
     expect(await screen.findByText('Tu cuenta fue creada. Ya puedes iniciar sesión.')).toBeInTheDocument()

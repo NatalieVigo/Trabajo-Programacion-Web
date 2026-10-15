@@ -6,9 +6,9 @@ import { validateRecuperacion } from '../../utils/validators.js'
 
 /**
  * Paso 1 de la recuperación (p08): el correo de la cuenta. `onEnviado` recibe la respuesta del servicio, que es la
- * misma exista o no la cuenta. `autoFocus` enfoca el correo, por ejemplo al volver del paso 2 para usar otro.
+ * misma exista o no la cuenta.
  */
-export default function RecoveryEmailForm({ correoInicial, autoFocus = false, onEnviado }) {
+export default function RecoveryEmailForm({ correoInicial, onEnviado }) {
   const toast = useToast()
   const form = useForm({ initialValues: { correo: correoInicial }, validate: validateRecuperacion })
 
@@ -41,7 +41,6 @@ export default function RecoveryEmailForm({ correoInicial, autoFocus = false, on
               autoComplete="email"
               autoCapitalize="none"
               spellCheck={false}
-              autoFocus={autoFocus}
             />
           </FormField>
         </fieldset>
