@@ -65,11 +65,24 @@ describe('TicketAtencionPage · bitácora', () => {
     expect(entradas()[1]).toHaveTextContent('Lucía Mendoza Ríos Supervisor · 29/09/2026 15:52')
     expect(entradas()[2]).toHaveTextContent('Julio Paredes Soto Técnico · 29/09/2026 16:30')
     expect(entradas()[2]).toHaveTextContent('Nota interna · no visible para el usuario')
-    expect(within(screen.getByRole('navigation', { name: 'Ruta de navegación' })).getByRole('link')).toHaveAttribute(
-      'href',
-      '/tecnico',
-    )
+    // p25 no tiene ruta de navegación: el plazo va junto al estado. Atención esperada de 2 h, ya superada.
+    expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
+    expect(etiquetas()).toHaveTextContent('En atención. Vencido hace 1 d 16 h 20 min')
     expect(document.title).toBe('TCK-2026-00144 · Mesa de Ayuda')
+  })
+
+  it('la cabecera indica cuánto falta para que venza la atención y lo omite en espera o cerrado (p25)', async () => {
+    modificarTicket('tck-00144', { tiempoEsperadoHoras: 48 })
+    const enAtencion = await renderTicket(EN_ATENCION)
+    expect(etiquetas()).toHaveTextContent('En atención. Vence en 5 h 40 min')
+    enAtencion.unmount()
+
+    const enEspera = await renderTicket(EN_ESPERA)
+    expect(etiquetas()).not.toHaveTextContent(/Vence|Vencido/)
+    enEspera.unmount()
+
+    await renderTicket(CERRADO)
+    expect(etiquetas()).not.toHaveTextContent(/Vence|Vencido/)
   })
 
   it('filtra las entradas por tipo', async () => {
@@ -98,7 +111,6 @@ describe('TicketAtencionPage · bitácora', () => {
 
     expect(screen.getByText('Estás escribiendo un comentario público: también lo verá Camila Quispe Ramos.')).toBeInTheDocument()
     await user.type(campo('Comentario público'), 'Ya llegó energía al gabinete.')
-    expect(screen.getByText('29 / 600 caracteres')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Publicar comentario' }))
 
     expect(await screen.findByText('Comentario publicado.')).toBeInTheDocument()
@@ -175,10 +187,6 @@ describe('TicketAtencionPage · bitácora', () => {
     const { user } = await renderTicket(DE_SANDRA, 'supervisor')
 
     expect(entradas()[2]).toHaveTextContent('Nota interna · no visible para el usuario')
-    expect(within(screen.getByRole('navigation', { name: 'Ruta de navegación' })).getByRole('link')).toHaveAttribute(
-      'href',
-      '/supervisor/cola',
-    )
     await user.type(campo('Comentario público'), 'El repuesto se aprobó hoy.')
     await user.click(screen.getByRole('button', { name: 'Publicar comentario' }))
 
@@ -244,7 +252,7 @@ describe('TicketAtencionPage · cambio de estado', () => {
 
     await user.click(boton('Cambiar estado'))
 
-    expect(dialogo(DIALOGO)).toHaveAccessibleDescription('Estado actual: En atención. Solo se ofrecen los cambios permitidos.')
+    expect(dialogo(DIALOGO)).toHaveAccessibleDescription('Estado actual: En atención. Solo se ofrecen las transiciones permitidas.')
     expect(within(dialogo(DIALOGO)).getAllByRole('radio')).toHaveLength(3)
     expect(opcion('En espera · falta un repuesto o depende de un tercero')).toBeEnabled()
     expect(opcion('En espera · falta un repuesto o depende de un tercero')).toHaveFocus()
@@ -382,14 +390,14 @@ describe('TicketAtencionPage · espera', () => {
     const { user } = await renderTicket(EN_ATENCION)
 
     await user.click(boton('Cambiar estado'))
-    expect(screen.queryByRole('textbox', { name: 'Motivo de espera' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Motivo de espera (obligatorio)' })).not.toBeInTheDocument()
 
     await user.click(opcion(EN_ESPERA_OPCION))
-    expect(campo('Motivo de espera')).toBeRequired()
+    expect(campo('Motivo de espera (obligatorio)')).toBeRequired()
     expect(screen.getByLabelText('Fecha estimada de retorno')).toHaveAttribute('min', '2026-10-01')
 
     await user.click(opcion('Resuelto · la falla ya no se presenta'))
-    expect(screen.queryByRole('textbox', { name: 'Motivo de espera' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Motivo de espera (obligatorio)' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Fecha estimada de retorno')).not.toBeInTheDocument()
   })
 
@@ -398,7 +406,7 @@ describe('TicketAtencionPage · espera', () => {
 
     await user.click(boton('Cambiar estado'))
     await user.click(opcion(EN_ESPERA_OPCION))
-    await user.type(campo('Motivo de espera'), 'Tomacorriente solicitado al almacén.')
+    await user.type(campo('Motivo de espera (obligatorio)'), 'Tomacorriente solicitado al almacén.')
     await user.type(screen.getByLabelText('Fecha estimada de retorno'), '2026-10-05')
     await user.click(boton('Guardar estado'))
 
@@ -421,8 +429,8 @@ describe('TicketAtencionPage · espera', () => {
     await user.click(opcion(EN_ESPERA_OPCION))
     await user.click(boton('Guardar estado'))
 
-    expect(campo('Motivo de espera')).toHaveAccessibleDescription('Indica el motivo de la espera.')
-    expect(campo('Motivo de espera')).toHaveFocus()
+    expect(campo('Motivo de espera (obligatorio)')).toHaveAccessibleDescription('Indica el motivo de la espera.')
+    expect(campo('Motivo de espera (obligatorio)')).toHaveFocus()
     expect(screen.getByLabelText('Fecha estimada de retorno')).toHaveAccessibleDescription(
       'Indica la fecha estimada de retorno.',
     )
@@ -434,7 +442,7 @@ describe('TicketAtencionPage · espera', () => {
 
     await user.click(boton('Cambiar estado'))
     await user.click(opcion(EN_ESPERA_OPCION))
-    await user.type(campo('Motivo de espera'), 'Tomacorriente solicitado al almacén.')
+    await user.type(campo('Motivo de espera (obligatorio)'), 'Tomacorriente solicitado al almacén.')
     await user.type(screen.getByLabelText('Fecha estimada de retorno'), '2026-09-30')
     await user.click(boton('Guardar estado'))
 
@@ -486,9 +494,9 @@ describe('TicketAtencionPage · cierre', () => {
 
     await user.click(boton('Cerrar ticket'))
 
-    expect(dialogo(DIALOGO)).toHaveAccessibleDescription('Punto de red caído en laboratorio')
-    expect(campo('Solución aplicada')).toHaveFocus()
-    expect(campo('Solución aplicada')).toBeRequired()
+    expect(dialogo(DIALOGO)).not.toHaveAccessibleDescription()
+    expect(campo('Solución aplicada (obligatoria)')).toHaveFocus()
+    expect(campo('Solución aplicada (obligatoria)')).toBeRequired()
     expect(within(dialogo(DIALOGO)).getByText('Tiempo total de atención').closest('div')).toHaveTextContent(
       'Tiempo total de atención1 d 18 h 20 minFuera del tiempo esperado (2 h)',
     )
@@ -504,7 +512,7 @@ describe('TicketAtencionPage · cierre', () => {
     const { user } = await renderTicket(EN_ATENCION)
 
     await user.click(boton('Cerrar ticket'))
-    await user.type(campo('Solución aplicada'), SOLUCION)
+    await user.type(campo('Solución aplicada (obligatoria)'), SOLUCION)
     await user.click(cerrarEnElDialogo())
 
     expect(
@@ -531,12 +539,12 @@ describe('TicketAtencionPage · cierre', () => {
 
     await user.click(boton('Cerrar ticket'))
     await user.click(cerrarEnElDialogo())
-    expect(campo('Solución aplicada')).toHaveAccessibleDescription('Describe la solución aplicada.')
-    expect(campo('Solución aplicada')).toHaveFocus()
+    expect(campo('Solución aplicada (obligatoria)')).toHaveAccessibleDescription('Describe la solución aplicada.')
+    expect(campo('Solución aplicada (obligatoria)')).toHaveFocus()
 
-    await user.type(campo('Solución aplicada'), 'Listo.')
+    await user.type(campo('Solución aplicada (obligatoria)'), 'Listo.')
     await user.click(cerrarEnElDialogo())
-    expect(campo('Solución aplicada')).toHaveAccessibleDescription('Describe la solución con al menos 10 caracteres.')
+    expect(campo('Solución aplicada (obligatoria)')).toHaveAccessibleDescription('Describe la solución con al menos 10 caracteres.')
     expect(ticketsRepository.findById('tck-00144')).toMatchObject({ estado: 'en_atencion', cerradoEn: null })
   })
 
@@ -544,7 +552,7 @@ describe('TicketAtencionPage · cierre', () => {
     const { user } = await renderTicket(EN_ATENCION)
 
     await user.click(boton('Cerrar ticket'))
-    await user.type(campo('Solución aplicada'), SOLUCION)
+    await user.type(campo('Solución aplicada (obligatoria)'), SOLUCION)
     await user.click(boton('Cancelar'))
     await user.click(
       within(await screen.findByRole('alertdialog', { name: '¿Descartar el cierre?' })).getByRole('button', {
@@ -564,12 +572,11 @@ describe('TicketAtencionPage · cierre', () => {
     )
     expect(desenlace()).toHaveTextContent('Cerrado01/09/2026 15:16 · Iván Zegarra Pinto')
     expect(desenlace()).toHaveTextContent('1 d 6 h 12 minFuera del tiempo esperado (8 h)')
-    expect(desenlace()).toHaveTextContent('Sin contar 18 h 30 min en espera: 11 h 42 min de atención.')
+    expect(desenlace()).not.toHaveTextContent('Sin contar')
     conEspera.unmount()
 
     await renderTicket('TCK-2026-00118')
     expect(desenlace()).toHaveTextContent('1 d 1 h 35 minDentro del tiempo esperado (4 h)')
-    expect(desenlace()).toHaveTextContent('Sin contar 23 h 30 min en espera: 2 h 05 min de atención.')
   })
 
   it('un ticket que no está cerrado no tiene desenlace', async () => {
@@ -583,7 +590,7 @@ describe('TicketAtencionPage · cierre', () => {
 
     await user.click(boton('Cerrar ticket'))
     modificarTicket('tck-00144', { estado: 'abierto' })
-    await user.type(campo('Solución aplicada'), SOLUCION)
+    await user.type(campo('Solución aplicada (obligatoria)'), SOLUCION)
     await user.click(cerrarEnElDialogo())
 
     expect(
@@ -608,30 +615,25 @@ describe('TicketAtencionPage · vista consolidada', () => {
     expect(within(seccion('Datos del reporte')).getAllByRole('term').map((termino) => termino.textContent)).toEqual([
       'Solicitante',
       'Teléfono',
-      'Categoría',
       'Registrado',
-      'Técnico asignado',
-      'Atención esperada',
     ])
     expect(within(seccion('Datos del reporte')).getAllByRole('definition').map((dato) => dato.textContent)).toEqual([
       'Camila Quispe Ramos',
       '987 654 321',
-      'Redes y conectividad',
       '29/09/2026 15:40',
-      'Julio Paredes Soto',
-      '2 h',
     ])
     expect(seccion('Ambiente')).toHaveTextContent('H-210')
-    expect(seccion('Ambiente')).toHaveTextContent('Laboratorio de Redes')
+    expect(seccion('Ambiente')).not.toHaveTextContent('Laboratorio de Redes')
     expect(seccion('Ambiente')).toHaveTextContent('Laboratorio · Pabellón H · piso 2 · capacidad 28 · Campus Monterrico')
-    expect(seccion('Ambiente')).toHaveTextContent('2 tickets en curso en este ambiente · sin cierres anteriores')
+    expect(seccion('Ambiente')).toHaveTextContent('2 tickets abiertos en este ambiente · sin cierres anteriores')
     expect(recientes()).toEqual([
       'Abierto 29/09/2026 15:40',
       'Asignado a Julio Paredes Soto 29/09/2026 15:50',
       'En atención 29/09/2026 16:10',
     ])
     expect(seccion('Historial reciente')).toHaveTextContent('1 d 18 h 20 min transcurridos')
-    expect(screen.getByRole('link', { name: 'Ver el historial completo' })).toHaveAttribute(
+    expect(screen.queryByRole('link', { name: 'Ver el historial completo' })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Historial' })).toHaveAttribute(
       'href',
       '/tecnico/tickets/TCK-2026-00144/historial',
     )
@@ -641,10 +643,10 @@ describe('TicketAtencionPage · vista consolidada', () => {
   it('un ticket en cola indica que no tiene técnico y cuándo fue el último cierre en su ambiente', async () => {
     await renderTicket(SIN_ASIGNAR, 'supervisor')
 
-    expect(seccion('Datos del reporte')).toHaveTextContent('Técnico asignadoSin asignar')
+    expect(seccion('Datos del reporte')).not.toHaveTextContent('Técnico asignado')
     expect(seccion('Ambiente')).toHaveTextContent('A-201')
     expect(seccion('Ambiente')).toHaveTextContent('Aula · Pabellón A · piso 2 · capacidad 68 · Campus Monterrico')
-    expect(seccion('Ambiente')).toHaveTextContent('1 ticket en curso en este ambiente · último cierre 21/08/2026')
+    expect(seccion('Ambiente')).toHaveTextContent('1 ticket abierto en este ambiente · último cierre 21/08/2026')
     expect(recientes()).toEqual(['Abierto 30/09/2026 08:12'])
   })
 
@@ -665,7 +667,6 @@ describe('TicketAtencionPage · vista consolidada', () => {
     expect(seccion('Desenlace')).toHaveTextContent(
       'El proveedor reemplazó el receptor inalámbrico. Se sincronizaron los dos micrófonos en una frecuencia libre.',
     )
-    expect(seccion('Datos del reporte')).toHaveTextContent('CategoríaAudiovisuales')
     expect(seccion('Ambiente')).toHaveTextContent('AUD-CEN')
     expect(entradas()).toHaveLength(4)
     expect(recientes()).toEqual([
@@ -683,12 +684,12 @@ describe('TicketAtencionPage · vista consolidada', () => {
     const { user } = await renderTicket(EN_ATENCION)
 
     await user.click(boton('Cerrar ticket'))
-    await user.type(campo('Solución aplicada'), 'Se reemplazó el tomacorriente del rack.')
+    await user.type(campo('Solución aplicada (obligatoria)'), 'Se reemplazó el tomacorriente del rack.')
     await user.click(within(dialogo('Cerrar TCK-2026-00144')).getByRole('button', { name: 'Cerrar ticket' }))
 
     expect(await screen.findByRole('region', { name: 'Desenlace' })).toBeInTheDocument()
     expect(recientes().at(-1)).toBe('Cerrado 01/10/2026 10:00')
     expect(seccion('Historial reciente')).toHaveTextContent('1 d 18 h 20 min de atención en total')
-    expect(seccion('Ambiente')).toHaveTextContent('1 ticket en curso en este ambiente · último cierre 01/10/2026')
+    expect(seccion('Ambiente')).toHaveTextContent('1 ticket abierto en este ambiente · último cierre 01/10/2026')
   })
 })

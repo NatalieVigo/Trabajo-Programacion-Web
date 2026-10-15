@@ -42,7 +42,7 @@ describe('HistorialCambiosPage', () => {
     const [abierto, asignado, enAtencion, enEspera, resuelto, cerrado] = cambios(CERRADO)
     expect(cambios(CERRADO)).toHaveLength(6)
     expect(abierto).toHaveTextContent('Abierto')
-    expect(abierto).toHaveTextContent('31/08/2026 09:04 · Camila Quispe Ramos (usuario)')
+    expect(abierto).toHaveTextContent('31/08/2026 09:04 · Camila Quispe Ramos (usuario) · prioridad inicial alta')
     expect(abierto).toHaveTextContent('Permaneció 1 h 08 min en este estado')
     expect(enAtencion).toHaveTextContent('En atención')
     expect(enAtencion).toHaveTextContent('31/08/2026 10:12 · Iván Zegarra Pinto (técnico)')
@@ -57,17 +57,15 @@ describe('HistorialCambiosPage', () => {
     expect(asignado).toHaveTextContent('31/08/2026 09:50 · Lucía Mendoza Ríos (supervisor)')
     expect(asignado).not.toHaveTextContent('en este estado')
 
-    expect(enEspera).toHaveTextContent('En espera')
-    expect(enEspera).toHaveTextContent(
-      'Motivo: Repuesto de canaleta: el almacén lo entrega al día siguiente. Retorno estimado: 01/09/2026.',
-    )
+    // Como en p27, el motivo va en el título y el retorno estimado en la línea de detalle.
+    expect(enEspera).toHaveTextContent('En espera · Repuesto de canaleta: el almacén lo entrega al día siguiente.')
+    expect(enEspera).toHaveTextContent('31/08/2026 16:00 · Iván Zegarra Pinto (técnico) · retorno estimado 01/09/2026')
+    expect(enEspera).not.toHaveTextContent('Motivo:')
     expect(enEspera).toHaveTextContent('Permaneció 18 h 30 min en este estado')
 
     expect(cerrado).toHaveTextContent('Cerrado')
-    expect(cerrado).toHaveTextContent('01/09/2026 15:16 · Iván Zegarra Pinto (técnico)')
-    expect(cerrado).toHaveTextContent(
-      'Solución: Se retiró la extensión dañada y se instaló una canaleta con dos tomacorrientes fijos junto al podio.',
-    )
+    expect(cerrado).toHaveTextContent('01/09/2026 15:16 · Iván Zegarra Pinto (técnico) · encuesta enviada al usuario')
+    expect(cerrado).not.toHaveTextContent('Solución:')
     expect(cerrado).not.toHaveTextContent('en este estado')
   })
 
@@ -106,7 +104,8 @@ describe('HistorialCambiosPage', () => {
 
     expect(within(ruta()).getByRole('link', { name: 'Mi bandeja' })).toHaveAttribute('href', '/tecnico')
     expect(within(ruta()).getByRole('link', { name: EN_ATENCION })).toHaveAttribute('href', `/tecnico/tickets/${EN_ATENCION}`)
-    await user.click(screen.getByRole('link', { name: 'Volver al ticket' }))
+    expect(screen.queryByRole('link', { name: 'Volver al ticket' })).not.toBeInTheDocument()
+    await user.click(within(ruta()).getByRole('link', { name: EN_ATENCION }))
 
     expect(await screen.findByRole('heading', { level: 1, name: EN_ATENCION })).toBeInTheDocument()
     expect(ubicacionActual()).toBe(`/tecnico/tickets/${EN_ATENCION}`)
@@ -116,7 +115,7 @@ describe('HistorialCambiosPage', () => {
     await renderHistorial(CERRADO, 'supervisor')
 
     expect(within(ruta()).getByRole('link', { name: 'Cola de atención' })).toHaveAttribute('href', '/supervisor/cola')
-    expect(screen.getByRole('link', { name: 'Volver al ticket' })).toHaveAttribute('href', `/supervisor/tickets/${CERRADO}`)
+    expect(within(ruta()).getByRole('link', { name: CERRADO })).toHaveAttribute('href', `/supervisor/tickets/${CERRADO}`)
   })
 
   it('desde el ticket, «Historial» abre su historial con el cambio de estado recién hecho', async () => {

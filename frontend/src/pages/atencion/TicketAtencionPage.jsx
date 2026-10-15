@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
@@ -15,19 +15,17 @@ import DatosDelReporte from './DatosDelReporte.jsx'
 import Desenlace from './Desenlace.jsx'
 import EsperaAviso from './EsperaAviso.jsx'
 import HistorialReciente from './HistorialReciente.jsx'
-import { origenDelTicket } from './origenDelTicket.js'
 import TicketCabecera from './TicketCabecera.jsx'
 import './TicketAtencionPage.css'
 
 /**
- * El ticket ya cargado, en una sola vista (p25): su cabecera con las acciones de quien lo atiende; a la izquierda, la
- * espera en curso o el desenlace y la bitácora; a la derecha, los datos del reporte, el ambiente y el historial
- * reciente.
+ * El ticket ya cargado, en una sola vista (p25): su cabecera con el plazo y las acciones de quien lo atiende; a la
+ * izquierda, la espera en curso o el desenlace y la bitácora; a la derecha, los datos del reporte, el ambiente y el
+ * historial reciente.
  */
 function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
   const { usuario } = useAuth()
   const { ticket, espera, tiempos, desenlace, eventos, permisos } = atencion
-  const origen = origenDelTicket(usuario.rol)
   const rutaDelHistorial = ticketHistorialPath(usuario.rol, ticket.codigo)
   // Diálogo abierto: 'estado' (cambiar estado), 'cierre' (cerrar ticket) o null.
   const [dialogo, setDialogo] = useState(null)
@@ -44,15 +42,9 @@ function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
 
   return (
     <div className="ticket-atencion">
-      <nav aria-label="Ruta de navegación" className="ticket-atencion__breadcrumb">
-        <Link to={origen.to}>{origen.label}</Link>
-        <span aria-hidden="true"> · </span>
-        <span aria-current="page" className="text-mono">
-          {ticket.codigo}
-        </span>
-      </nav>
       <TicketCabecera
         ticket={ticket}
+        tiempos={tiempos}
         acciones={
           <>
             {permisos.transiciones.length > 0 && <Button onClick={() => setDialogo('estado')}>Cambiar estado</Button>}
@@ -74,14 +66,9 @@ function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
           <BitacoraPanel atencion={atencion} onActualizada={onActualizada} onDesactualizada={onDesactualizada} />
         </div>
         <aside className="ticket-atencion__lateral" aria-label="Datos del ticket">
-          <DatosDelReporte ticket={ticket} tiempos={tiempos} />
+          <DatosDelReporte ticket={ticket} />
           <AmbienteDelTicket ambiente={ticket.ambiente} />
-          <HistorialReciente
-            eventos={eventos}
-            tiempos={tiempos}
-            cerrado={ticket.estado === 'cerrado'}
-            rutaDelHistorial={rutaDelHistorial}
-          />
+          <HistorialReciente eventos={eventos} tiempos={tiempos} cerrado={ticket.estado === 'cerrado'} />
         </aside>
       </div>
       {dialogo === 'estado' && (
