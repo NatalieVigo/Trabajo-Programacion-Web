@@ -27,7 +27,7 @@ async function enlaceDeCamila() {
 
 async function abrirEnlace(token) {
   const view = renderApp(`/restablecer-contrasena/${token}`)
-  await screen.findByRole('heading', { level: 1, name: 'Crea tu nueva contraseña' })
+  await screen.findByRole('heading', { level: 1, name: 'Recuperar mi contraseña' })
   return view
 }
 
@@ -46,14 +46,13 @@ describe('ResetPasswordPage · enlace vigente', () => {
     renderApp(`/restablecer-contrasena/${await enlaceDeCamila()}`)
     expect(screen.getByText('Verificando el enlace…')).toHaveAttribute('role', 'status')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Crea tu nueva contraseña' })).toBeInTheDocument()
-    expect(screen.getByText(`Para la cuenta ${CAMILA}.`)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Recuperar mi contraseña' })).toBeInTheDocument()
     const [correo, enlace, nueva] = pasos()
     expect(correo).toHaveTextContent('Tu correo (completado)')
     expect(enlace).toHaveTextContent('Enlace enviado (completado)')
     expect(nueva).toHaveAttribute('aria-current', 'step')
     expect(campo('Nueva contraseña')).toHaveAttribute('type', 'password')
-    expect(campo('Nueva contraseña')).toHaveAccessibleDescription('Mínimo 8 caracteres, con una mayúscula y un número.')
+    expect(campo('Nueva contraseña')).not.toHaveAccessibleDescription()
     expect(campo('Confirmar')).toHaveAttribute('autocomplete', 'new-password')
     expect(boton('Guardar contraseña')).toHaveAttribute('type', 'submit')
     expect(document.title).toBe('Nueva contraseña · Mesa de Ayuda')
@@ -182,6 +181,6 @@ describe('ResetPasswordPage · enlaces que ya no sirven', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos verificar el enlace. Inténtalo otra vez.')
     await user.click(boton('Reintentar'))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Crea tu nueva contraseña' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Recuperar mi contraseña' })).toBeInTheDocument()
   })
 })

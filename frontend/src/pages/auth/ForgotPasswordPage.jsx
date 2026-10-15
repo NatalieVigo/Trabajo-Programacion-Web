@@ -15,27 +15,16 @@ import './PasswordRecovery.css'
 export default function ForgotPasswordPage() {
   const [searchParams] = useSearchParams()
   const [envio, setEnvio] = useState(null)
-  // Correo con el que se volvió del paso 2 para corregirlo: reemplaza al de la dirección.
-  const [correoAnterior, setCorreoAnterior] = useState(null)
   useDocumentTitle('Recuperar mi contraseña')
-
-  function usarOtroCorreo() {
-    setCorreoAnterior(envio.correo)
-    setEnvio(null)
-  }
 
   return (
     <div className="container page recovery-page">
       <Card className="recovery-page__card">
         <RecoveryStepper current={envio ? 2 : 1} />
         {envio ? (
-          <RecoveryLinkSent correo={envio.correo} onReenviado={setEnvio} onUsarOtroCorreo={usarOtroCorreo} />
+          <RecoveryLinkSent correo={envio.correo} onReenviado={setEnvio} />
         ) : (
-          <RecoveryEmailForm
-            correoInicial={correoAnterior ?? searchParams.get('correo') ?? ''}
-            autoFocus={correoAnterior !== null}
-            onEnviado={setEnvio}
-          />
+          <RecoveryEmailForm correoInicial={searchParams.get('correo') ?? ''} onEnviado={setEnvio} />
         )}
       </Card>
       {envio && <SimulatedInbox tokenDemo={envio.tokenDemo} />}

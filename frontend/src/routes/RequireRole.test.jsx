@@ -22,8 +22,6 @@ async function renderComo(rol, ruta) {
 
 async function solicitarAcceso(user) {
   await user.click(botonSolicitar())
-  const dialogo = await screen.findByRole('alertdialog', { name: '¿Solicitar acceso?' })
-  await user.click(within(dialogo).getByRole('button', { name: 'Enviar solicitud' }))
 }
 
 beforeEach(() => {
@@ -69,11 +67,11 @@ describe('RequireRole · vista 403', () => {
     expect(within(contenido()).queryByText('403')).not.toBeInTheDocument()
   })
 
-  it('un técnico en el inicio del usuario ve el 403 y vuelve a su bandeja', async () => {
+  it('un técnico en /usuario ve el 403 y vuelve a su bandeja', async () => {
     const { user } = await renderComo('tecnico', '/usuario')
 
     expect(
-      within(contenido()).getByRole('heading', { level: 1, name: 'No tienes permiso para ver el inicio del usuario' }),
+      within(contenido()).getByRole('heading', { level: 1, name: 'No tienes permiso para ver los tickets del usuario' }),
     ).toBeInTheDocument()
     expect(
       within(contenido()).getByText(
@@ -111,33 +109,17 @@ describe('RequireRole · vista 403', () => {
 })
 
 describe('RequireRole · «Solicitar acceso»', () => {
-  it('tras confirmar envía la solicitud, lo notifica y queda como «Solicitud enviada»', async () => {
+  it('envía la solicitud sin pasos intermedios, lo notifica y queda como «Solicitud enviada»', async () => {
     const { user } = await renderComo('usuario', '/supervisor/cola')
 
-    await user.click(botonSolicitar())
-    const dialogo = await screen.findByRole('alertdialog', { name: '¿Solicitar acceso?' })
-    expect(dialogo).toHaveAccessibleDescription(
-      'Enviaremos a Infraestructura y Servicios tu solicitud para ver la cola de atención.',
-    )
-    await user.click(within(dialogo).getByRole('button', { name: 'Enviar solicitud' }))
+    await solicitarAcceso(user)
 
     expect(await screen.findByText('Enviamos tu solicitud a Infraestructura y Servicios.')).toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
     expect(within(contenido()).getByRole('button', { name: 'Solicitud enviada' })).toBeDisabled()
     expect(readTable('solicitudesAcceso')).toEqual([
       { id: 'sol-001', usuarioId: DEMO.usuario, recurso: 'la cola de atención', creadaEn: AHORA },
     ])
-  })
-
-  it('si se cancela la confirmación no envía nada', async () => {
-    const { user } = await renderComo('usuario', '/supervisor/cola')
-
-    await user.click(botonSolicitar())
-    const dialogo = await screen.findByRole('alertdialog', { name: '¿Solicitar acceso?' })
-    await user.click(within(dialogo).getByRole('button', { name: 'Cancelar' }))
-
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
-    expect(botonSolicitar()).toHaveFocus()
-    expect(readTable('solicitudesAcceso')).toEqual([])
   })
 
   it('si ya la había enviado lo avisa y también queda como «Solicitud enviada»', async () => {
@@ -174,18 +156,18 @@ describe('RequireRole · «Solicitar acceso»', () => {
   })
 
   it('al pasar a otra sección prohibida la solicitud vuelve a estar disponible para ese recurso', async () => {
-    function IrAInvitaciones() {
+    function IrACategorias() {
       const navigate = useNavigate()
       return (
-        <button type="button" onClick={() => navigate('/supervisor/invitaciones')}>
-          Abrir invitaciones
+        <button type="button" onClick={() => navigate('/supervisor/categorias')}>
+          Abrir categorías
         </button>
       )
     }
     const { user } = renderWithProviders(
       <>
         <AppRoutes />
-        <IrAInvitaciones />
+        <IrACategorias />
       </>,
       { route: '/supervisor/cola', usuario: DEMO.usuario },
     )
@@ -193,10 +175,10 @@ describe('RequireRole · «Solicitar acceso»', () => {
     await solicitarAcceso(user)
     await within(contenido()).findByRole('button', { name: 'Solicitud enviada' })
 
-    await user.click(screen.getByRole('button', { name: 'Abrir invitaciones' }))
+    await user.click(screen.getByRole('button', { name: 'Abrir categorías' }))
 
     expect(
-      within(contenido()).getByRole('heading', { level: 1, name: 'No tienes permiso para ver las invitaciones' }),
+      within(contenido()).getByRole('heading', { level: 1, name: 'No tienes permiso para ver las categorías de servicio' }),
     ).toBeInTheDocument()
     expect(botonSolicitar()).toBeEnabled()
   })

@@ -14,12 +14,9 @@ const FILAS_POR_ROL = {
     { clave: 'abiertosAhora', etiqueta: 'Abiertos ahora' },
     CUENTA_CREADA,
   ],
-  tecnico: [
-    { clave: 'ticketsAsignados', etiqueta: 'Tickets asignados' },
-    { clave: 'enAtencion', etiqueta: 'En atención' },
-    CUENTA_CREADA,
-  ],
-  supervisor: [{ clave: 'invitacionesPendientes', etiqueta: 'Invitaciones pendientes' }, CUENTA_CREADA],
+  // p10 solo dibuja el resumen del usuario: técnico y supervisor muestran solo la fecha de creación de la cuenta.
+  tecnico: [CUENTA_CREADA],
+  supervisor: [CUENTA_CREADA],
 }
 
 /** «Usuario · estudiante»: el rol y, si lo tiene, el vínculo con la universidad. */

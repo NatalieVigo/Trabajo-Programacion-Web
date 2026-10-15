@@ -6,10 +6,10 @@ const PILDORA = { usuario: 'Mis tickets abiertos', tecnico: 'Asignados a mí', s
 
 describe('GuestOnly', () => {
   it.each([
-    ['usuario', '/iniciar-sesion', 'Inicio', '/usuario'],
+    ['usuario', '/iniciar-sesion', 'Mis tickets', '/usuario/tickets'],
     ['tecnico', '/registro', 'Mi bandeja', '/tecnico'],
     ['supervisor', '/recuperar-contrasena', 'Tablero', '/supervisor'],
-    ['usuario', '/restablecer-contrasena/a1b2c3', 'Inicio', '/usuario'],
+    ['usuario', '/restablecer-contrasena/a1b2c3', 'Mis tickets', '/usuario/tickets'],
   ])('con la sesión de %s, %s lleva a la vista del rol', async (rol, ruta, titulo, inicio) => {
     renderApp(ruta, { usuario: DEMO[rol] })
 

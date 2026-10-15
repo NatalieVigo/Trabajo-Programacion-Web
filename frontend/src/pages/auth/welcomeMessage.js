@@ -10,11 +10,11 @@ const RESUMEN_POR_ROL = {
 }
 
 /**
- * Bienvenida tras iniciar sesión (p05), con un lenguaje neutro y el resumen propio de cada rol:
- * «Te damos la bienvenida, Camila. Tienes 3 tickets abiertos y 1 encuesta pendiente.». Sin contadores, solo saluda.
+ * Bienvenida tras iniciar sesión, con el texto de p05 y el resumen propio de cada rol:
+ * «Bienvenida, Camila. Tienes 3 tickets abiertos y 1 encuesta pendiente.». Sin contadores, solo saluda.
  */
 export function buildWelcomeMessage(usuario, contadores) {
-  const saludo = `Te damos la bienvenida, ${getFirstName(usuario.nombres)}.`
+  const saludo = `Bienvenida, ${getFirstName(usuario.nombres)}.`
   const resumen = contadores && RESUMEN_POR_ROL[usuario.rol]?.(contadores)
   return resumen ? `${saludo} ${resumen}` : saludo
 }

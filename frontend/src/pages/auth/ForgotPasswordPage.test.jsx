@@ -88,7 +88,7 @@ describe('ForgotPasswordPage', () => {
 
     await user.click(abrir)
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Crea tu nueva contraseña' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Recuperar mi contraseña' })).toBeInTheDocument()
     expect(pasoActual()).toHaveTextContent('Nueva contraseña')
     await user.type(campo('Nueva contraseña'), NUEVA)
     expect(screen.getByText('Segura')).toBeInTheDocument()
@@ -106,7 +106,7 @@ describe('ForgotPasswordPage', () => {
     await user.type(campo('Contraseña'), NUEVA)
     await user.click(boton('Ingresar'))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mis tickets' })).toBeInTheDocument()
     await esperarPanel()
   })
 
@@ -121,23 +121,6 @@ describe('ForgotPasswordPage', () => {
     expect(bandeja()).toHaveTextContent('No llegó ningún correo a esta dirección.')
     expect(within(bandeja()).queryByRole('link')).not.toBeInTheDocument()
     expect(tokensRecuperacionRepository.findAll()).toEqual([])
-  })
-
-  it('«Usar otro correo» vuelve al paso 1 con el correo enviado, listo para corregirlo', async () => {
-    const { user } = renderApp('/recuperar-contrasena')
-    await pedirEnlace(user, 'camila.quispe@ulima.edu.pe')
-
-    await user.click(boton('Usar otro correo'))
-
-    expect(screen.getByRole('heading', { level: 1, name: 'Recuperar mi contraseña' })).toBeInTheDocument()
-    expect(pasoActual()).toHaveTextContent('Tu correo')
-    expect(campo('Correo institucional')).toHaveValue('camila.quispe@ulima.edu.pe')
-    expect(campo('Correo institucional')).toHaveFocus()
-    expect(screen.queryByRole('status', { name: BANDEJA })).not.toBeInTheDocument()
-
-    await user.clear(campo('Correo institucional'))
-    await pedirEnlace(user, CAMILA)
-    expect(within(bandeja()).getByRole('link', { name: 'Abrir enlace de restablecimiento' })).toBeInTheDocument()
   })
 
   it('si el envío falla de forma inesperada lo notifica y conserva el correo', async () => {

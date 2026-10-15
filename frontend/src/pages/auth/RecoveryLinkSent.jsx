@@ -8,10 +8,9 @@ const ESPERA_REENVIO_SEGUNDOS = 45
 
 /**
  * Paso 2 de la recuperación (p09): confirma el envío del enlace. «Reenviar enlace» se habilita a los 45 segundos y
- * vuelve a contar tras cada reenvío; `onReenviado` recibe la nueva respuesta del servicio. «Usar otro correo» vuelve
- * al paso 1.
+ * vuelve a contar tras cada reenvío; `onReenviado` recibe la nueva respuesta del servicio.
  */
-export default function RecoveryLinkSent({ correo, onReenviado, onUsarOtroCorreo }) {
+export default function RecoveryLinkSent({ correo, onReenviado }) {
   const toast = useToast()
   const espera = useCountdown(ESPERA_REENVIO_SEGUNDOS)
   const [reenviando, setReenviando] = useState(false)
@@ -57,9 +56,6 @@ export default function RecoveryLinkSent({ correo, onReenviado, onUsarOtroCorreo
           {espera.isRunning
             ? `Reenviar enlace (disponible en ${formatCountdown(espera.secondsLeft)})`
             : 'Reenviar enlace'}
-        </Button>
-        <Button variant="tertiary" onClick={onUsarOtroCorreo} disabled={reenviando}>
-          Usar otro correo
         </Button>
       </div>
     </div>

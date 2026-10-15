@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
-import { ROUTES } from '../../routes/routePaths.js'
 import { guardarMatriz, obtenerMatriz } from '../../services/habilitaciones.service.js'
 import { Alert, Button, Card, EmptyState, PageHeader, useConfirm, useToast } from '../../shared/components'
 import { pluralize } from '../../utils/format.js'
+import InvitarTecnicoButton from '../supervisor/InvitarTecnicoButton.jsx'
 import { alternarHabilitacion, avisosDeCobertura, habilitadasDe, tecnicosCambiados } from './matrizTecnicos.js'
 import MatrizTecnicosTable from './MatrizTecnicosTable.jsx'
 import './TecnicosCategoriaPage.css'
@@ -13,11 +13,7 @@ import './TecnicosCategoriaPage.css'
 const TITULO = 'Técnicos por categoría'
 const SUBTITULO = 'Marca las categorías que cada técnico puede atender, según su especialidad.'
 
-const invitarTecnico = (
-  <Button to={ROUTES.supervisorInvitaciones} variant="secondary">
-    Invitar técnico
-  </Button>
-)
+const invitarTecnico = <InvitarTecnicoButton />
 
 /**
  * Edita la matriz cargada: las casillas cambian una copia local y «Guardar matriz» envía solo los técnicos que

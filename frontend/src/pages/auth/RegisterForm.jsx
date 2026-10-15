@@ -11,7 +11,6 @@ import {
   Checkbox,
   FormField,
   PasswordInput,
-  PasswordStrength,
   SelectInput,
   TextInput,
   useConfirm,
@@ -117,7 +116,6 @@ export default function RegisterForm() {
 
           <FormField label="Contraseña" required hint={VALIDATION_MESSAGES.passwordRule} error={form.errors.password}>
             <PasswordInput {...form.getFieldProps('password')} autoComplete="new-password" />
-            <PasswordStrength password={form.values.password} />
           </FormField>
           <FormField label="Confirmar contraseña" required error={form.errors.confirmacion}>
             <PasswordInput {...form.getFieldProps('confirmacion')} autoComplete="new-password" />

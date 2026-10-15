@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { readTable, writeTable } from '../repositories/db.js'
-import { invitacionesRepository } from '../repositories/invitaciones.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { verifyPassword } from '../utils/password.js'
 import { ServiceError } from './ServiceError.js'
@@ -358,25 +357,12 @@ describe('usuarios.service · obtenerResumenCuenta', () => {
     await expect(obtenerResumenCuenta('usr-001')).resolves.toMatchObject({ encuestaPendiente: null })
   })
 
-  it('técnico: tickets asignados y los que están en atención (Julio)', async () => {
-    await expect(obtenerResumenCuenta('usr-002')).resolves.toEqual({
-      ticketsAsignados: 8,
-      enAtencion: 1,
-      cuentaCreada: '2026-03-02T14:15:00.000Z',
-    })
+  it('técnico: solo la fecha de creación de la cuenta (Julio)', async () => {
+    await expect(obtenerResumenCuenta('usr-002')).resolves.toEqual({ cuentaCreada: '2026-03-02T14:15:00.000Z' })
   })
 
-  it('supervisor: invitaciones que envió y siguen vigentes (Lucía)', async () => {
-    await expect(obtenerResumenCuenta('usr-003')).resolves.toEqual({
-      invitacionesPendientes: 2,
-      cuentaCreada: '2026-01-12T13:30:00.000Z',
-    })
-
-    invitacionesRepository.update('inv-002', { invitadoPor: 'usr-099' })
-    await expect(obtenerResumenCuenta('usr-003')).resolves.toMatchObject({ invitacionesPendientes: 1 })
-
-    vi.setSystemTime('2027-01-02T00:00:00.000Z')
-    await expect(obtenerResumenCuenta('usr-003')).resolves.toMatchObject({ invitacionesPendientes: 0 })
+  it('supervisor: solo la fecha de creación de la cuenta (Lucía)', async () => {
+    await expect(obtenerResumenCuenta('usr-003')).resolves.toEqual({ cuentaCreada: '2026-01-12T13:30:00.000Z' })
   })
 
   it('responde 404 USER_NOT_FOUND si la cuenta no existe', async () => {

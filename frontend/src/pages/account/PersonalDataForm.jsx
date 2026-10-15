@@ -1,11 +1,9 @@
-import { useId } from 'react'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useForm } from '../../hooks/useForm.js'
 import { actualizarPerfil } from '../../services/usuarios.service.js'
-import { Badge, Button, FormField, SelectInput, TextInput, useConfirm, useToast } from '../../shared/components'
+import { Button, FormField, SelectInput, TextInput, useConfirm, useToast } from '../../shared/components'
 import { formatTelefono } from '../../utils/format.js'
 import { validatePerfil } from '../../utils/validators.js'
-import './PersonalDataForm.css'
 
 /** Valores del formulario según la cuenta guardada: el teléfono como «987 654 321» y sin ambiente habitual como ''. */
 const valoresDe = (usuario) => ({
@@ -16,36 +14,8 @@ const valoresDe = (usuario) => ({
   ambienteHabitualId: usuario.ambienteHabitualId ?? '',
 })
 
-const opcionDeAmbiente = (ambiente) => ({ value: ambiente.id, label: `${ambiente.codigo} · ${ambiente.nombre}` })
-
-/** Especialidades de un técnico o supervisor (p07): solo se muestran, las asigna el supervisor. */
-function Especialidades({ ids, categorias }) {
-  const etiquetaId = useId()
-  const notaId = useId()
-  const nombres = new Map(categorias.map((categoria) => [categoria.id, categoria.nombre]))
-
-  return (
-    <div className="form-grid__full especialidades">
-      <p id={etiquetaId} className="text-label text-muted">
-        Especialidades
-      </p>
-      {ids.length > 0 ? (
-        <ul className="especialidades__list" aria-labelledby={etiquetaId} aria-describedby={notaId}>
-          {ids.map((id) => (
-            <li key={id}>
-              <Badge tone="primary">{nombres.get(id) ?? id}</Badge>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Aún no tienes especialidades asignadas.</p>
-      )}
-      <p id={notaId} className="text-aux text-muted">
-        La asignación de categorías la gestiona el supervisor.
-      </p>
-    </div>
-  )
-}
+// Como en p10, el ambiente se identifica por su código: «A-201».
+const opcionDeAmbiente = (ambiente) => ({ value: ambiente.id, label: ambiente.codigo })
 
 /**
  * Datos personales de Mi cuenta (p10). El correo no se edita. «Guardar cambios» se habilita al editar algún dato y,
@@ -126,10 +96,6 @@ export default function PersonalDataForm({ usuario, catalogos, labelledBy, onSav
               placeholder="Sin ambiente habitual"
             />
           </FormField>
-
-          {usuario.rol !== 'usuario' && (
-            <Especialidades ids={usuario.especialidades} categorias={catalogos.categorias} />
-          )}
 
           <div className="form-actions form-grid__full">
             <Button type="submit" disabled={!form.isDirty} loading={form.isSubmitting} loadingText="Guardando…">
