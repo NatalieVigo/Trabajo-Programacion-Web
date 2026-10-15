@@ -99,7 +99,14 @@
 }
 
 .tickets-table .tickets-table__asunto {
-  min-width: 220px;
+  min-width: 150px;
+  white-space: normal;
+}
+
+/* Para que las nueve columnas de la bandeja (p24) entren en el ancho del contenido, la categoría, el solicitante y
+   el plazo pasan a dos líneas cuando no caben en una. */
+.tickets-table .tickets-table__ajustable {
+  min-width: 96px;
   white-space: normal;
 }
 
