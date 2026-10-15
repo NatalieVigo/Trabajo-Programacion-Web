@@ -19,7 +19,6 @@ import { emailTakenError, insertarCuenta } from './usuarios.service.js'
 
 const VIGENCIA_MS = 7 * 24 * 60 * 60 * 1000
 const UNIDAD_INFRAESTRUCTURA = 'Dirección de Infraestructura y Servicios'
-const ESTADOS = ['pendiente', 'vencida', 'aceptada', 'rechazada', 'revocada']
 const INVITACION_PENDIENTE = 'Ya hay una invitación pendiente para este correo.'
 
 const NO_PENDIENTE = {
@@ -117,18 +116,6 @@ export function rechazar(token) {
   })
 }
 
-/** Invitaciones de la más reciente a la más antigua. `estado` filtra por estado efectivo (admite «vencida»). */
-export function listar({ estado } = {}) {
-  return simulateRequest(() => {
-    if (estado && !ESTADOS.includes(estado)) {
-      throw validationError({ estado: 'Elige un estado de invitación válido.' })
-    }
-    return presentar(invitacionesRepository.findAll())
-      .filter((invitacion) => !estado || invitacion.estadoEfectivo === estado)
-      .sort((a, b) => b.creadaEn.localeCompare(a.creadaEn))
-  })
-}
-
 /**
  * Un supervisor activo invita a un técnico o a otro supervisor. El enlace usa un token aleatorio de 96 bits y vence
  * a los 7 días. Falla con 403 FORBIDDEN, 400 VALIDATION_ERROR, 409 EMAIL_TAKEN (el correo ya tiene cuenta) o
@@ -166,15 +153,5 @@ export function crear(datos, invitadoPorId) {
       respondidaEn: null,
     })
     return presentarUna(invitacion)
-  })
-}
-
-/** El supervisor anula una invitación pendiente y vigente. Falla con 404, 410 o 409. */
-export function revocar(id) {
-  return simulateRequest(() => {
-    const invitacion = invitacionesRepository.findById(id)
-    if (!invitacion) throw notFoundError()
-    assertPendiente(invitacion)
-    return presentarUna(invitacionesRepository.update(id, { estado: 'revocada' }))
   })
 }

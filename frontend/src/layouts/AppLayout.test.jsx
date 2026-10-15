@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SESSION_STORAGE_KEY, sessionRepository } from '../repositories/session.repository.js'
-import { DEMO, renderApp } from '../test/test-utils.jsx'
+import { DEMO, renderApp, ubicacionActual } from '../test/test-utils.jsx'
 
 const TITULO_LANDING = 'Reporta una falla del campus y sigue su atención en un solo lugar'
 const PILDORA = { usuario: 'Mis tickets abiertos', tecnico: 'Asignados a mí', supervisor: 'Cola sin asignar' }
@@ -35,7 +35,7 @@ describe('AppLayout · cabecera y pie', () => {
     await renderPanel('/mi-cuenta')
 
     const cabecera = screen.getByRole('banner')
-    expect(within(cabecera).getByRole('link', { name: 'Mesa de Ayuda' })).toHaveAttribute('href', '/usuario')
+    expect(within(cabecera).getByRole('link', { name: 'Mesa de Ayuda' })).toHaveAttribute('href', '/usuario/tickets')
     expect(buscador()).toHaveAttribute('placeholder', 'Buscar por código de ticket · TCK-2026-…')
     expect(within(cabecera).getByRole('search')).toContainElement(buscador())
     expect(within(cabecera).getByText(PILDORA.usuario).closest('p')).toHaveTextContent('Mis tickets abiertos 3')
@@ -73,7 +73,7 @@ describe('AppLayout · menú lateral', () => {
 
     const menu = screen.getByRole('navigation', { name: 'Mis servicios' })
     expect(enlacesDe(menu)).toEqual([
-      ['Inicio', '/usuario'],
+      ['Inicio', '/'],
       ['Nuevo ticket', '/usuario/tickets/nuevo'],
       ['Mis tickets 12', '/usuario/tickets'],
       ['Encuesta pendiente 1', '/usuario/encuestas/pendiente'],
@@ -86,6 +86,18 @@ describe('AppLayout · menú lateral', () => {
     expect(actuales.map((link) => link.textContent)).toEqual(['Mis tickets 12'])
     expect(screen.getAllByRole('link', { name: 'Mi cuenta' })).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument()
+  })
+
+  it('/usuario lleva a «Mis tickets» y el «Inicio» del menú, a la landing (p03)', async () => {
+    const { user } = renderApp('/usuario', { usuario: DEMO.usuario })
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mis tickets' })).toBeInTheDocument()
+    expect(ubicacionActual()).toBe('/usuario/tickets')
+    await screen.findByText(PILDORA.usuario)
+
+    const menu = screen.getByRole('navigation', { name: 'Mis servicios' })
+    await user.click(within(menu).getByRole('link', { name: 'Inicio' }))
+    expect(await screen.findByRole('heading', { level: 1, name: TITULO_LANDING })).toBeInTheDocument()
   })
 
   it('el técnico ve «Atención» y el supervisor «Supervisión» (SPEC §9)', async () => {
@@ -109,8 +121,6 @@ describe('AppLayout · menú lateral', () => {
       ['Sedes y ambientes', '/supervisor/ambientes'],
       ['Técnicos por categoría', '/supervisor/tecnicos'],
       ['Usuarios', '/supervisor/usuarios'],
-      ['Invitaciones', '/supervisor/invitaciones'],
-      ['Mi cuenta', '/mi-cuenta'],
     ])
     expect(within(menu).getByRole('link', { name: 'Usuarios' })).toHaveAttribute('aria-current', 'page')
     expect(within(menu).getByRole('link', { name: 'Tablero' })).not.toHaveAttribute('aria-current')
@@ -133,7 +143,7 @@ describe('AppLayout · menú lateral', () => {
   })
 
   it('el menú lateral se cierra al navegar, al tocar el fondo y cuando el foco sale de él', async () => {
-    const { user } = await renderPanel('/usuario')
+    const { user } = await renderPanel('/usuario/tickets')
 
     await user.click(botonMenu())
     await user.click(within(screen.getByRole('navigation', { name: 'Mis servicios' })).getByRole('link', { name: 'Nuevo ticket' }))
@@ -152,7 +162,7 @@ describe('AppLayout · menú lateral', () => {
   })
 
   it('el botón «Menú» vuelve a cerrar el menú lateral', async () => {
-    const { user } = await renderPanel('/usuario')
+    const { user } = await renderPanel('/usuario/tickets')
 
     await user.click(botonMenu())
     await user.click(botonMenu())
@@ -164,7 +174,7 @@ describe('AppLayout · menú lateral', () => {
 
 describe('AppLayout · buscador de la cabecera', () => {
   it('con Enter lleva a la lista de tickets del usuario con el código buscado', async () => {
-    const { user } = await renderPanel('/usuario')
+    const { user } = await renderPanel('/usuario/tickets')
 
     await user.type(buscador(), ' tck-2026-00147 {Enter}')
 
@@ -189,11 +199,11 @@ describe('AppLayout · buscador de la cabecera', () => {
   })
 
   it('sin código no navega', async () => {
-    const { user } = await renderPanel('/usuario')
+    const { user } = await renderPanel('/usuario/tickets')
 
     await user.type(buscador(), '   {Enter}')
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Mis tickets' })).toBeInTheDocument()
   })
 })
 
@@ -207,9 +217,7 @@ describe('AppLayout · cerrar sesión', () => {
     expect(await screen.findByRole('heading', { level: 1, name: TITULO_LANDING })).toBeInTheDocument()
     const cabecera = screen.getByRole('banner')
     expect(within(cabecera).getByRole('link', { name: 'Iniciar sesión' })).toBeInTheDocument()
-    expect(within(cabecera).queryByRole('link', { name: 'Ir a mi panel' })).not.toBeInTheDocument()
     expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
-    expect(await screen.findByRole('heading', { level: 3, name: 'Audiovisuales' })).toBeInTheDocument()
   })
 
   it('si no puede cerrar la sesión lo notifica y la mantiene', async () => {

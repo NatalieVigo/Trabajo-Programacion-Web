@@ -1,15 +1,15 @@
 import { useId } from 'react'
 import { useForm } from '../../hooks/useForm.js'
 import { cambiarPassword } from '../../services/auth.service.js'
-import { Button, FormField, PasswordInput, PasswordStrength, useToast } from '../../shared/components'
-import { VALIDATION_MESSAGES, validateCambioPassword } from '../../utils/validators.js'
+import { Button, FormField, PasswordInput, useToast } from '../../shared/components'
+import { validateCambioPassword } from '../../utils/validators.js'
 import './ChangePasswordSection.css'
 
 const CAMPOS_VACIOS = { actual: '', nueva: '', confirmacion: '' }
 
 /**
- * Sección «Cambiar contraseña» de Mi cuenta (p10): la contraseña actual, la nueva con su medidor de seguridad y la
- * confirmación. Al actualizarla lo notifica y deja los campos vacíos.
+ * Sección «Cambiar contraseña» de Mi cuenta (p10): la contraseña actual, la nueva y la confirmación. Al actualizarla
+ * lo notifica y deja los campos vacíos.
  */
 export default function ChangePasswordSection({ usuario }) {
   const toast = useToast()
@@ -42,9 +42,8 @@ export default function ChangePasswordSection({ usuario }) {
             <FormField label="Actual" required error={form.errors.actual}>
               <PasswordInput {...form.getFieldProps('actual')} autoComplete="current-password" />
             </FormField>
-            <FormField label="Nueva" required hint={VALIDATION_MESSAGES.passwordRule} error={form.errors.nueva}>
+            <FormField label="Nueva" required error={form.errors.nueva}>
               <PasswordInput {...form.getFieldProps('nueva')} autoComplete="new-password" />
-              <PasswordStrength password={form.values.nueva} />
             </FormField>
             <FormField label="Confirmar" required error={form.errors.confirmacion}>
               <PasswordInput {...form.getFieldProps('confirmacion')} autoComplete="new-password" />

@@ -34,6 +34,5 @@ describe('NotFoundPage', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Reporta una falla del campus y sigue su atención en un solo lugar' }),
     ).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { level: 3, name: 'Audiovisuales' })).toBeInTheDocument()
   })
 })

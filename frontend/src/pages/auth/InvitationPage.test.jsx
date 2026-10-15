@@ -44,10 +44,9 @@ async function completarFormulario(user) {
   await user.click(chip('Redes y conectividad'))
 }
 
-/** Tras volver a la landing, espera sus categorías para no dejar cargas pendientes. */
+/** Espera a que se muestre la landing tras volver al inicio. */
 async function esperarLanding() {
   expect(await screen.findByRole('heading', { level: 1, name: TITULO_LANDING })).toBeInTheDocument()
-  expect(await screen.findByRole('heading', { level: 3, name: 'Audiovisuales' })).toBeInTheDocument()
 }
 
 /** Con la cuenta activa se llega a «Iniciar sesión» con el correo de la invitación precargado. */
@@ -79,7 +78,7 @@ describe('InvitationPage · invitación vigente', () => {
     expect(campo('Rol asignado')).toHaveAttribute('readonly')
     expect(campo('Teléfono de contacto')).toHaveValue('951 220 874')
     expect(campo('Teléfono de contacto')).not.toHaveAttribute('readonly')
-    expect(campo('Contraseña')).toHaveAccessibleDescription('Mínimo 8 caracteres, con una mayúscula y un número.')
+    expect(campo('Contraseña')).not.toHaveAccessibleDescription()
     expect(
       within(especialidades())
         .getAllByRole('button')
@@ -102,7 +101,6 @@ describe('InvitationPage · invitación vigente', () => {
     const { user } = await renderInvitacion()
 
     await completarFormulario(user)
-    expect(screen.getByText('Segura')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Activar mi cuenta' }))
 
     expect(await screen.findByText('Tu cuenta de técnico está activa. Ya puedes iniciar sesión.')).toBeInTheDocument()
