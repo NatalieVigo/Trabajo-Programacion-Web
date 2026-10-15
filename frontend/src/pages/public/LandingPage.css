@@ -112,57 +112,6 @@
   fill: var(--color-primary);
 }
 
-.hero-art__critical {
-  fill: var(--color-danger);
-}
-
-.hero-art__code {
-  fill: var(--color-primary);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: var(--font-weight-medium);
-}
-
-.hero-art__status {
-  fill: var(--color-warning-soft);
-  stroke: var(--color-warning);
-}
-
-.hero-art__status-text {
-  fill: var(--color-warning-text);
-  font-family: var(--font-sans);
-  font-size: 10.5px;
-  font-weight: var(--font-weight-medium);
-}
-
-.hero-art__track,
-.hero-art__progress {
-  fill: none;
-  stroke-width: 2;
-}
-
-.hero-art__track {
-  stroke: var(--color-border);
-}
-
-.hero-art__progress {
-  stroke: var(--color-success);
-}
-
-.hero-art__done {
-  fill: var(--color-success);
-}
-
-.hero-art__current {
-  fill: var(--color-warning);
-}
-
-.hero-art__pending {
-  fill: var(--color-surface);
-  stroke: var(--color-border);
-  stroke-width: 2;
-}
-
 /* Tarjetas destacadas */
 .highlights {
   display: grid;

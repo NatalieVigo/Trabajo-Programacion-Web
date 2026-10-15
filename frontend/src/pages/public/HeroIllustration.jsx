@@ -1,4 +1,7 @@
-/** Ilustración del hero: un aula atendida (ecran, proyector, escalera y caja de herramientas) y un ticket en curso. */
+/**
+ * Ilustración del hero en lugar de la foto de p03 («técnico atendiendo un aula»): ecran, proyector, escalera y caja de
+ * herramientas.
+ */
 export default function HeroIllustration({ className }) {
   return (
     <svg className={className} viewBox="0 0 480 300" aria-hidden="true" focusable="false">
@@ -33,24 +36,6 @@ export default function HeroIllustration({ className }) {
       <path d="M430 236v-7h22v7" className="hero-art__handle" />
       <rect x="418" y="236" width="46" height="26" rx="3" className="hero-art__toolbox" />
       <rect x="418" y="245" width="46" height="3" className="hero-art__dark" />
-
-      <rect x="28" y="168" width="214" height="106" rx="4" className="hero-art__surface" />
-      <rect x="28" y="168" width="4" height="106" className="hero-art__critical" />
-      <text x="44" y="193" className="hero-art__code">
-        TCK-2026-00147
-      </text>
-      <rect x="160" y="180" width="70" height="20" rx="3" className="hero-art__status" />
-      <text x="195" y="194" textAnchor="middle" className="hero-art__status-text">
-        En atención
-      </text>
-      <rect x="44" y="208" width="150" height="6" rx="2" className="hero-art__line" />
-      <rect x="44" y="220" width="104" height="6" rx="2" className="hero-art__soft" />
-      <path d="M52 252h120" className="hero-art__track" />
-      <path d="M52 252h80" className="hero-art__progress" />
-      <circle cx="52" cy="252" r="6" className="hero-art__done" />
-      <circle cx="92" cy="252" r="6" className="hero-art__done" />
-      <circle cx="132" cy="252" r="6" className="hero-art__current" />
-      <circle cx="172" cy="252" r="6" className="hero-art__pending" />
     </svg>
   )
 }
