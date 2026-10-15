@@ -109,20 +109,21 @@ describe('RequireRole · vista 403', () => {
 })
 
 describe('RequireRole · «Solicitar acceso»', () => {
-  it('envía la solicitud sin pasos intermedios, lo notifica y queda como «Solicitud enviada»', async () => {
+  it('envía la solicitud sin pasos intermedios, lo notifica y el botón conserva el texto de p11', async () => {
     const { user } = await renderComo('usuario', '/supervisor/cola')
 
     await solicitarAcceso(user)
 
     expect(await screen.findByText('Enviamos tu solicitud a Infraestructura y Servicios.')).toBeInTheDocument()
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
-    expect(within(contenido()).getByRole('button', { name: 'Solicitud enviada' })).toBeDisabled()
+    await waitFor(() => expect(botonSolicitar()).toBeEnabled())
+    expect(within(contenido()).queryByRole('button', { name: 'Solicitud enviada' })).not.toBeInTheDocument()
     expect(readTable('solicitudesAcceso')).toEqual([
       { id: 'sol-001', usuarioId: DEMO.usuario, recurso: 'la cola de atención', creadaEn: AHORA },
     ])
   })
 
-  it('si ya la había enviado lo avisa y también queda como «Solicitud enviada»', async () => {
+  it('si ya la había enviado lo avisa y no la registra otra vez', async () => {
     solicitudesAccesoRepository.insert({
       id: 'sol-001',
       usuarioId: DEMO.usuario,
@@ -138,7 +139,7 @@ describe('RequireRole · «Solicitar acceso»', () => {
         'Ya habías solicitado acceso a la cola de atención. Infraestructura y Servicios está revisando tu solicitud.',
       ),
     ).toBeInTheDocument()
-    expect(within(contenido()).getByRole('button', { name: 'Solicitud enviada' })).toBeDisabled()
+    await waitFor(() => expect(botonSolicitar()).toBeEnabled())
     expect(readTable('solicitudesAcceso')).toHaveLength(1)
   })
 
@@ -155,7 +156,7 @@ describe('RequireRole · «Solicitar acceso»', () => {
     expect(readTable('solicitudesAcceso')).toEqual([])
   })
 
-  it('al pasar a otra sección prohibida la solicitud vuelve a estar disponible para ese recurso', async () => {
+  it('cada sección prohibida registra su propia solicitud', async () => {
     function IrACategorias() {
       const navigate = useNavigate()
       return (
@@ -173,13 +174,20 @@ describe('RequireRole · «Solicitar acceso»', () => {
     )
     await screen.findByText(PILDORA.usuario)
     await solicitarAcceso(user)
-    await within(contenido()).findByRole('button', { name: 'Solicitud enviada' })
+    await screen.findByText('Enviamos tu solicitud a Infraestructura y Servicios.')
 
     await user.click(screen.getByRole('button', { name: 'Abrir categorías' }))
-
     expect(
       within(contenido()).getByRole('heading', { level: 1, name: 'No tienes permiso para ver las categorías de servicio' }),
     ).toBeInTheDocument()
-    expect(botonSolicitar()).toBeEnabled()
+    await waitFor(() => expect(botonSolicitar()).toBeEnabled())
+    await solicitarAcceso(user)
+
+    await waitFor(() =>
+      expect(readTable('solicitudesAcceso').map(({ recurso }) => recurso)).toEqual([
+        'la cola de atención',
+        'las categorías de servicio',
+      ]),
+    )
   })
 })
