@@ -1,0 +1,193 @@
+.satisfaccion-supervisor-grid {
+  display: flex;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: flex-start;
+}
+
+.main-content-panel {
+  flex: 1;
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #d6dee5);
+  border-radius: 4px;
+  padding: 24px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.panel-header h2 {
+  font-size: var(--font-size-section, 20px);
+  line-height: var(--line-height-section, 28px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text, #141c24);
+  margin: 0 0 4px 0;
+}
+
+.panel-header p {
+  font-size: var(--font-size-aux, 13px);
+  color: var(--color-text-muted, #5f6c78);
+  margin: 0;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.tabla-satisfaccion {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-body, 15px);
+}
+
+.tabla-satisfaccion th {
+  background-color: var(--color-bg, #f4f6f8);
+  color: var(--color-text-muted, #5f6c78);
+  font-size: var(--font-size-label, 12px);
+  line-height: var(--line-height-label, 16px);
+  font-weight: var(--font-weight-semibold, 600);
+  letter-spacing: var(--letter-spacing-label, 0.06em);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border, #d6dee5);
+}
+
+.tabla-satisfaccion td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border, #d6dee5);
+  color: var(--color-text, #141c24);
+  vertical-align: middle;
+}
+
+.tabla-satisfaccion tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-satisfaccion tbody tr:hover {
+  background-color: #fafbfc;
+}
+
+.satisfaccion-footnote {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background-color: var(--color-bg, #f4f6f8);
+  border-radius: 4px;
+  font-size: var(--font-size-aux, 13px);
+  line-height: var(--line-height-aux, 18px);
+  color: var(--color-text-muted, #5f6c78);
+}
+
+.sidebar-comentarios {
+  width: 380px;
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #d6dee5);
+  border-radius: 4px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.sidebar-comentarios h3 {
+  font-size: var(--font-size-subtitle, 16px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text, #141c24);
+  margin: 0 0 16px 0;
+}
+
+.filter-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-size: var(--font-size-aux, 13px);
+  color: var(--color-text-muted, #5f6c78);
+}
+
+.filter-select select {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border, #d6dee5);
+  border-radius: 4px;
+  font-size: var(--font-size-aux, 13px);
+  color: var(--color-text, #141c24);
+  background-color: var(--color-surface, #ffffff);
+  cursor: pointer;
+}
+
+.filter-select select:focus {
+  outline: none;
+  border-color: var(--color-primary, #1f4e79);
+}
+
+.comentarios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 580px;
+  overflow-y: auto;
+}
+
+.comentario-card {
+  border: 1px solid var(--color-border, #d6dee5);
+  border-radius: 4px;
+  padding: 12px 14px;
+  background-color: #fafbfc;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.puntaje-badge {
+  background-color: var(--color-primary, #1f4e79);
+  color: #ffffff;
+  font-size: var(--font-size-label, 12px);
+  font-weight: var(--font-weight-semibold, 600);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.cat-text {
+  font-size: var(--font-size-aux, 13px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text, #141c24);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comentario-body {
+  font-size: var(--font-size-aux, 13px);
+  color: var(--color-text, #141c24);
+  margin: 0 0 8px 0;
+  line-height: 18px;
+  font-style: italic;
+}
+
+.fecha-text {
+  font-size: var(--font-size-label, 12px);
+  color: var(--color-text-muted, #5f6c78);
+}
+
+.no-comentarios {
+  font-size: var(--font-size-aux, 13px);
+  text-align: center;
+  padding: 20px;
+}
+
+@media (max-width: 960px) {
+  .satisfaccion-supervisor-grid {
+    flex-direction: column;
+  }
+  .sidebar-comentarios {
+    width: 100%;
+  }
+}

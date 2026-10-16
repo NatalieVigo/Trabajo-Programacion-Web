@@ -22,7 +22,7 @@ describe('routeAccess', () => {
   it('las rutas exclusivas de un rol nombran el recurso que muestran, para la vista 403', () => {
     const exclusivas = PRIVATE_ROUTES.filter(({ roles }) => roles.length === 1)
 
-    expect(exclusivas).toHaveLength(19)
+    expect(exclusivas).toHaveLength(21)
     exclusivas.forEach(({ recurso }) => expect(recurso).toMatch(/^(el|la|los|las) \S/))
     expect(PRIVATE_ROUTES.find(({ path }) => path === '/supervisor/cola').recurso).toBe('la cola de atención')
   })
@@ -30,6 +30,11 @@ describe('routeAccess', () => {
   it.each([
     ['usuario', '/usuario', true],
     ['usuario', '/usuario/tickets/nuevo', true],
+    ['usuario', '/usuario/encuestas', true],
+    ['usuario', '/usuario/encuestas/TCK-2026-00130/evaluar', true],
+    ['supervisor', '/usuario/encuestas/TCK-2026-00130/evaluar', false],
+    ['supervisor', '/supervisor/satisfaccion', true],
+    ['usuario', '/supervisor/satisfaccion', false],
     ['usuario', '/supervisor/cola', false],
     ['usuario', '/tecnico', false],
     ['tecnico', '/tecnico/historial', true],
