@@ -41,6 +41,8 @@ export const NAVIGATION = Object.freeze({
       { label: 'Categorías', to: ROUTES.supervisorCategorias },
       { label: 'Sedes y ambientes', to: ROUTES.supervisorAmbientes },
       { label: 'Técnicos por categoría', to: ROUTES.supervisorTecnicos },
+      { label: 'Satisfacción', to: ROUTES.supervisorSatisfaccion },
+      { label: 'Carga por técnico', to: ROUTES.supervisorCarga },
       { label: 'Usuarios', to: ROUTES.supervisorUsuarios },
     ],
   },
