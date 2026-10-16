@@ -120,6 +120,8 @@ describe('AppLayout · menú lateral', () => {
       ['Categorías', '/supervisor/categorias'],
       ['Sedes y ambientes', '/supervisor/ambientes'],
       ['Técnicos por categoría', '/supervisor/tecnicos'],
+      ['Satisfacción', '/supervisor/satisfaccion'],
+      ['Carga por técnico', '/supervisor/carga-tecnicos'],
       ['Usuarios', '/supervisor/usuarios'],
     ])
     expect(within(menu).getByRole('link', { name: 'Usuarios' })).toHaveAttribute('aria-current', 'page')

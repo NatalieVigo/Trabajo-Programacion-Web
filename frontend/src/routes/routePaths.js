@@ -31,6 +31,7 @@ export const ROUTES = Object.freeze({
   supervisorAmbientes: '/supervisor/ambientes',
   supervisorTecnicos: '/supervisor/tecnicos',
   supervisorSatisfaccion: '/supervisor/satisfaccion',
+  supervisorCarga: '/supervisor/carga-tecnicos',
   supervisorUsuarios: '/supervisor/usuarios',
 
   miCuenta: '/mi-cuenta',

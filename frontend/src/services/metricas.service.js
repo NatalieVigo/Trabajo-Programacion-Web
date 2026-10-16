@@ -1,6 +1,7 @@
 import { readTable } from '../repositories/db.js'
 import { fechaEnLima, esFechaDeCalendario } from '../utils/fechaLima.js'
 import { HORA_MS } from '../utils/duracion.js'
+import { getDisplayName } from '../utils/format.js'
 import { tiemposDe } from './tiemposDeAtencion.js'
 import { esTicketEnCurso } from './ticketsEnCurso.js'
 import { simulateRequest } from './request.js'
@@ -98,5 +99,42 @@ export function obtenerTablero(usuarioId, rango) {
       porCategoria: categorias.map((cat) => ({ id: cat.id, nombre: cat.nombre, total: actual.registrados.filter((t) => t.categoriaId === cat.id).length })).sort((a, b) => b.total - a.total || a.nombre.localeCompare(b.nombre)),
       ambientes,
     }
+  })
+}
+
+/** Carga actual frente a resultados y encuestas del periodo seleccionado (HU-7.2). */
+export function obtenerCargaTecnicos(usuarioId, rango) {
+  return simulateRequest(() => {
+    exigirSupervisor(usuarioId)
+    validarRangoMetricas(rango)
+    const { tickets, categorias } = actividad(Date.now())
+    const encuestas = readTable('encuestas')
+    const tecnicos = readTable('usuarios').filter((u) => u.rol === 'tecnico' && u.estado === 'activo')
+    const habilitaciones = readTable('habilitaciones')
+    const filas = tecnicos.map((u) => {
+      const propios = tickets.filter((t) => t.asignadoA === u.id && esTicketEnCurso(t))
+      const resueltos = tickets.filter((t) => t.tecnicoResolutorId === u.id && enRango(t.resueltoEn, rango))
+      const puntajes = encuestas.filter((e) => enRango(e.fechaRespuesta ?? e.respondidaEn, rango)).flatMap((e) => {
+        const ticket = tickets.find((t) => t.id === e.ticketId || t.codigo === e.codigoTicket)
+        const puntaje = e.puntajeGeneral ?? e.puntaje
+        return ticket?.tecnicoResolutorId === u.id && Number.isFinite(puntaje) && puntaje >= 1 && puntaje <= 5 ? [puntaje] : []
+      })
+      return {
+        id: u.id, nombre: getDisplayName(u),
+        especialidad: (u.especialidades ?? []).map((id) => categorias.find((cat) => cat.id === id)?.nombre).filter(Boolean).join(' · '),
+        asignados: propios.length, resueltos: resueltos.length,
+        enEspera: propios.filter((t) => t.estado === 'en_espera').length,
+        promedioMs: promedio(resueltos.map((t) => t.atencionMs)), satisfaccion: promedio(puntajes),
+      }
+    })
+    const totalAsignados = filas.reduce((total, fila) => total + fila.asignados, 0)
+    const mayor = [...filas].sort((a, b) => b.asignados - a.asignados)[0]
+    let aviso = mayor?.asignados ? `${mayor.nombre} concentra ${mayor.asignados} de los ${totalAsignados} tickets asignados.` : 'No hay tickets en curso asignados a técnicos activos.'
+    if (mayor?.asignados) {
+      const criticos = tickets.filter((t) => t.asignadoA === mayor.id && esTicketEnCurso(t) && t.prioridad === 'critica')
+      const candidato = [...filas].sort((a, b) => a.asignados - b.asignados).find((fila) => fila.id !== mayor.id && fila.asignados < mayor.asignados && criticos.some((t) => habilitaciones.some((h) => h.tecnicoId === fila.id && h.categoriaId === t.categoriaId)))
+      if (candidato) aviso += ` Considera repartir los tickets críticos con ${candidato.nombre}, que cuenta con habilitación compatible.`
+    }
+    return { filas, totalAsignados, promedioAsignados: filas.length ? totalAsignados / filas.length : 0, aviso }
   })
 }
