@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout.jsx'
 import PublicLayout from '../layouts/PublicLayout.jsx'
 import AccountPage from '../pages/account/AccountPage.jsx'
@@ -20,10 +20,8 @@ import NotFoundPage from '../pages/errors/NotFoundPage.jsx'
 import { HISTORIAS } from '../pages/placeholders/historias.js'
 import PlaceholderPage from '../pages/placeholders/PlaceholderPage.jsx'
 import LandingPage from '../pages/public/LandingPage.jsx'
-import InvitationsPage from '../pages/supervisor/InvitationsPage.jsx'
 import SupervisorHomePage from '../pages/supervisor/SupervisorHomePage.jsx'
 import TechnicianHomePage from '../pages/technician/TechnicianHomePage.jsx'
-import UserHomePage from '../pages/user/UserHomePage.jsx'
 import GuestOnly from './GuestOnly.jsx'
 import RequireAuth from './RequireAuth.jsx'
 import RequireRole from './RequireRole.jsx'
@@ -39,12 +37,12 @@ const pendiente = (title, historia) => <PlaceholderPage title={title} pendiente=
 
 /** Página de cada ruta privada. Quién puede verla lo define la tabla de routeAccess.js. */
 const PRIVATE_PAGES = {
-  [ROUTES.usuarioInicio]: <UserHomePage />,
-
-  [ROUTES.usuarioNuevoTicket]: <NewTicket />,  // <-- Reemplazado-H3
-  [ROUTES.usuarioTickets]: <MyTickets />,      // <-- Reemplazadp-H3
-  [ROUTES.usuarioTicketDetalle]: <TicketDetail />,  //  <--Reemplazdo-H3
-  [ROUTES.usuarioTicketConfirmacion]: <TicketConfirmation />, //<--Reemplazado-H3
+  [ROUTES.usuarioInicio]: <Navigate to={ROUTES.usuarioTickets} replace />,
+  // h3-tickets
+  [ROUTES.usuarioNuevoTicket]: <NewTicket />,  
+  [ROUTES.usuarioTickets]: <MyTickets />,      
+  [ROUTES.usuarioTicketDetalle]: <TicketDetail />, 
+  [ROUTES.usuarioTicketConfirmacion]: <TicketConfirmation />, 
 
   [ROUTES.usuarioEncuestaPendiente]: pendiente('Encuesta pendiente', HISTORIAS.encuestas),
   [ROUTES.usuarioEncuestas]: pendiente('Mis encuestas', HISTORIAS.encuestas),
@@ -64,7 +62,6 @@ const PRIVATE_PAGES = {
   [ROUTES.supervisorAmbientes]: <UbicacionesPage />,
   [ROUTES.supervisorTecnicos]: <TecnicosCategoriaPage />,
   [ROUTES.supervisorUsuarios]: pendiente('Usuarios', HISTORIAS.metricas),
-  [ROUTES.supervisorInvitaciones]: <InvitationsPage />,
 
   [ROUTES.miCuenta]: <AccountPage />,
   [ROUTES.accesoDenegado]: <ForbiddenPage />,

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { LANDING_SECTIONS, ROUTES, landingSectionPath } from '../routes/routePaths.js'
-import DemoResetButton from './DemoResetButton.jsx'
 import './PublicFooter.css'
 
 const FOOTER_SECTIONS = [
@@ -24,7 +23,7 @@ const FOOTER_SECTIONS = [
   },
 ]
 
-/** Pie institucional (p03). En desarrollo incluye el botón para restablecer los datos de demostración. */
+/** Pie institucional (p03). */
 export default function PublicFooter() {
   return (
     <footer className="public-footer">
@@ -53,7 +52,6 @@ export default function PublicFooter() {
       </div>
 
       <div className="container public-footer__bottom">
-        {import.meta.env.DEV && <DemoResetButton />}
         <p className="public-footer__legal">
           © 2026 Universidad de Lima
           <br />

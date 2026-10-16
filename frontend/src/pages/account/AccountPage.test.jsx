@@ -69,7 +69,7 @@ describe('AccountPage · datos de la cuenta', () => {
     expect(campo('Teléfono')).toHaveValue('987 654 321')
     expect(campo('Unidad o carrera')).toHaveValue('Ingeniería de Sistemas')
     expect(within(campo('Ambiente habitual')).getByRole('option', { selected: true })).toHaveTextContent(
-      'A-201 · Aula A-201',
+      'A-201',
     )
     expect(within(formulario()).queryByText('Especialidades')).not.toBeInTheDocument()
 
@@ -122,42 +122,27 @@ describe('AccountPage · datos de la cuenta', () => {
     )
   })
 
-  it('el técnico ve sus especialidades sin poder editarlas y el resumen de su atención', async () => {
+  it('el técnico ve los mismos datos personales de p10 y en su resumen solo la fecha de creación', async () => {
     await abrirMiCuenta(DEMO.tecnico, 'tecnico')
 
-    const especialidades = within(formulario()).getByRole('list', { name: 'Especialidades' })
-    expect(within(especialidades).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
-      'Audiovisuales',
-      'Redes y conectividad',
-    ])
-    expect(especialidades).toHaveAccessibleDescription('La asignación de categorías la gestiona el supervisor.')
-    expect(within(especialidades).queryByRole('button')).not.toBeInTheDocument()
+    expect(within(formulario()).queryByText('Especialidades')).not.toBeInTheDocument()
     expect(campo('Unidad o carrera')).toHaveValue('Dirección de Infraestructura y Servicios')
 
     expect(within(resumen()).getByRole('heading', { name: 'Julio César Paredes Soto' })).toBeInTheDocument()
     expect(within(resumen()).getByText('Técnico')).toBeInTheDocument()
     expect(filasDelResumen()).toEqual([
-      ['Tickets asignados', '8'],
-      ['En atención', '1'],
       ['Cuenta creada', '02/03/2026'],
     ])
     expect(screen.queryByRole('region', { name: 'Encuesta pendiente' })).not.toBeInTheDocument()
     expect(screen.queryByText('No tienes encuestas pendientes.')).not.toBeInTheDocument()
   })
 
-  it('el supervisor ve sus especialidades y sus invitaciones pendientes', async () => {
+  it('el supervisor ve en su resumen solo la fecha de creación de la cuenta', async () => {
     await abrirMiCuenta(DEMO.supervisor, 'supervisor')
 
-    const especialidades = within(formulario()).getByRole('list', { name: 'Especialidades' })
-    expect(within(especialidades).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
-      'Climatización',
-      'Eléctrico',
-    ])
+    expect(within(formulario()).queryByText('Especialidades')).not.toBeInTheDocument()
     expect(within(resumen()).getByText('Supervisor')).toBeInTheDocument()
-    expect(filasDelResumen()).toEqual([
-      ['Invitaciones pendientes', '2'],
-      ['Cuenta creada', '12/01/2026'],
-    ])
+    expect(filasDelResumen()).toEqual([['Cuenta creada', '12/01/2026']])
   })
 })
 
@@ -281,7 +266,7 @@ describe('AccountPage · cambiar contraseña', () => {
     expect(campoContrasena('Actual')).toHaveAttribute('type', 'password')
     expect(campoContrasena('Actual')).toHaveAttribute('autocomplete', 'current-password')
     expect(campoContrasena('Nueva')).toHaveAttribute('autocomplete', 'new-password')
-    expect(campoContrasena('Nueva')).toHaveAccessibleDescription('Mínimo 8 caracteres, con una mayúscula y un número.')
+    expect(campoContrasena('Nueva')).not.toHaveAccessibleDescription()
     expect(campoContrasena('Confirmar')).toHaveAttribute('type', 'password')
     expect(botonActualizar()).toHaveAttribute('type', 'submit')
     expect(
@@ -310,7 +295,7 @@ describe('AccountPage · cambiar contraseña', () => {
   it('actualiza la contraseña, lo notifica y deja los campos vacíos', async () => {
     const { user } = await abrirMiCuenta()
     await completarCambio(user, { actual: 'Camila2026', nueva: NUEVA })
-    expect(within(formularioContrasena()).getByText('Segura')).toBeInTheDocument()
+    expect(within(formularioContrasena()).queryByText('Segura')).not.toBeInTheDocument()
 
     await user.click(botonActualizar())
 
@@ -319,7 +304,6 @@ describe('AccountPage · cambiar contraseña', () => {
     expect(campoContrasena('Nueva')).toHaveValue('')
     expect(campoContrasena('Confirmar')).toHaveValue('')
     expect(campoContrasena('Actual')).not.toHaveAttribute('aria-invalid')
-    expect(within(formularioContrasena()).queryByText('Segura')).not.toBeInTheDocument()
     await expect(tieneLaContrasena(DEMO.usuario, NUEVA)).resolves.toBe(true)
   })
 

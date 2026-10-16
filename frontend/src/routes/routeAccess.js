@@ -13,7 +13,7 @@ const SUPERVISOR = Object.freeze(['supervisor'])
  */
 export const PRIVATE_ROUTES = Object.freeze(
   [
-    { path: ROUTES.usuarioInicio, roles: USUARIO, recurso: 'el inicio del usuario' },
+    { path: ROUTES.usuarioInicio, roles: USUARIO, recurso: 'los tickets del usuario' },
     { path: ROUTES.usuarioNuevoTicket, roles: USUARIO, recurso: 'el registro de tickets' },
     { path: ROUTES.usuarioTickets, roles: USUARIO, recurso: 'los tickets del usuario' },
     { path: ROUTES.usuarioTicketDetalle, roles: USUARIO, recurso: 'el detalle del ticket' },
@@ -38,7 +38,6 @@ export const PRIVATE_ROUTES = Object.freeze(
     { path: ROUTES.supervisorAmbientes, roles: SUPERVISOR, recurso: 'las sedes y ambientes' },
     { path: ROUTES.supervisorTecnicos, roles: SUPERVISOR, recurso: 'los técnicos por categoría' },
     { path: ROUTES.supervisorUsuarios, roles: SUPERVISOR, recurso: 'la gestión de usuarios' },
-    { path: ROUTES.supervisorInvitaciones, roles: SUPERVISOR, recurso: 'las invitaciones' },
 
     { path: ROUTES.miCuenta, roles: ROLES },
     { path: ROUTES.accesoDenegado, roles: ROLES },

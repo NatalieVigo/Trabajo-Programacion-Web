@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { Card, TextLink } from '../../shared/components'
+import { Card } from '../../shared/components'
 import { formatDuracion } from '../../utils/duracion.js'
 import { formatDateTime } from '../../utils/format.js'
 import { tituloDeEvento } from './eventoDelHistorial.js'
@@ -8,10 +8,10 @@ import { tituloDeEvento } from './eventoDelHistorial.js'
 const RECIENTES = 4
 
 /**
- * Historial reciente (HU-5 · 5.6, p25): los últimos cambios del ticket y el tiempo que lleva, con el enlace a su
- * historial completo (`rutaDelHistorial`).
+ * Historial reciente (HU-5 · 5.6, p25): los últimos cambios del ticket y el tiempo que lleva. El historial completo se
+ * abre con «Historial», en la cabecera.
  */
-export default function HistorialReciente({ eventos, tiempos, cerrado, rutaDelHistorial }) {
+export default function HistorialReciente({ eventos, tiempos, cerrado }) {
   const tituloId = useId()
   const recientes = eventos.slice(-RECIENTES)
 
@@ -33,7 +33,6 @@ export default function HistorialReciente({ eventos, tiempos, cerrado, rutaDelHi
       <p className="ticket-dato-card__nota">
         {formatDuracion(tiempos.totalMs)} {cerrado ? 'de atención en total' : 'transcurridos'}
       </p>
-      <TextLink to={rutaDelHistorial}>Ver el historial completo</TextLink>
     </Card>
   )
 }

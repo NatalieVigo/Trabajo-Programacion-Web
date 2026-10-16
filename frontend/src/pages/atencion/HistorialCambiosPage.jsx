@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { ticketAtencionPath } from '../../routes/routePaths.js'
 import { obtenerHistorial } from '../../services/atencion.service.js'
-import { Button, Card, PageHeader } from '../../shared/components'
+import { Card, PageHeader } from '../../shared/components'
 import { formatDuracion } from '../../utils/duracion.js'
 import { formatDate, formatEstado } from '../../utils/format.js'
 import CargaDelTicket from './CargaDelTicket.jsx'
@@ -19,6 +19,11 @@ import './HistorialCambiosPage.css'
 function resumir({ ticket, tiempos }) {
   const situacion = ticket.cerradoEn ? `cerrado el ${formatDate(ticket.cerradoEn)}` : formatEstado(ticket.estado).toLowerCase()
   return [ticket.asunto, ticket.ambiente.codigo, situacion, `tiempo total ${formatDuracion(tiempos.totalMs)}`].join(' · ')
+}
+
+/** Prioridad con la que se registró el ticket: la anterior al primer cambio de prioridad o, si no lo hubo, la actual. */
+function prioridadInicialDe({ ticket, eventos }) {
+  return eventos.find((evento) => evento.tipo === 'prioridad')?.prioridadAnterior ?? ticket.prioridad
 }
 
 /** El historial ya cargado: la ruta de navegación, la línea de tiempo y el tiempo por etapa. */
@@ -40,18 +45,14 @@ function HistorialDeTicket({ historial }) {
         <span aria-hidden="true"> · </span>
         <span aria-current="page">Historial de cambios</span>
       </nav>
-      <PageHeader
-        title="Historial de cambios"
-        subtitle={resumir(historial)}
-        actions={
-          <Button to={rutaDelTicket} variant="secondary">
-            Volver al ticket
-          </Button>
-        }
-      />
+      <PageHeader title="Historial de cambios" subtitle={resumir(historial)} />
       <div className="historial-cambios__layout">
         <Card>
-          <LineaDeTiempo eventos={eventos} aria-label={`Cambios de ${ticket.codigo}`} />
+          <LineaDeTiempo
+            eventos={eventos}
+            prioridadInicial={prioridadInicialDe(historial)}
+            aria-label={`Cambios de ${ticket.codigo}`}
+          />
         </Card>
         <TiempoPorEtapa etapas={etapas} tiempos={tiempos} />
       </div>

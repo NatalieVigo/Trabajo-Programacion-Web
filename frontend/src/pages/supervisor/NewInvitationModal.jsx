@@ -2,14 +2,18 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useCopyLink } from '../../hooks/useCopyLink.js'
 import { useForm } from '../../hooks/useForm.js'
+import { invitacionPath } from '../../routes/routePaths.js'
 import { crear } from '../../services/invitaciones.service.js'
 import { Button, FormField, Modal, SelectInput, TextInput, useConfirm, useToast } from '../../shared/components'
 import { formatDate, formatRol, getFullName } from '../../utils/format.js'
 import { ROLES_INVITABLES, validateInvitacion } from '../../utils/validators.js'
-import { enlaceDeInvitacion } from './invitationsList.js'
 
-const INITIAL_VALUES = { nombres: '', apellidos: '', correo: '', rol: '', telefono: '' }
+// Se abre desde «Invitar técnico» (p16): el rol llega elegido y se puede cambiar para invitar a un supervisor.
+const INITIAL_VALUES = { nombres: '', apellidos: '', correo: '', rol: 'tecnico', telefono: '' }
 const ROL_OPTIONS = ROLES_INVITABLES.map((rol) => ({ value: rol, label: formatRol(rol) }))
+
+/** Enlace completo que el supervisor comparte con la persona invitada. */
+const enlaceDeInvitacion = (token) => new URL(invitacionPath(token), window.location.origin).href
 
 function InvitationFields({ form, firstFieldRef }) {
   return (
@@ -56,9 +60,9 @@ function InvitationLink({ enlace, venceEn }) {
 
 /**
  * Formulario de la invitación y, una vez creada, el enlace para compartir con «Copiar enlace». Cerrar el formulario
- * con datos ingresados pide confirmación. `onCreada` recibe la invitación creada.
+ * con datos ingresados pide confirmación.
  */
-function NewInvitationDialog({ onClose, onCreada }) {
+function NewInvitationDialog({ onClose }) {
   const { usuario } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
@@ -77,7 +81,6 @@ function NewInvitationDialog({ onClose, onCreada }) {
     try {
       const invitacion = await crear(values, usuario.id)
       toast.success(`Invitación creada para ${getFullName(invitacion)}.`)
-      onCreada(invitacion)
       setCreada(invitacion)
     } catch (error) {
       // 400 y 409 (el correo ya tiene cuenta o una invitación pendiente) traen el mensaje de cada campo.
@@ -154,7 +157,7 @@ function NewInvitationDialog({ onClose, onCreada }) {
   )
 }
 
-/** «Nueva invitación» (HU-1 · 1.4). Se monta al abrirse, así cada vez empieza con el formulario vacío. */
-export default function NewInvitationModal({ open, onClose, onCreada }) {
-  return open ? <NewInvitationDialog onClose={onClose} onCreada={onCreada} /> : null
+/** «Nueva invitación» (HU-1 · 1.2). Se monta al abrirse, así cada vez empieza con el formulario vacío. */
+export default function NewInvitationModal({ open, onClose }) {
+  return open ? <NewInvitationDialog onClose={onClose} /> : null
 }

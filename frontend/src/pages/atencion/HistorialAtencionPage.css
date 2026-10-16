@@ -1,29 +1,5 @@
-/* «Historial» del técnico: búsqueda, filtro por estado y los tickets en filas compactas (p24). */
-.historial-filtros {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-
-.historial-filtros__busqueda {
-  flex: 1 1 240px;
-  max-width: 360px;
-}
-
-.historial-filtros__estado {
-  flex: 0 1 220px;
-}
-
-.historial-conteo {
-  margin-top: var(--space-3);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-aux);
-  line-height: var(--line-height-aux);
-}
-
-/* Tabla de tickets: por debajo de 768 px cada fila se apila como una tarjeta. */
+/* «Historial» del técnico: sus tickets resueltos y cerrados en filas compactas, como la bandeja (p24). Por debajo de
+   768 px cada fila se apila como una tarjeta. */
 .tickets-table {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -123,27 +99,18 @@
 }
 
 .tickets-table .tickets-table__asunto {
-  min-width: 220px;
+  min-width: 150px;
   white-space: normal;
 }
 
-.tickets-table__categoria {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
-}
-
-.tickets-table__acciones .btn + .btn {
-  margin-left: var(--space-1);
+/* Para que las nueve columnas de la bandeja (p24) entren en el ancho del contenido, la categoría, el solicitante y
+   el plazo pasan a dos líneas cuando no caben en una. */
+.tickets-table .tickets-table__ajustable {
+  min-width: 96px;
+  white-space: normal;
 }
 
 @media (max-width: 767px) {
-  .historial-filtros__busqueda,
-  .historial-filtros__estado {
-    flex-basis: 100%;
-    max-width: none;
-  }
-
   .tickets-table {
     border: 0;
     background: none;
@@ -208,7 +175,7 @@
     text-align: right;
   }
 
-  /* Con dos líneas (asunto y categoría), la etiqueta va arriba y el contenido ocupa todo el ancho. */
+  /* El asunto puede ocupar varias líneas: la etiqueta va arriba y el contenido ocupa todo el ancho. */
   .tickets-table td.tickets-table__asunto {
     display: block;
     text-align: left;
@@ -237,9 +204,5 @@
     margin-top: var(--space-2);
     padding-top: var(--space-2);
     border-top: 1px solid var(--color-border);
-  }
-
-  .tickets-table__acciones .btn + .btn {
-    margin-left: 0;
   }
 }

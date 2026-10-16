@@ -1,13 +1,10 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { recuperarContrasenaPath } from '../../routes/routePaths.js'
 import { Alert, Button } from '../../shared/components'
 
 const CORREO_SOPORTE = 'soporte.campus@ulima.edu.pe'
 
 function CuentaBloqueadaAlert({ message, correo, ...rest }) {
-  const [soporteVisible, setSoporteVisible] = useState(false)
-  const soporteId = useId()
-
   return (
     <Alert
       {...rest}
@@ -15,18 +12,9 @@ function CuentaBloqueadaAlert({ message, correo, ...rest }) {
       actions={
         <>
           <Button to={recuperarContrasenaPath(correo)}>Restablecer contraseña</Button>
-          <Button
-            variant="tertiary"
-            aria-expanded={soporteVisible}
-            aria-controls={soporteId}
-            onClick={() => setSoporteVisible((visible) => !visible)}
-          >
+          <Button variant="tertiary" href={`mailto:${CORREO_SOPORTE}`}>
             Escribir a soporte
           </Button>
-          <p id={soporteId} className="login-alert__support" hidden={!soporteVisible}>
-            Escríbenos a <a href={`mailto:${CORREO_SOPORTE}`}>{CORREO_SOPORTE}</a>. Atendemos de lunes a sábado, de
-            07:00 a 21:00.
-          </p>
         </>
       }
     >

@@ -15,7 +15,6 @@ describe('routePaths', () => {
 
     expect(new Set(paths).size).toBe(paths.length)
     paths.forEach((path) => expect(path.startsWith('/')).toBe(true))
-    expect(ROUTES.supervisorInvitaciones).toBe('/supervisor/invitaciones')
   })
 
   it('construye las rutas con parámetros', () => {
