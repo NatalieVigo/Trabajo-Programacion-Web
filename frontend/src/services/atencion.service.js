@@ -415,3 +415,35 @@ export function listarAtendidos(usuarioId) {
       .sort((a, b) => b.actualizadoEn.localeCompare(a.actualizadoEn) || b.codigo.localeCompare(a.codigo))
   })
 }
+
+/**
+ * Obtiene la información enriquecida de un ticket para la vista de encuesta (HU-6).
+ */
+export async function obtenerTicketPorCodigo(codigoTicket) {
+  let ticket
+  if (codigoTicket) {
+    try {
+      ticket = buscarTicket(codigoTicket)
+    } catch {
+      ticket = ticketsRepository.findAll().find((t) => t.codigo === codigoTicket || t.id === codigoTicket) || null
+    }
+  } else {
+    ticket = ticketsRepository.findAll().find((t) => t.estado === 'cerrado') || ticketsRepository.findAll()[0] || null
+  }
+
+  if (!ticket) return null
+
+  const categoria = categoriasRepository.findById(ticket.categoriaId)
+  const ambiente = ambientesRepository.findById(ticket.ambienteId)
+  const tecnico = ticket.asignadoA ? usuariosRepository.findById(ticket.asignadoA) : null
+
+  return {
+    ...ticket,
+    codigo: ticket.codigo,
+    asunto: ticket.asunto,
+    categoriaNombre: categoria?.nombre || 'General',
+    ambienteCodigo: ambiente?.codigo || 'Ambiente',
+    tecnicoNombre: tecnico ? `${tecnico.nombres} ${tecnico.apellidos}` : 'No asignado',
+    fechaCierre: ticket.cerradoEn ? new Date(ticket.cerradoEn).toLocaleDateString('es-PE') : 'Recientemente',
+  }
+}
