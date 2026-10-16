@@ -59,6 +59,7 @@ describe('auth.service · iniciarSesion', () => {
     expect(usuario).toMatchObject({ id: 'usr-001', nombres: 'Camila Alejandra', rol: 'usuario', estado: 'activo' })
     expect(usuario).not.toHaveProperty('passwordHash')
     expect(usuario).not.toHaveProperty('passwordSalt')
+    expect(usuario.ultimoAccesoEn).toBe(AHORA)
     expect(sesionGuardada(sessionStorage)).toEqual({ usuarioId: 'usr-001', iniciadaEn: AHORA })
     expect(localStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
   })

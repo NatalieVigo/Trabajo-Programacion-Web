@@ -6,6 +6,7 @@ import { listarCuentas } from '../../services/administracionUsuarios.service.js'
 import { usuarioFichaPath } from '../../routes/routePaths.js'
 import { Alert, Button, Card, EmptyState, PageHeader, SelectInput, TextInput, useToast } from '../../shared/components'
 import { descargarFilasCsv } from '../../utils/exportarCsv.js'
+import { pluralize } from '../../utils/format.js'
 import Paginacion from '../catalogo/Paginacion.jsx'
 import InvitarTecnicoButton from './InvitarTecnicoButton.jsx'
 import BloquearCuentaModal from './usuarios/BloquearCuentaModal.jsx'
@@ -33,7 +34,7 @@ export default function UsuariosPage() {
   const paginaActual = Math.min(pagina, totalPaginas)
   const inicio = (paginaActual - 1) * POR_PAGINA
   const visibles = filtradas.slice(inicio, inicio + POR_PAGINA)
-  const resumen = `${cuentas.length} cuentas · ${cuentas.filter((u) => u.rol === 'usuario').length} usuarios, ${cuentas.filter((u) => u.rol === 'tecnico').length} técnicos, ${cuentas.filter((u) => u.rol === 'supervisor').length} supervisores`
+  const resumen = `${pluralize(cuentas.length, 'cuenta', 'cuentas')} · ${pluralize(cuentas.filter((u) => u.rol === 'usuario').length, 'usuario', 'usuarios')}, ${pluralize(cuentas.filter((u) => u.rol === 'tecnico').length, 'técnico', 'técnicos')}, ${pluralize(cuentas.filter((u) => u.rol === 'supervisor').length, 'supervisor', 'supervisores')}`
   function filtrar(campo, valor) { setFiltros({ ...filtros, [campo]: valor }); setPagina(1) }
   function limpiar() { setFiltros(FILTROS_CUENTAS); setPagina(1) }
   function exportar() {

@@ -37,6 +37,7 @@ export const PRIVATE_ROUTES = Object.freeze(
     { path: ROUTES.supervisorSatisfaccion, roles: SUPERVISOR, recurso: 'la satisfacción por técnico y categoría' },
     { path: ROUTES.supervisorCarga, roles: SUPERVISOR, recurso: 'la carga por técnico' },
     { path: ROUTES.supervisorUsuarios, roles: SUPERVISOR, recurso: 'la gestión de usuarios' },
+    { path: ROUTES.supervisorUsuarioFicha, roles: SUPERVISOR, recurso: 'la ficha del usuario' },
 
     { path: ROUTES.miCuenta, roles: ROLES },
     { path: ROUTES.accesoDenegado, roles: ROLES },

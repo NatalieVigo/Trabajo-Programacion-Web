@@ -2,10 +2,44 @@
 .hu7-usuarios__filtros > .control:first-child { width: 280px; }
 .hu7-usuarios__filtros > .control { width: 160px; }
 .hu7-usuarios { min-width: 1150px; }
-.hu7-usuarios td, .hu7-usuarios th { padding-inline: var(--space-2); }
+.hu7-usuarios td, .hu7-usuarios th { padding: 6px var(--space-2); }
 .hu7-usuarios td:nth-child(2) { font-size: 12px; }
 .hu7-usuarios__acciones { display: flex; white-space: nowrap; }
 .hu7-usuarios__acciones .btn { padding: var(--space-1); font-size: 12px; }
 .hu7-usuarios__pie { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); color: var(--color-text-muted); font-size: var(--font-size-aux); }
 .hu7-bloqueo { display: grid; gap: var(--space-4); }
+.hu7-ficha__ruta { color: var(--color-text-muted); font-size: var(--font-size-aux); margin-bottom: var(--space-3); }
+.hu7-ficha__ruta a { color: inherit; text-decoration: none; }
+.hu7-ficha__ruta a:hover { text-decoration: underline; }
+.hu7-ficha__cabecera { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
+.hu7-ficha__identidad { flex: 1; min-width: 0; }
+.hu7-ficha__identidad > div { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.hu7-ficha__identidad h1 { font-size: var(--font-size-title); line-height: var(--line-height-title); }
+.hu7-ficha__identidad p { font-size: var(--font-size-aux); color: var(--color-text-muted); margin-top: var(--space-1); overflow-wrap: anywhere; }
+.hu7-ficha__bloquear { color: var(--color-danger); border-color: var(--color-danger); }
+.hu7-ficha__columnas { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: var(--space-5); }
+.hu7-ficha__datos { display: grid; gap: var(--space-4); align-content: start; }
+.hu7-ficha__datos > .card { padding: var(--space-5); }
+.hu7-ficha__datos h2, .hu7-ficha__reportes h2 { font-size: var(--font-size-subtitle); }
+.hu7-ficha__campos { font-size: var(--font-size-aux); }
+.hu7-ficha__campos > div { display: flex; justify-content: space-between; gap: var(--space-2); padding-block: var(--space-1); border-bottom: 1px solid var(--color-border); }
+.hu7-ficha__campos > div:last-child { border-bottom: 0; }
+.hu7-ficha__campos dt { color: var(--color-text-muted); }
+.hu7-ficha__campos dd { text-align: right; overflow-wrap: anywhere; }
+.hu7-ficha__resumen { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-2); }
+.hu7-ficha__resumen > div { border: 1px solid var(--color-border); border-radius: var(--radius); padding: var(--space-3); }
+.hu7-ficha__resumen dt { font-size: 10px; line-height: 14px; text-transform: uppercase; letter-spacing: var(--letter-spacing-label); color: var(--color-text-muted); }
+.hu7-ficha__resumen dd { font-size: 26px; line-height: 30px; font-weight: var(--font-weight-semibold); }
+.hu7-ficha__resumen > div:last-child dd { color: var(--color-primary); }
+.hu7-ficha__reportes { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); min-width: 0; }
+.hu7-ficha__reportes-cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+.hu7-ficha__reportes-cabecera .control { width: 165px; }
+.hu7-ficha__scroll { overflow-x: auto; }
+.hu7-ficha__tabla { min-width: 860px; font-size: 12px; }
+.hu7-ficha__tabla td, .hu7-ficha__tabla th { padding-inline: var(--space-2); }
+.hu7-ficha__codigo { white-space: nowrap; font-size: 11px; color: var(--color-primary); font-family: var(--font-mono); text-decoration: none; }
+.hu7-ficha__codigo:hover { text-decoration: underline; }
+.hu7-ficha__vacio { padding: var(--space-6); color: var(--color-text-muted); }
+@media (max-width: 1000px) { .hu7-ficha__columnas { grid-template-columns: 1fr; } .hu7-ficha__datos { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .hu7-ficha__cabecera { flex-wrap: wrap; } .hu7-ficha__datos { grid-template-columns: 1fr; } .hu7-ficha__reportes-cabecera { flex-wrap: wrap; } }
 @media (max-width: 640px) { .hu7-usuarios__filtros > .control, .hu7-usuarios__filtros > .control:first-child { width: 100%; } .hu7-usuarios__pie { flex-direction: column; align-items: start; } }

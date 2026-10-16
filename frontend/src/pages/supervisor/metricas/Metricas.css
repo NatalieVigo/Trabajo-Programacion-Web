@@ -12,9 +12,9 @@
 .hu7-indicador--peligro { border-color: var(--color-danger); color: var(--color-danger); }
 .hu7-indicador--peligro p { color: inherit; }
 .hu7-indicador .hu7-variacion { color: var(--color-success); }
-.hu7-graficos { display: grid; grid-template-columns: .9fr 1.2fr 1.2fr; gap: var(--space-4); }
+.hu7-graficos { display: grid; grid-template-columns: 1fr 1.1fr 1.1fr; gap: var(--space-4); }
 .hu7-graficos > .card { min-height: 360px; padding: var(--space-5); }
-.hu7-graficos h2 { font-size: var(--font-size-subtitle); margin-bottom: var(--space-5); }
+.hu7-graficos h2 { font-size: var(--font-size-subtitle); margin-bottom: 0; }
 .hu7-barras { list-style: none; display: grid; gap: var(--space-3); padding: 0; }
 .hu7-barras__etiqueta { display: flex; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-1); font-size: var(--font-size-aux); }
 .hu7-barras__etiqueta span:last-child { color: var(--color-text-muted); }
@@ -41,5 +41,6 @@
 .hu7-carga__puntaje { color: var(--color-primary); font-weight: var(--font-weight-semibold); }
 .hu7-carga__notas { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-4); font-size: var(--font-size-aux); }
 .hu7-carga__notas > .card { padding: var(--space-4); color: var(--color-text-muted); }
+.hu7-carga__notas > .alert { border: 0; border-left: 3px solid var(--color-primary); border-radius: 0; }
 @media (max-width: 1000px) { .hu7-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hu7-graficos { grid-template-columns: 1fr; } .hu7-graficos > .card { min-height: auto; } }
 @media (max-width: 640px) { .hu7-indicadores, .hu7-carga__notas { grid-template-columns: 1fr; } .hu7-periodo__panel { right: auto; left: 0; max-width: calc(100vw - 48px); } }

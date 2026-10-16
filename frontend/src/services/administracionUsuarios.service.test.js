@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import { readTable } from '../repositories/db.js'
 import { sessionRepository } from '../repositories/session.repository.js'
-import { bloquearCuenta, listarCuentas } from './administracionUsuarios.service.js'
+import { bloquearCuenta, desbloquearCuenta, listarCuentas, obtenerFichaCuenta } from './administracionUsuarios.service.js'
 import { iniciarSesion, obtenerSesion } from './auth.service.js'
 
 describe('HU-7.3 · administración de cuentas', () => {
+  it('la ficha agrega reportes y encuestas de esa persona y permite recuperar su cuenta', async () => {
+    const ficha = await obtenerFichaCuenta('usr-001', 'usr-003')
+    expect(ficha.resumen).toMatchObject({ reportados: 12, abiertos: 3, cerrados: 8 })
+    expect(ficha.reportes.filter((r) => r.encuesta !== null)).toHaveLength(7)
+    expect(ficha.cuenta.ultimoAccesoEn).toBeNull()
+    await expect(obtenerFichaCuenta('no-existe', 'usr-003')).rejects.toMatchObject({ status: 404 })
+    await expect(obtenerFichaCuenta('usr-001', 'usr-002')).rejects.toMatchObject({ status: 403 })
+    await bloquearCuenta('usr-001', { motivo: 'Reportes duplicados.' }, 'usr-003')
+    await desbloquearCuenta('usr-001', 'usr-003')
+    await expect(iniciarSesion({ correo: 'camila.quispe@aloe.ulima.edu.pe', password: 'Camila2026' })).resolves.toMatchObject({ usuario: { estado: 'activo' } })
+    expect((await obtenerFichaCuenta('usr-001', 'usr-003')).cuenta.ultimoAccesoEn).toBeTruthy()
+  })
   it('solo lista para supervisor y no devuelve credenciales', async () => {
     await expect(listarCuentas('usr-001')).rejects.toMatchObject({ status: 403 })
     const cuentas = await listarCuentas('usr-003')
