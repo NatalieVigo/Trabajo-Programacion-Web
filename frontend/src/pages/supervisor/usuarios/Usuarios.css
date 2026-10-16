@@ -1,0 +1,11 @@
+.hu7-usuarios__filtros { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); }
+.hu7-usuarios__filtros > .control:first-child { width: 280px; }
+.hu7-usuarios__filtros > .control { width: 160px; }
+.hu7-usuarios { min-width: 1150px; }
+.hu7-usuarios td, .hu7-usuarios th { padding-inline: var(--space-2); }
+.hu7-usuarios td:nth-child(2) { font-size: 12px; }
+.hu7-usuarios__acciones { display: flex; white-space: nowrap; }
+.hu7-usuarios__acciones .btn { padding: var(--space-1); font-size: 12px; }
+.hu7-usuarios__pie { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); color: var(--color-text-muted); font-size: var(--font-size-aux); }
+.hu7-bloqueo { display: grid; gap: var(--space-4); }
+@media (max-width: 640px) { .hu7-usuarios__filtros > .control, .hu7-usuarios__filtros > .control:first-child { width: 100%; } .hu7-usuarios__pie { flex-direction: column; align-items: start; } }

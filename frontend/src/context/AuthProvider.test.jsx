@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react'
+import { act, screen } from '@testing-library/react'
+import { DB_STORAGE_KEY } from '../repositories/db.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useAuth } from '../hooks/useAuth.js'
 import { SESSION_STORAGE_KEY, sessionRepository } from '../repositories/session.repository.js'
@@ -31,6 +32,13 @@ afterEach(() => {
 })
 
 describe('AuthProvider', () => {
+  it('termina una sesión abierta cuando otra pestaña bloquea la cuenta', async () => {
+    renderWithProviders(<SesionActual />, { usuario: DEMO.usuario })
+    await screen.findByText('Estado: autenticado')
+    usuariosRepository.update(DEMO.usuario, { estado: 'bloqueado' })
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: DB_STORAGE_KEY })))
+    expect(await screen.findByText('Estado: anonimo')).toBeInTheDocument()
+  })
   it('sin una sesión guardada muestra la aplicación de inmediato, sin indicador de carga', () => {
     renderWithProviders(<SesionActual />)
 
