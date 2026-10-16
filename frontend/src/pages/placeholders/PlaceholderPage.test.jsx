@@ -15,8 +15,6 @@ describe('PlaceholderPage', () => {
   it.each([
     ['/usuario/tickets/nuevo', 'usuario', 'Nuevo ticket', deOtroIntegrante('HU-3 (Registro de tickets)')],
     ['/usuario/tickets', 'usuario', 'Mis tickets', deOtroIntegrante('HU-3 (Registro de tickets)')],
-    ['/usuario/encuestas/pendiente', 'usuario', 'Encuesta pendiente', deOtroIntegrante('HU-6 (Encuesta de satisfacción)')],
-    ['/usuario/encuestas', 'usuario', 'Mis encuestas', deOtroIntegrante('HU-6 (Encuesta de satisfacción)')],
     ['/supervisor/usuarios', 'supervisor', 'Usuarios', deOtroIntegrante('HU-7 (Métricas y usuarios)')],
   ])('%s indica que la sección pendiente corresponde a su historia', async (ruta, rol, titulo, descripcion) => {
     await renderSeccion(ruta, rol)

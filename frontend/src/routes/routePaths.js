@@ -14,6 +14,7 @@ export const ROUTES = Object.freeze({
   usuarioTickets: '/usuario/tickets',
   usuarioEncuestas: '/usuario/encuestas',
   usuarioEncuestaPendiente: '/usuario/encuestas/pendiente',
+  usuarioEncuestaEvaluar: '/usuario/encuestas/:codigoTicket/evaluar',
 
   tecnicoBandeja: '/tecnico',
   tecnicoHistorial: '/tecnico/historial',
@@ -29,6 +30,7 @@ export const ROUTES = Object.freeze({
   supervisorCategoriaEditar: '/supervisor/categorias/:id/editar',
   supervisorAmbientes: '/supervisor/ambientes',
   supervisorTecnicos: '/supervisor/tecnicos',
+  supervisorSatisfaccion: '/supervisor/satisfaccion',
   supervisorUsuarios: '/supervisor/usuarios',
 
   miCuenta: '/mi-cuenta',
@@ -59,6 +61,9 @@ export const ticketAtencionPath = (rol, codigo) =>
 /** Historial de cambios de un ticket (HU-5) en el panel del rol: /tecnico/tickets/TCK-2026-00130/historial. */
 export const ticketHistorialPath = (rol, codigo) =>
   generatePath(rol === 'supervisor' ? ROUTES.supervisorTicketHistorial : ROUTES.tecnicoTicketHistorial, { codigo })
+
+/** Evaluación o edición de encuesta de un ticket (HU-6): /usuario/encuestas/TCK-2026-00130/evaluar. */
+export const encuestaEvaluarPath = (codigoTicket) => generatePath(ROUTES.usuarioEncuestaEvaluar, { codigoTicket })
 
 /** Recuperación de contraseña con el correo precargado: /recuperar-contrasena?correo=… (sin correo, sin búsqueda). */
 export const recuperarContrasenaPath = (correo) => ({
