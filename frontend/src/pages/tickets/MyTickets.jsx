@@ -1,31 +1,81 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, TextInput, SelectInput } from "../../shared/components";
 import { ROUTES, usuarioTicketDetallePath } from "../../routes/routePaths";
-// testeo
 import { ticketsRepository } from "../../repositories/tickets.repository.js";
 import { sessionRepository } from "../../repositories/session.repository.js";
+import { listar as listarCategorias } from "../../services/categorias.service.js";
 import './MyTickets.css';
 
 export const MyTickets = () => {
     const navigate = useNavigate();
 
-    // 1. Cargar tickets usando los repositorios-testeo-vota tu gaaa
+    // Sacamos los tickets del usuario logueado en la sesion
     const [tickets] = useState(() => {
         const sesion = sessionRepository.read();
         
-        // Si no hay sesión activa, devolvemos un arreglo vacío
         if (!sesion || !sesion.usuarioId) {
             return [];
         }
         
-        // Usamos el repositorio para filtrar directamente por el ID del usuario
         return ticketsRepository.findAll({ usuarioId: sesion.usuarioId });
     });
 
-    // 2. Estados para TODOS los filtros
+    // Mapeos de IDs a nombres para no mostrar cat-01 o amb-01 pelado
+    const [opcionesCategorias, setOpcionesCategorias] = useState([
+        { value: '', label: 'Categoría: todas' }
+    ]);
+    const [mapaCategorias, setMapaCategorias] = useState({});
+    const [mapaAmbientes, setMapaAmbientes] = useState({});
+
+    useEffect(() => {
+        // Cargar categorias desde el servicio para los combos
+        listarCategorias()
+            .then((listaCat) => {
+                if (!Array.isArray(listaCat)) return;
+
+                const mapaCat = {};
+                const opts = [{ value: '', label: 'Categoría: todas' }];
+
+                listaCat.forEach(cat => {
+                    const nombre = cat.nombre || cat.label;
+                    const val = cat.id || cat.value || nombre.toLowerCase();
+                    
+                    if (cat.id) mapaCat[cat.id] = nombre;
+
+                    if (!cat.categoriaPadreId && !cat.categoriaId && !cat.parentId) {
+                        if (!opts.some(o => o.label.toLowerCase() === nombre.toLowerCase())) {
+                            opts.push({ value: val, label: nombre });
+                        }
+                    }
+                });
+
+                setMapaCategorias(mapaCat);
+                setOpcionesCategorias(opts);
+            })
+            .catch(err => console.error("Error al cargar categorias:", err));
+
+        // Leer los ambientes guardados en el local storage
+        try {
+            const dbString = localStorage.getItem('mesa-ayuda:db');
+            if (dbString) {
+                const db = JSON.parse(dbString);
+                if (Array.isArray(db.ambientes)) {
+                    const mapaAmb = {};
+                    db.ambientes.forEach(a => {
+                        mapaAmb[a.id] = a.codigo || a.nombre || a.id;
+                    });
+                    setMapaAmbientes(mapaAmb);
+                }
+            }
+        } catch (e) {
+            console.error("Error leyendo ambientes:", e);
+        }
+    }, []);
+
+    // Inputs para controlar la busqueda y los combos
     const [busqueda, setBusqueda] = useState('');
-    const [filtroEstado, setFiltroEstado] = useState('en curso'); //  estados
+    const [filtroEstado, setFiltroEstado] = useState('');
     const [filtroCategoria, setFiltroCategoria] = useState('');
     const [fechaInicio, setFechaInicio] = useState('');
     const [fechaFin, setFechaFin] = useState('');
@@ -33,57 +83,103 @@ export const MyTickets = () => {
     const [paginaActual, setPaginaActual] = useState(1);
     const registrosPorPagina = 8;
 
-    // 3. Conteo de resumen
+    // Conteo para la cabecera
     const totalTickets = tickets.length;
     const ticketsEnCursoCount = useMemo(() => {
         return tickets.filter(t => {
-            const estado = t.estado || 'Abierto';
-            return estado === 'Abierto' || estado === 'En atención' || estado === 'En espera';
+            const estado = (t.estado || 'Abierto').toLowerCase();
+            return estado === 'abierto' || estado === 'en atención' || estado === 'en espera';
         }).length;
     }, [tickets]);
 
-    // Función auxiliar para convertir fecha de DD/MM/YYYY a un valor comparable
-    const parseFecha = (fechaStr) => {
-        if (!fechaStr) return 0;
-        const partes = fechaStr.split(/[/,-]/); // Soporta 12/10/2026 o 12-10-2026
+    // Formateadores para armar las celdas de la tabla
+    const obtenerCategoriaTexto = (t) => {
+        if (t.categoriaNombre && t.subcategoriaNombre) {
+            return `${t.categoriaNombre} · ${t.subcategoriaNombre}`;
+        }
+        if (t.categoriaNombre) return t.categoriaNombre;
+        
+        const catId = t.categoriaId || t.categoria;
+        if (mapaCategorias[catId]) return mapaCategorias[catId];
+        
+        return t.categoria || 'General';
+    };
+
+    const obtenerAmbienteTexto = (t) => {
+        if (t.ambiente) return t.ambiente;
+        if (t.ambienteCodigo) return t.ambienteCodigo;
+        if (t.ambienteId && mapaAmbientes[t.ambienteId]) return mapaAmbientes[t.ambienteId];
+        if (t.ambienteId) return t.ambienteId;
+        return '-';
+    };
+
+    const obtenerFechaTexto = (t) => {
+        const f = t.creadoEn || t.fechaCreacion || t.fecha || t.registrado;
+        if (!f) return 'Reciente';
+
+        if (typeof f === 'string' && (f.includes('T') || f.includes('-'))) {
+            const dateObj = new Date(f);
+            if (!isNaN(dateObj.getTime())) {
+                return dateObj.toLocaleDateString('es-PE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            }
+        }
+        return String(f).split(',')[0];
+    };
+
+    const parseFecha = (t) => {
+        const f = t.creadoEn || t.fechaCreacion || t.fecha;
+        if (!f) return 0;
+        
+        const dateObj = new Date(f);
+        if (!isNaN(dateObj.getTime())) return dateObj.getTime();
+
+        const partes = String(f).split(/[/,-]/);
         if (partes.length >= 3) {
-            // asume formato DD/MM/YYYY
             return new Date(`${partes[2]}-${partes[1]}-${partes[0]}T00:00:00`).getTime();
         }
         return 0;
     };
 
-    // 4. Lógica Maestra de Filtrado
+    // Aplicar los filtros seleccionados
     const ticketsFiltrados = useMemo(() => {
         return tickets.filter(ticket => {
             const codigo = ticket.codigo || '';
-            const asunto = ticket.asunto || '';
-            const ambiente = ticket.ambiente || '';
+            const asunto = ticket.asunto || ticket.descripcion || '';
+            const ambiente = obtenerAmbienteTexto(ticket);
             const estado = ticket.estado || 'Abierto';
-            const fechaStr = ticket.fechaCreacion ? ticket.fechaCreacion.split(',')[0] : (ticket.fecha || '');
             
-            // A. Filtro de Búsqueda de texto
+            // Texto libre
             const coincideBusqueda =
                 codigo.toLowerCase().includes(busqueda.toLowerCase()) ||
                 asunto.toLowerCase().includes(busqueda.toLowerCase()) ||
                 ambiente.toLowerCase().includes(busqueda.toLowerCase());
 
-            // B. Filtro de Estado
+            // Estado del ticket
             let coincideEstado = true;
+            const estadoLower = estado.toLowerCase();
             if (filtroEstado === 'en curso') {
-                coincideEstado = (estado === 'Abierto' || estado === 'En atención' || estado === 'En espera');
+                coincideEstado = (estadoLower === 'abierto' || estadoLower === 'en atención' || estadoLower === 'en espera');
             } else if (filtroEstado !== '') {
-                coincideEstado = estado.toLowerCase() === filtroEstado.toLowerCase();
+                coincideEstado = estadoLower === filtroEstado.toLowerCase();
             }
 
-            // C. Filtro de Categoría
-            const coincideCategoria = filtroCategoria
-                ? ticket.categoria === filtroCategoria || ticket.categoriaNombre === filtroCategoria
-                : true;
+            // Categoria principal o ID
+            let coincideCategoria = true;
+            if (filtroCategoria !== '') {
+                const catFiltroLower = filtroCategoria.toLowerCase().trim();
+                const catNombreVal = obtenerCategoriaTexto(ticket).toLowerCase().trim();
+                const catIdVal = String(ticket.categoriaId || ticket.categoria || '').toLowerCase().trim();
+                
+                coincideCategoria = catNombreVal.includes(catFiltroLower) || catIdVal === catFiltroLower;
+            }
 
-            // D. Filtro de Fechas
+            // Rango de fechas
             let coincideFecha = true;
-            const tiempoTicket = parseFecha(fechaStr);
+            const tiempoTicket = parseFecha(ticket);
             
             if (tiempoTicket > 0) {
                 if (fechaInicio) {
@@ -98,9 +194,9 @@ export const MyTickets = () => {
 
             return coincideBusqueda && coincideEstado && coincideCategoria && coincideFecha;
         });
-    }, [tickets, busqueda, filtroEstado, filtroCategoria, fechaInicio, fechaFin]);
+    }, [tickets, busqueda, filtroEstado, filtroCategoria, fechaInicio, fechaFin, mapaCategorias, mapaAmbientes]);
 
-    // 5. Paginación
+    // Paginacion
     const totalPaginas = Math.ceil(ticketsFiltrados.length / registrosPorPagina) || 1;
     const ticketsPaginados = useMemo(() => {
         const inicio = (paginaActual - 1) * registrosPorPagina;
@@ -150,7 +246,7 @@ export const MyTickets = () => {
                 </Button>
             </div>
 
-            {/* Barra de Filtros */}
+            {/* Filtros superiores */}
             <div className="filters-bar" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div className="search-box">
                     <TextInput
@@ -160,7 +256,7 @@ export const MyTickets = () => {
                     />
                 </div>
 
-                {/* Filtro de Estado  */}
+                {/* Combo estado */}
                 <div className="category-select-wrapper">
                     <SelectInput
                         value={filtroEstado}
@@ -176,7 +272,7 @@ export const MyTickets = () => {
                     />
                 </div>
 
-                {/* Filtro de Fecha  */}
+                {/* Rango de fechas */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#fff', padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc' }}>
                     <input 
                         type="date" 
@@ -195,19 +291,12 @@ export const MyTickets = () => {
                     />
                 </div>
 
-                {/* Filtro de Categoría */}
+                {/* Combo categorias */}
                 <div className="category-select-wrapper">
                     <SelectInput
                         value={filtroCategoria}
                         onChange={(e) => setFiltroCategoria(e.target.value)}
-                        options={[
-                            { value: '', label: 'Categoría: todas' },
-                            { value: 'audiovisuales', label: 'Audiovisuales' },
-                            { value: 'redes y conectividad', label: 'Redes y conectividad' },
-                            { value: 'climatizacion', label: 'Climatización' },
-                            { value: 'electrico', label: 'Eléctrico' },
-                            { value: 'mobiliario', label: 'Mobiliario' }
-                        ]}
+                        options={opcionesCategorias}
                     />
                 </div>
 
@@ -216,7 +305,7 @@ export const MyTickets = () => {
                 </button>
             </div>
 
-            {/* Tabla Principal */}
+            {/* Tabla de tickets */}
             <div className="table-card">
                 <table className="tickets-table">
                     <thead>
@@ -243,23 +332,23 @@ export const MyTickets = () => {
                                             {ticket.codigo}
                                         </button>
                                     </td>
-                                    <td className="subject-cell">{ticket.asunto || 'Sin asunto'}</td>
+                                    <td className="subject-cell">{ticket.asunto || ticket.descripcion || 'Sin asunto'}</td>
                                     <td className="category-cell">
-                                        {ticket.categoriaNombre || ticket.categoria || 'General'}
+                                        {obtenerCategoriaTexto(ticket)}
                                     </td>
-                                    <td className="location-cell">{ticket.ambiente || '-'}</td>
+                                    <td className="location-cell">
+                                        {obtenerAmbienteTexto(ticket)}
+                                    </td>
                                     <td className="date-cell">
-                                        {ticket.fechaCreacion 
-                                            ? ticket.fechaCreacion.split(',')[0] 
-                                            : (ticket.fecha || 'Reciente')}
+                                        {obtenerFechaTexto(ticket)}
                                     </td>
                                     <td>
-                                        <span className={`priority-tag ${ticket.prioridad?.toLowerCase() || 'baja'}`}>
+                                        <span className={`priority-tag ${(ticket.prioridad || 'baja').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`}>
                                             {ticket.prioridad || 'Baja'}
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`status-tag ${ticket.estado?.toLowerCase().replace(' ', '-') || 'abierto'}`}>
+                                        <span className={`status-tag ${(ticket.estado || 'abierto').toLowerCase().replace(' ', '-')}`}>
                                             {ticket.estado || 'Abierto'}
                                         </span>
                                     </td>
@@ -275,7 +364,7 @@ export const MyTickets = () => {
                     </tbody>
                 </table>
 
-                {/* Paginación Inferior */}
+                {/* Controles de paginacion */}
                 <div className="table-pagination">
                     <span className="pagination-info">
                         Mostrando {ticketsFiltrados.length > 0 ? (paginaActual - 1) * registrosPorPagina + 1 : 0}–

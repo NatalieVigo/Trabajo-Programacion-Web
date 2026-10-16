@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../../shared/components";
 import { ROUTES } from "../../routes/routePaths";
+import { sessionRepository } from "../../repositories/session.repository.js";
 import './TicketDetail.css';
 
 export const TicketDetail = () => {
@@ -12,50 +13,105 @@ export const TicketDetail = () => {
     const [nuevoComentario, setNuevoComentario] = useState('');
     const [bitacora, setBitacora] = useState([]);
     const [error, setError] = useState(false);
+    
+    const [nombreUsuario, setNombreUsuario] = useState('Camila Quispe Ramos');
+    const [inicialesUsuario, setInicialesUsuario] = useState('CQ');
 
-    // Buscar el ticket en localStorage
+    // Cargar la sesion del usuario y buscar el ticket en el local storage
     useEffect(() => {
-        const ticketsGuardados = JSON.parse(localStorage.getItem('tickets')) || [];
-        
-        // Buscamos por ID o por Código 
-        const ticketEncontrado = ticketsGuardados.find(t => 
-            t.id?.toString() === id || t.codigo === id
+        // Sacar datos del usuario que inicio sesion
+        const sesion = sessionRepository.read();
+        if (sesion?.nombre) {
+            setNombreUsuario(sesion.nombre);
+            const inits = sesion.nombre.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            setInicialesUsuario(inits || 'CQ');
+        }
+
+        // Jalamos la BD de tickets
+        const dbString = localStorage.getItem('mesa-ayuda:db');
+        if (!dbString) {
+            setError(true);
+            return;
+        }
+
+        const db = JSON.parse(dbString);
+        const ticketsGuardados = db.tickets || [];
+
+        // Buscar si coincide por el ID o por el codigo
+        const ticketEncontrado = ticketsGuardados.find(t =>
+            t && (t.id?.toString() === id || t.codigo === id)
         );
-        
+
         if (ticketEncontrado) {
             setTicket(ticketEncontrado);
-            
-            const fechaRegistro = ticketEncontrado.fecha || ticketEncontrado.fechaCreacion || ticketEncontrado.registrado || new Date().toLocaleDateString();
-            
-            setBitacora([
-                {
-                    id: Date.now(),
-                    autor: 'Tú',
-                    rol: 'Usuario',
-                    iniciales: 'TU',
-                    fecha: fechaRegistro,
-                    texto: ticketEncontrado.descripcion || ticketEncontrado.asunto || 'Reporte inicial registrado.'
-                }
-            ]);
+
+            // Cargar los comentarios de la bitacora filtrando las notas internas del tecnico
+            let listaComentarios = [];
+
+            if (Array.isArray(ticketEncontrado.bitacora) && ticketEncontrado.bitacora.length > 0) {
+                listaComentarios = ticketEncontrado.bitacora.filter(
+                    item => !item.esInterna && !item.esInterno && item.tipo !== 'nota_interna'
+                );
+            } else if (Array.isArray(ticketEncontrado.comentarios) && ticketEncontrado.comentarios.length > 0) {
+                listaComentarios = ticketEncontrado.comentarios.filter(
+                    item => !item.esInterna && !item.esInterno && item.tipo !== 'nota_interna'
+                );
+            } else {
+                // Si recien se crea y no hay bitacora, mostramos la descripcion inicial
+                const fechaReg = ticketEncontrado.fechaCreacion || ticketEncontrado.creadoEn || ticketEncontrado.fecha || new Date().toLocaleString();
+                listaComentarios = [
+                    {
+                        id: `bit-${Date.now()}`,
+                        autor: sesion?.nombre || 'Camila Quispe Ramos',
+                        rol: 'Usuario',
+                        iniciales: sesion?.nombre ? sesion.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CQ',
+                        fecha: fechaReg,
+                        texto: ticketEncontrado.descripcion || ticketEncontrado.asunto || 'Reporte inicial registrado.'
+                    }
+                ];
+            }
+
+            setBitacora(listaComentarios);
         } else {
             setError(true);
         }
     }, [id]);
 
+    // Agregar un nuevo comentario público
     const handleEnviarComentario = (e) => {
         e.preventDefault();
-        if (!nuevoComentario.trim()) return;
+        if (!nuevoComentario.trim() || !ticket) return;
 
-        const entrada = {
-            id: Date.now(),
-            autor: 'Tú',
+        const nuevaEntrada = {
+            id: `bit-${Date.now()}`,
+            autor: nombreUsuario,
             rol: 'Usuario',
-            iniciales: 'TU',
-            fecha: new Date().toLocaleString(),
-            texto: nuevoComentario.trim()
+            iniciales: inicialesUsuario,
+            fecha: new Date().toLocaleString('es-PE'),
+            texto: nuevoComentario.trim(),
+            esInterna: false
         };
 
-        setBitacora([...bitacora, entrada]);
+        const bitacoraActualizada = [...bitacora, nuevaEntrada];
+        setBitacora(bitacoraActualizada);
+
+        // Guardar el comentario en el local storage
+        try {
+            const dbString = localStorage.getItem('mesa-ayuda:db');
+            if (dbString) {
+                const db = JSON.parse(dbString);
+                const index = db.tickets.findIndex(t => t.id?.toString() === ticket.id?.toString() || t.codigo === ticket.codigo);
+                if (index !== -1) {
+                    db.tickets[index].bitacora = db.tickets[index].bitacora 
+                        ? [...db.tickets[index].bitacora, nuevaEntrada]
+                        : bitacoraActualizada;
+                    localStorage.setItem('mesa-ayuda:db', JSON.stringify(db));
+                }
+            }
+        } catch (err) {
+            console.error("Error guardando comentario:", err);
+        }
+
         setNuevoComentario('');
     };
 
@@ -67,7 +123,6 @@ export const TicketDetail = () => {
         }
     };
 
-    // Mensaje si no encuentra el ticket
     if (error) {
         return (
             <div className="ticket-detail-container" style={{ textAlign: 'center', padding: '50px' }}>
@@ -78,21 +133,26 @@ export const TicketDetail = () => {
         );
     }
 
-    
-    if (!ticket) return null; 
+    if (!ticket) return null;
 
-    
     const estadoSeguro = ticket.estado || 'Abierto';
     const prioridadSegura = ticket.prioridad || 'Baja';
     const estadoClase = estadoSeguro.toLowerCase().replace(' ', '-');
-    const prioridadClase = prioridadSegura.toLowerCase();
-    const fechaMostrar = ticket.fecha || ticket.fechaCreacion || ticket.registrado || '-';
+    const prioridadClase = prioridadSegura.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    const fechaMostrar = ticket.fechaCreacion || ticket.creadoEn || ticket.fecha || '-';
+    const fechaLimpia = String(fechaMostrar).split(',')[0];
 
-    // Lógica visual para la línea de tiempo
-    const estadoTicket = estadoSeguro.toLowerCase();
-    const pasoAsignado = estadoTicket === 'en atención' || estadoTicket === 'resuelto' || estadoTicket === 'cerrado';
-    const pasoAtencion = estadoTicket === 'en atención';
-    const pasoResuelto = estadoTicket === 'resuelto' || estadoTicket === 'cerrado';
+    // Verificar en que estado esta para marcar los hitos de la linea de tiempo
+    const estadoLower = estadoSeguro.toLowerCase();
+    const tieneTecnico = !!(ticket.tecnicoAsignado || ticket.tecnicoNombre || ticket.asignadoA);
+    
+    const pasoAsignado = tieneTecnico || estadoLower === 'en atención' || estadoLower === 'en espera' || estadoLower === 'resuelto' || estadoLower === 'cerrado';
+    const pasoAtencion = estadoLower === 'en atención' || estadoLower === 'resuelto' || estadoLower === 'cerrado';
+    const pasoResuelto = estadoLower === 'resuelto' || estadoLower === 'cerrado';
+
+    const tecnicoNombre = ticket.tecnicoNombre || ticket.tecnicoAsignado || (pasoAsignado ? 'Técnico de soporte' : 'Pendiente');
+    const supervisorNombre = ticket.supervisorNombre || 'Lucía Mendoza Ríos';
 
     return (
         <div className="ticket-detail-container">
@@ -114,24 +174,24 @@ export const TicketDetail = () => {
                     </Button>
                 </div>
 
-                <p className="ticket-subtitle">{ticket.asunto}</p>
+                <p className="ticket-subtitle">{ticket.asunto || ticket.descripcion}</p>
             </div>
 
             <div className="ticket-detail-grid">
                 
-                {/* Bitácora */}
+                {/* Comentarios y bitacora */}
                 <div className="bitacora-card">
                     <h2>Bitácora de la atención</h2>
                     <div className="comments-list">
                         {bitacora.map((item) => (
-                            <div key={item.id} className="comment-item">
-                                <div className={`avatar-badge ${item.rol.toLowerCase()}`}>
-                                    {item.iniciales}
+                            <div key={item.id || Math.random()} className="comment-item">
+                                <div className={`avatar-badge ${(item.rol || 'usuario').toLowerCase()}`}>
+                                    {item.iniciales || 'TU'}
                                 </div>
                                 <div className="comment-content">
                                     <div className="comment-meta">
-                                        <strong>{item.autor}</strong>
-                                        <span className="role-label">{item.rol}</span>
+                                        <strong>{item.autor || 'Usuario'}</strong>
+                                        <span className="role-label">{item.rol || 'Usuario'}</span>
                                         <span className="dot-separator">·</span>
                                         <span className="date-label">{item.fecha}</span>
                                     </div>
@@ -161,30 +221,30 @@ export const TicketDetail = () => {
                     </form>
                 </div>
 
-                {/* Datos del Reporte */}
+                {/* Lateral con resumen del ticket y linea de tiempo */}
                 <aside className="detail-sidebar">
                     <div className="sidebar-card">
                         <h3>Datos del reporte</h3>
                         <div className="report-data-list">
                             <div className="data-row">
                                 <span className="data-label">Categoría</span>
-                                <span className="data-value">{ticket.categoriaNombre || ticket.categoria || 'Sin categoría'}</span>
+                                <span className="data-value">{ticket.categoriaNombre || ticket.categoria || 'General'}</span>
                             </div>
                             <div className="data-row">
                                 <span className="data-label">Subcategoría</span>
-                                <span className="data-value">{ticket.subcategoria || '-'}</span>
+                                <span className="data-value">{ticket.subcategoriaNombre || ticket.subcategoria || '-'}</span>
                             </div>
                             <div className="data-row">
                                 <span className="data-label">Ambiente</span>
-                                <span className="data-value highlight">{ticket.ambiente || '-'}</span>
+                                <span className="data-value highlight">{ticket.ambiente || ticket.ambienteCodigo || '-'}</span>
                             </div>
                             <div className="data-row">
                                 <span className="data-label">Registrado</span>
-                                <span className="data-value">{String(fechaMostrar).split(',')[0]}</span>
+                                <span className="data-value">{fechaLimpia}</span>
                             </div>
                             <div className="data-row">
                                 <span className="data-label">Técnico asignado</span>
-                                <span className="data-value">{pasoAsignado ? 'Técnico de soporte' : 'Pendiente'}</span>
+                                <span className="data-value">{tecnicoNombre}</span>
                             </div>
                             <div className="data-row">
                                 <span className="data-label">Atención esperada</span>
@@ -200,21 +260,21 @@ export const TicketDetail = () => {
                                 <div className="timeline-marker"></div>
                                 <div className="timeline-content">
                                     <strong>Abierto</strong>
-                                    <span>{fechaMostrar} · registrado por ti</span>
+                                    <span>{fechaLimpia} · registrado por ti</span>
                                 </div>
                             </div>
                             <div className={`timeline-item ${pasoAsignado ? 'done' : 'pending'}`}>
                                 <div className="timeline-marker"></div>
                                 <div className="timeline-content">
                                     <strong>Asignado</strong>
-                                    <span>{pasoAsignado ? 'Supervisor asignó el caso' : 'Pendiente'}</span>
+                                    <span>{pasoAsignado ? `${supervisorNombre} asignó el caso` : 'Pendiente'}</span>
                                 </div>
                             </div>
                             <div className={`timeline-item ${pasoAtencion ? 'in-progress' : pasoResuelto ? 'done' : 'pending'}`}>
                                 <div className="timeline-marker"></div>
                                 <div className="timeline-content">
                                     <strong>En atención</strong>
-                                    <span>{pasoAtencion || pasoResuelto ? 'Técnico trabajando' : 'Pendiente'}</span>
+                                    <span>{pasoAtencion || pasoResuelto ? `${tecnicoNombre} trabajando` : 'Pendiente'}</span>
                                 </div>
                             </div>
                             <div className={`timeline-item ${pasoResuelto ? 'done' : 'pending'}`}>
