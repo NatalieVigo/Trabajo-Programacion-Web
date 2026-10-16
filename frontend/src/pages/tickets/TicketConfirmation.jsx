@@ -8,6 +8,7 @@ export const TicketConfirmation = ({ ticket }) => {
     const navigate = useNavigate();
     const [copiado, setCopiado] = useState(false);
 
+    // Copiar el código del ticket al portapapeles
     const handleCopiarCodigo = () => {
         if (ticket?.codigo) {
             navigator.clipboard.writeText(ticket.codigo);
@@ -16,6 +17,7 @@ export const TicketConfirmation = ({ ticket }) => {
         }
     };
 
+    // Ir a la vista principal con la lista de mis tickets
     const handleIrAMisTickets = () => {
         if (ROUTES?.usuarioTickets) {
             navigate(ROUTES.usuarioTickets);
@@ -24,18 +26,21 @@ export const TicketConfirmation = ({ ticket }) => {
         }
     };
 
+    // Ver a detalle el ticket recién creado
     const handleVerDetalle = () => {
-        if (ROUTES?.usuarioTicketDetalle) {
+        if (ROUTES?.usuarioTicketDetalle && ticket?.id) {
             navigate(usuarioTicketDetallePath(ticket.id));
         } else {
             handleIrAMisTickets();
         }
     };
 
+    const prioridadClase = ticket?.prioridad ? ticket.prioridad.toLowerCase() : 'baja';
+
     return (
         <div className="confirmation-container">
             <div className="confirmation-card">
-                {/* Icono de Check Verde */}
+                {/* Check de confirmacion */}
                 <div className="check-icon-box">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
@@ -47,42 +52,42 @@ export const TicketConfirmation = ({ ticket }) => {
                     Guarda el código: con él puedes buscar el ticket desde la cabecera en cualquier momento.
                 </p>
 
-                {/* Recuadro Azul con el Código */}
+                {/* Bloque con el codigo generado */}
                 <div className="ticket-code-display">
-                    <span className="code-text">{ticket.codigo}</span>
+                    <span className="code-text">{ticket?.codigo}</span>
                     <button type="button" className="btn-copy" onClick={handleCopiarCodigo}>
                         {copiado ? '¡Copiado!' : 'Copiar'}
                     </button>
                 </div>
 
-                {/* Fila de detalles: Prioridad, Tiempo Esperado y Ambiente */}
+                {/* Resumen rapido de prioridad, tiempo y lugar */}
                 <div className="confirmation-details-row">
                     <div className="detail-box">
                         <span className="detail-title">PRIORIDAD ASIGNADA</span>
                         <div className="badges-group">
-                            <span className={`priority-tag ${ticket.prioridad.toLowerCase()}`}>
-                                {ticket.prioridad}
+                            <span className={`priority-tag ${prioridadClase}`}>
+                                {ticket?.prioridad || 'Baja'}
                             </span>
                             <span className="status-badge-open">
-                                {ticket.estado}
+                                {ticket?.estado || 'Abierto'}
                             </span>
                         </div>
                     </div>
 
                     <div className="detail-box">
                         <span className="detail-title">TIEMPO DE ATENCIÓN ESPERADO</span>
-                        <span className="detail-value-text">{ticket.tiempoEsperado}</span>
+                        <span className="detail-value-text">{ticket?.tiempoEsperado || 'En evaluación'}</span>
                     </div>
 
                     <div className="detail-box">
                         <span className="detail-title">AMBIENTE</span>
                         <span className="detail-value-text">
-                            <strong>{ticket.ambiente}</strong> · {ticket.categoriaNombre}
+                            <strong>{ticket?.ambiente}</strong> · {ticket?.categoriaNombre}
                         </span>
                     </div>
                 </div>
 
-                {/* Botones de acción */}
+                {/* Botones para redirigir */}
                 <div className="confirmation-actions">
                     <Button variant="primary" onClick={handleVerDetalle}>
                         Ver el detalle del ticket
