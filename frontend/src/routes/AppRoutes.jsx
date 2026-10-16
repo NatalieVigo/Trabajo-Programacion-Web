@@ -26,6 +26,7 @@ import SatisfaccionSupervisorPage from '../pages/supervisor/SatisfaccionSupervis
 import SupervisorHomePage from '../pages/supervisor/SupervisorHomePage.jsx'
 import CargaTecnicosPage from '../pages/supervisor/CargaTecnicosPage.jsx'
 import UsuariosPage from '../pages/supervisor/UsuariosPage.jsx'
+import FichaUsuarioPage from '../pages/supervisor/FichaUsuarioPage.jsx'
 import TechnicianHomePage from '../pages/technician/TechnicianHomePage.jsx'
 import GuestOnly from './GuestOnly.jsx'
 import RequireAuth from './RequireAuth.jsx'
@@ -62,6 +63,7 @@ const PRIVATE_PAGES = {
   [ROUTES.supervisorTecnicos]: <TecnicosCategoriaPage />,
   [ROUTES.supervisorSatisfaccion]: <SatisfaccionSupervisorPage />,
   [ROUTES.supervisorUsuarios]: <UsuariosPage />,
+  [ROUTES.supervisorUsuarioFicha]: <FichaUsuarioPage />,
 
   [ROUTES.miCuenta]: <AccountPage />,
   [ROUTES.accesoDenegado]: <ForbiddenPage />,

@@ -123,7 +123,7 @@ export function iniciarSesion(credenciales) {
     if (!passwordCorrecta) throw registrarFallo(usuario, ahora)
     if (usuario.estado !== 'activo') throw cuentaBloqueada(usuario.motivoBloqueo)
 
-    const actualizado = usuariosRepository.update(usuario.id, { intentosFallidos: 0, bloqueadoHasta: null })
+    const actualizado = usuariosRepository.update(usuario.id, { intentosFallidos: 0, bloqueadoHasta: null, ultimoAccesoEn: new Date(ahora).toISOString() })
     sessionRepository.save(
       { usuarioId: usuario.id, iniciadaEn: new Date(ahora).toISOString() },
       { recordar: recordar === true },

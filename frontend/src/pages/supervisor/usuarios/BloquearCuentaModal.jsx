@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { bloquearCuenta } from '../../../services/administracionUsuarios.service.js'
 import { ROUTES } from '../../../routes/routePaths.js'
+import { pluralize } from '../../../utils/format.js'
 import { Alert, Button, Checkbox, FormField, Modal, useToast } from '../../../shared/components'
 import TextArea from '../../catalogo/TextArea.jsx'
 
@@ -26,7 +27,7 @@ export default function BloquearCuentaModal({ cuenta, onClose, onBloqueada }) {
     finally { setGuardando(false) }
   }
   const criticos = cuenta.criticosAsignados > 0 || error?.code === 'CRITICAL_TICKETS'
-  return <Modal open size="md" title={`Bloquear la cuenta de ${cuenta.nombre}`} description={`La persona no podrá iniciar sesión ni registrar tickets. Sus ${cuenta.ticketsReportados} tickets existentes se mantienen y siguen su curso.`} onClose={() => { if (!guardando) onClose() }}
+  return <Modal open size="md" title={`Bloquear la cuenta de ${cuenta.nombre}`} description={`La persona no podrá iniciar sesión ni registrar tickets. ${cuenta.ticketsReportados === 1 ? 'Su ticket existente se mantiene y sigue su curso.' : `Sus ${cuenta.ticketsReportados} tickets existentes se mantienen y siguen su curso.`}`} onClose={() => { if (!guardando) onClose() }}
     footer={<><Button variant="secondary" onClick={onClose} disabled={guardando}>Cancelar</Button><Button variant="destructive" type="submit" form={formId} loading={guardando} loadingText="Bloqueando…" disabled={criticos}>Bloquear cuenta</Button></>}>
     <form id={formId} onSubmit={enviar} className="hu7-bloqueo">
       <FormField label="Motivo del bloqueo (obligatorio)" error={error?.fieldErrors?.motivo}>
@@ -34,7 +35,7 @@ export default function BloquearCuentaModal({ cuenta, onClose, onBloqueada }) {
       </FormField>
       <Checkbox label="Notificar a la persona por correo" checked={notificar} onChange={(e) => setNotificar(e.target.checked)} />
       {notificar && <p className="text-aux text-muted">La solicitud de notificación se registrará de forma simulada en esta entrega.</p>}
-      {criticos && <Alert variant="warning" actions={<Button to={ROUTES.supervisorCola} variant="secondary" size="sm">Ir a la cola</Button>}>{error?.code === 'CRITICAL_TICKETS' ? error.message : `Esta cuenta tiene ${cuenta.criticosAsignados} tickets críticos abiertos. Reasígnalos antes de bloquearla.`}</Alert>}
+      {criticos && <Alert variant="warning" actions={<Button to={ROUTES.supervisorCola} variant="secondary" size="sm">Ir a la cola</Button>}>{error?.code === 'CRITICAL_TICKETS' ? error.message : `Esta cuenta tiene ${pluralize(cuenta.criticosAsignados, 'ticket crítico abierto', 'tickets críticos abiertos')}. ${cuenta.criticosAsignados === 1 ? 'Reasígnalo' : 'Reasígnalos'} antes de bloquearla.`}</Alert>}
       {error && !error.fieldErrors && error.code !== 'CRITICAL_TICKETS' && <Alert variant="error">{error.message}</Alert>}
     </form>
   </Modal>

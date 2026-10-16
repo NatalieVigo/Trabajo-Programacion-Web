@@ -50,14 +50,19 @@ function actividad(ahora) {
     const eventos = historial.filter((e) => e.ticketId === ticket.id).sort((a, b) => a.creadoEn.localeCompare(b.creadoEn))
     let estados = eventos.filter((e) => e.tipo === 'estado')
     if (!estados.length || estados[0].creadoEn > ticket.creadoEn) estados = [{ estado: 'abierto', creadoEn: ticket.creadoEn }, ...estados]
-    const resuelto = ['resuelto', 'cerrado'].includes(ticket.estado)
-      ? estados.findLast((e) => e.estado === 'resuelto')?.creadoEn ?? ticket.cerradoEn : null
-    const fin = resuelto ? Date.parse(resuelto) : ahora
-    const { atencionMs } = tiemposDe(estados.filter((e) => Date.parse(e.creadoEn) <= fin), fin)
+    const medirHasta = (fin) => tiemposDe(estados.filter((e) => Date.parse(e.creadoEn) <= fin), fin).atencionMs
+    const resoluciones = estados.filter((e) => e.estado === 'resuelto').map((e) => ({
+      creadoEn: e.creadoEn, tecnicoId: tecnicoEn(ticket, eventos, e.creadoEn), atencionMs: medirHasta(Date.parse(e.creadoEn)),
+    }))
+    if (!resoluciones.length && ticket.estado === 'cerrado' && ticket.cerradoEn) {
+      resoluciones.push({ creadoEn: ticket.cerradoEn, tecnicoId: tecnicoEn(ticket, eventos, ticket.cerradoEn), atencionMs: medirHasta(Date.parse(ticket.cerradoEn)) })
+    }
+    const ultima = resoluciones.at(-1)
+    const fin = !esTicketEnCurso(ticket) && ultima ? Date.parse(ultima.creadoEn) : ahora
+    const atencionMs = medirHasta(fin)
     const catalogo = subcategorias.find((c) => c.id === ticket.subcategoriaId) ?? categorias.find((c) => c.id === ticket.categoriaId)
     const esperado = ticket.tiempoEsperadoHoras ?? catalogo?.tiempoEsperadoHoras ?? HORAS[ticket.prioridad]
-    return { ...ticket, resueltoEn: resuelto, atencionMs,
-      tecnicoResolutorId: resuelto ? tecnicoEn(ticket, eventos, resuelto) : null,
+    return { ...ticket, resoluciones, atencionMs,
       fueraDePlazo: atencionMs > esperado * HORA_MS }
   })
   return { tickets, categorias }
@@ -65,7 +70,11 @@ function actividad(ahora) {
 
 function resumenPeriodo(tickets, rango) {
   const registrados = tickets.filter((t) => enRango(t.creadoEn, rango))
-  const resueltos = tickets.filter((t) => enRango(t.resueltoEn, rango))
+  // Una reapertura posterior no borra los resultados históricos. Cada ticket cuenta una sola vez por periodo.
+  const resueltos = tickets.flatMap((t) => {
+    const resolucion = t.resoluciones.filter((r) => enRango(r.creadoEn, rango)).at(-1)
+    return resolucion ? [{ ...t, resueltoEn: resolucion.creadoEn, tecnicoResolutorId: resolucion.tecnicoId, atencionMs: resolucion.atencionMs }] : []
+  })
   return { registrados, resueltos, total: registrados.length,
     promedioMs: promedio(resueltos.map((t) => t.atencionMs)),
     fueraDePlazo: registrados.filter((t) => t.fueraDePlazo).length }
@@ -108,16 +117,18 @@ export function obtenerCargaTecnicos(usuarioId, rango) {
     exigirSupervisor(usuarioId)
     validarRangoMetricas(rango)
     const { tickets, categorias } = actividad(Date.now())
+    const resueltosDelPeriodo = resumenPeriodo(tickets, rango).resueltos
     const encuestas = readTable('encuestas')
     const tecnicos = readTable('usuarios').filter((u) => u.rol === 'tecnico' && u.estado === 'activo')
     const habilitaciones = readTable('habilitaciones')
     const filas = tecnicos.map((u) => {
       const propios = tickets.filter((t) => t.asignadoA === u.id && esTicketEnCurso(t))
-      const resueltos = tickets.filter((t) => t.tecnicoResolutorId === u.id && enRango(t.resueltoEn, rango))
+      const resueltos = resueltosDelPeriodo.filter((t) => t.tecnicoResolutorId === u.id)
       const puntajes = encuestas.filter((e) => enRango(e.fechaRespuesta ?? e.respondidaEn, rango)).flatMap((e) => {
         const ticket = tickets.find((t) => t.id === e.ticketId || t.codigo === e.codigoTicket)
         const puntaje = e.puntajeGeneral ?? e.puntaje
-        return ticket?.tecnicoResolutorId === u.id && Number.isFinite(puntaje) && puntaje >= 1 && puntaje <= 5 ? [puntaje] : []
+        const resolucion = ticket?.resoluciones.filter((r) => r.creadoEn <= (e.fechaRespuesta ?? e.respondidaEn)).at(-1)
+        return resolucion?.tecnicoId === u.id && Number.isFinite(puntaje) && puntaje >= 1 && puntaje <= 5 ? [puntaje] : []
       })
       return {
         id: u.id, nombre: getDisplayName(u),

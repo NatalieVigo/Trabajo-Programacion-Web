@@ -8,7 +8,7 @@ describe('GuestOnly', () => {
   it.each([
     ['usuario', '/iniciar-sesion', 'Mis tickets', '/usuario/tickets'],
     ['tecnico', '/registro', 'Mi bandeja', '/tecnico'],
-    ['supervisor', '/recuperar-contrasena', 'Tablero', '/supervisor'],
+    ['supervisor', '/recuperar-contrasena', 'Tablero de métricas', '/supervisor'],
     ['usuario', '/restablecer-contrasena/a1b2c3', 'Mis tickets', '/usuario/tickets'],
   ])('con la sesión de %s, %s lleva a la vista del rol', async (rol, ruta, titulo, inicio) => {
     renderApp(ruta, { usuario: DEMO[rol] })
