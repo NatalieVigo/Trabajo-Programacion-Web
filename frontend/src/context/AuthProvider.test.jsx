@@ -114,7 +114,7 @@ describe('AuthProvider', () => {
     renderApp('/supervisor', { usuario: DEMO.supervisor })
 
     expect(screen.getByText('Cargando tu sesión…')).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { level: 1, name: 'Tablero' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Tablero de métricas' })).toBeInTheDocument()
     expect(await screen.findByText('Cola sin asignar')).toBeInTheDocument()
   })
 })

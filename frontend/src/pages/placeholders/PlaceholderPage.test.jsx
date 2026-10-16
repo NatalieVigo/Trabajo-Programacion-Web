@@ -31,14 +31,7 @@ describe('PlaceholderPage', () => {
 
     await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Ir a Tablero' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Tablero' })).toBeInTheDocument()
-  })
-
-  it('la vista principal pendiente del supervisor da la bienvenida sin enlace a sí misma', async () => {
-    await renderSeccion('/supervisor', 'supervisor')
-    expect(screen.getByText('Te damos la bienvenida, Lucía. Aquí verás las métricas de atención del área.')).toBeInTheDocument()
-    expect(screen.getByText(deOtroIntegrante('HU-7 (Métricas y usuarios)'))).toBeInTheDocument()
-    expect(within(screen.getByRole('main')).queryByRole('link')).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Tablero de métricas' })).toBeInTheDocument()
   })
 
   it('sin código buscado no muestra el aviso de búsqueda', async () => {
