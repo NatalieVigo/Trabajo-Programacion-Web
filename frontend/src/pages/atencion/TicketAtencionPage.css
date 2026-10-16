@@ -1,4 +1,5 @@
-/* Vista consolidada de un ticket (p25): ruta de navegación, cabecera con el código y dos columnas de contenido. */
+/* Vista consolidada de un ticket (p25): cabecera con el código y dos columnas de contenido. La ruta de navegación es
+   la del historial de cambios (p27). */
 .ticket-atencion__breadcrumb {
   margin-bottom: var(--space-2);
   color: var(--color-text-muted);
@@ -47,6 +48,17 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+}
+
+.ticket-cabecera__plazo {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
+  font-weight: var(--font-weight-medium);
+}
+
+.ticket-cabecera__plazo--vencido {
+  color: var(--color-danger);
 }
 
 .ticket-cabecera__asunto {
@@ -146,12 +158,6 @@
   font-size: var(--font-size-subtitle);
   line-height: var(--line-height-subtitle);
   font-weight: var(--font-weight-semibold);
-}
-
-.ticket-ambiente__nombre {
-  font-size: var(--font-size-aux);
-  line-height: var(--line-height-aux);
-  font-weight: var(--font-weight-medium);
 }
 
 .ticket-recientes {
@@ -310,6 +316,19 @@
   margin: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+/* La etiqueta del texto queda solo para lectores de pantalla, como .visually-hidden: p25 no la dibuja. */
+.nueva-entrada__campo > .field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .nueva-entrada__aviso {

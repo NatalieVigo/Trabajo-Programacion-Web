@@ -15,7 +15,7 @@ vi.mock('../../services/resumen.service.js', async (importOriginal) => {
 
 const AHORA = '2026-10-01T15:27:00.000Z' // 10:27 en Lima
 const CAMILA = { correo: 'camila.quispe@aloe.ulima.edu.pe', password: 'Camila2026' }
-const BIENVENIDA_CAMILA = 'Te damos la bienvenida, Camila. Tienes 3 tickets abiertos y 1 encuesta pendiente.'
+const BIENVENIDA_CAMILA = 'Bienvenida, Camila. Tienes 3 tickets abiertos y 1 encuesta pendiente.'
 
 const campo = (label) => screen.getByLabelText(label)
 const botonIngresar = () => screen.getByRole('button', { name: 'Ingresar' })
@@ -27,7 +27,7 @@ async function ingresarCon(user, { correo, password }) {
   await user.click(botonIngresar())
 }
 
-/** El panel del rol cargó sus contadores (cabecera e Inicio): no quedan consultas pendientes. */
+/** El panel del rol cargó los contadores de su cabecera: no quedan consultas pendientes. */
 async function esperarPanel(pildora) {
   expect(await screen.findByText(pildora)).toBeInTheDocument()
   await waitFor(() => expect(screen.queryByText('Cargando tu resumen…')).not.toBeInTheDocument())
@@ -69,13 +69,13 @@ describe('LoginPage', () => {
   })
 
   it.each([
-    ['usuario', CAMILA, 'Inicio', 'Mis tickets abiertos', BIENVENIDA_CAMILA, 'usr-001'],
+    ['usuario', CAMILA, 'Mis tickets', 'Mis tickets abiertos', BIENVENIDA_CAMILA, 'usr-001'],
     [
       'técnico',
       { correo: 'jparedes@ulima.edu.pe', password: 'Tecnico2026' },
       'Mi bandeja',
       'Asignados a mí',
-      'Te damos la bienvenida, Julio. Tienes 8 tickets asignados.',
+      'Bienvenida, Julio. Tienes 8 tickets asignados.',
       'usr-002',
     ],
     [
@@ -83,7 +83,7 @@ describe('LoginPage', () => {
       { correo: 'lmendoza@ulima.edu.pe', password: 'Supervisor2026' },
       'Tablero',
       'Cola sin asignar',
-      'Te damos la bienvenida, Lucía. Hay 2 tickets sin asignar en la cola.',
+      'Bienvenida, Lucía. Hay 2 tickets sin asignar en la cola.',
       'usr-003',
     ],
   ])('la cuenta de %s llega a su vista principal con la bienvenida', async (_, credenciales, inicio, pildora, bienvenida, id) => {
@@ -110,7 +110,7 @@ describe('LoginPage', () => {
 
     await ingresarCon(user, CAMILA)
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mis tickets' })).toBeInTheDocument()
     expect(screen.queryByText(BIENVENIDA_CAMILA)).not.toBeInTheDocument()
 
     await act(async () =>
@@ -171,13 +171,7 @@ describe('LoginPage', () => {
     await user.tab()
     expect(within(alerta).getByRole('link', { name: 'Restablecer contraseña' })).toHaveFocus()
     expect(campo('Contraseña')).not.toHaveAttribute('aria-invalid')
-    const soporte = within(alerta).getByRole('button', { name: 'Escribir a soporte' })
-    expect(soporte).toHaveAttribute('aria-expanded', 'false')
-    expect(within(alerta).queryByRole('link', { name: 'soporte.campus@ulima.edu.pe' })).not.toBeInTheDocument()
-
-    await user.click(soporte)
-    expect(soporte).toHaveAttribute('aria-expanded', 'true')
-    expect(within(alerta).getByRole('link', { name: 'soporte.campus@ulima.edu.pe' })).toHaveAttribute(
+    expect(within(alerta).getByRole('link', { name: 'Escribir a soporte' })).toHaveAttribute(
       'href',
       'mailto:soporte.campus@ulima.edu.pe',
     )
@@ -272,7 +266,7 @@ describe('LoginPage', () => {
 
     await ingresarCon(user, { correo: 'jparedes@ulima.edu.pe', password: 'Tecnico2026' })
 
-    expect(await screen.findByText('Te damos la bienvenida, Julio.')).toBeInTheDocument()
+    expect(await screen.findByText('Bienvenida, Julio.')).toBeInTheDocument()
     expect(await screen.findByRole('heading', { level: 1, name: 'Mi bandeja' })).toBeInTheDocument()
   })
 

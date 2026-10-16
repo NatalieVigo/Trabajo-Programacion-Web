@@ -52,7 +52,7 @@ describe('TecnicosCategoriaPage', () => {
     expect(casilla('Julio Paredes Soto', 'Climatización')).not.toBeChecked()
     expect(screen.getByText('Ningún técnico está habilitado para atender Limpieza.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Guardar matriz' })).toBeDisabled()
-    expect(screen.getByRole('link', { name: 'Invitar técnico' })).toHaveAttribute('href', '/supervisor/invitaciones')
+    expect(screen.getByRole('button', { name: 'Invitar técnico' })).toBeEnabled()
     expect(document.title).toBe('Técnicos por categoría · Mesa de Ayuda')
   })
 
@@ -103,8 +103,9 @@ describe('TecnicosCategoriaPage', () => {
     const { user } = renderApp('/supervisor/tecnicos', { usuario: DEMO.supervisor })
 
     expect(await screen.findByRole('heading', { name: 'Aún no hay técnicos activos' })).toBeInTheDocument()
-    await user.click(screen.getAllByRole('link', { name: 'Invitar técnico' })[0])
-    expect(ubicacionActual()).toBe('/supervisor/invitaciones')
+    await user.click(screen.getAllByRole('button', { name: 'Invitar técnico' })[0])
+    expect(await screen.findByRole('dialog', { name: 'Nueva invitación' })).toBeInTheDocument()
+    expect(ubicacionActual()).toBe('/supervisor/tecnicos')
   })
 
   it('un usuario ve el acceso denegado', async () => {

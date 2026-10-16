@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth.js'
 import { useForm } from '../../hooks/useForm.js'
 import { cambiarEstado } from '../../services/atencion.service.js'
 import { Button, FormField, Modal, TextInput, useConfirm, useToast } from '../../shared/components'
-import { MOTIVO_MAX_LENGTH, validateCambioEstado } from '../../utils/atencionValidators.js'
+import { validateCambioEstado } from '../../utils/atencionValidators.js'
 import { cx } from '../../utils/classNames.js'
 import { hoyEnLima } from '../../utils/fechaLima.js'
 import { formatEstado } from '../../utils/format.js'
@@ -89,7 +89,7 @@ export default function CambiarEstadoModal({ ticket, transiciones, onClose, onCa
       open
       onClose={cerrar}
       title={`Cambiar estado de ${ticket.codigo}`}
-      description={`Estado actual: ${formatEstado(ticket.estado)}. Solo se ofrecen los cambios permitidos.`}
+      description={`Estado actual: ${formatEstado(ticket.estado)}. Solo se ofrecen las transiciones permitidas.`}
       initialFocusRef={primeraRef}
       footer={
         <>
@@ -108,7 +108,8 @@ export default function CambiarEstadoModal({ ticket, transiciones, onClose, onCa
             className={cx('estado-opciones', error && 'estado-opciones--error')}
             aria-describedby={error ? errorId : undefined}
           >
-            <legend className="field__label">Nuevo estado</legend>
+            {/* p26 no muestra un título sobre las opciones: queda para lectores de pantalla. */}
+            <legend className="visually-hidden">Nuevo estado</legend>
             {opciones.map(({ estado, detalle, disponible }, indice) => (
               <label key={estado} className={cx('estado-opcion', !disponible && 'is-disabled')}>
                 <input
@@ -137,20 +138,10 @@ export default function CambiarEstadoModal({ ticket, transiciones, onClose, onCa
 
           {enEspera && (
             <div className="form-grid estado-espera">
-              <FormField
-                label="Motivo de espera"
-                required
-                hint={`Qué falta para continuar. Máximo ${MOTIVO_MAX_LENGTH} caracteres.`}
-                error={form.errors.motivo}
-              >
+              <FormField label="Motivo de espera (obligatorio)" required error={form.errors.motivo}>
                 <TextArea {...form.getFieldProps('motivo')} placeholder="Repuesto solicitado al almacén…" />
               </FormField>
-              <FormField
-                label="Fecha estimada de retorno"
-                required
-                hint="Cuándo esperas retomar la atención."
-                error={form.errors.retornoEstimado}
-              >
+              <FormField label="Fecha estimada de retorno" required error={form.errors.retornoEstimado}>
                 <TextInput {...form.getFieldProps('retornoEstimado')} type="date" min={hoy} />
               </FormField>
             </div>

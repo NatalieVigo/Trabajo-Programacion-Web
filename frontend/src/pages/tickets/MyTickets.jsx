@@ -2,20 +2,30 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, TextInput, SelectInput } from "../../shared/components";
 import { ROUTES, usuarioTicketDetallePath } from "../../routes/routePaths";
+// testeo
+import { ticketsRepository } from "../../repositories/tickets.repository.js";
+import { sessionRepository } from "../../repositories/session.repository.js";
 import './MyTickets.css';
 
 export const MyTickets = () => {
     const navigate = useNavigate();
 
-    // 1. Cargar tickets de localStorage
+    // 1. Cargar tickets usando los repositorios-testeo-vota tu gaaa
     const [tickets] = useState(() => {
-        const guardados = JSON.parse(localStorage.getItem('tickets')) || [];
-        return guardados;
+        const sesion = sessionRepository.read();
+        
+        // Si no hay sesión activa, devolvemos un arreglo vacío
+        if (!sesion || !sesion.usuarioId) {
+            return [];
+        }
+        
+        // Usamos el repositorio para filtrar directamente por el ID del usuario
+        return ticketsRepository.findAll({ usuarioId: sesion.usuarioId });
     });
 
     // 2. Estados para TODOS los filtros
     const [busqueda, setBusqueda] = useState('');
-    const [filtroEstado, setFiltroEstado] = useState('en curso'); // Por defecto como en la imagen
+    const [filtroEstado, setFiltroEstado] = useState('en curso'); //  estados
     const [filtroCategoria, setFiltroCategoria] = useState('');
     const [fechaInicio, setFechaInicio] = useState('');
     const [fechaFin, setFechaFin] = useState('');

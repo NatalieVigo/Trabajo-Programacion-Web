@@ -2,7 +2,7 @@ import { useAuth } from '../../hooks/useAuth.js'
 import { useForm } from '../../hooks/useForm.js'
 import { agregarEntrada } from '../../services/atencion.service.js'
 import { Button, FormField, useToast } from '../../shared/components'
-import { MENSAJE_MAX_LENGTH, validateEntrada } from '../../utils/atencionValidators.js'
+import { validateEntrada } from '../../utils/atencionValidators.js'
 import { cx } from '../../utils/classNames.js'
 import { getDisplayName } from '../../utils/format.js'
 import TextArea from '../catalogo/TextArea.jsx'
@@ -69,10 +69,11 @@ export default function NuevaEntradaForm({ ticket, permisos, onGuardada, onDesac
             ? 'Estás escribiendo una nota interna: solo la ve el equipo técnico y el supervisor.'
             : `Estás escribiendo un comentario público: también lo verá ${getDisplayName(ticket.solicitante)}.`}
         </p>
+        {/* p25 no muestra una etiqueta sobre el texto: el tipo elegido arriba la nombra para los lectores de pantalla. */}
         <FormField
+          className="nueva-entrada__campo"
           label={esInterna ? 'Nota interna' : 'Comentario público'}
           required
-          hint={`${form.values.mensaje.length} / ${MENSAJE_MAX_LENGTH} caracteres`}
           error={form.errors.mensaje}
         >
           <TextArea
