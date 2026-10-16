@@ -1,0 +1,62 @@
+import { readTable, updateTables } from '../repositories/db.js'
+import { getDisplayName } from '../utils/format.js'
+import { esTicketEnCurso } from './ticketsEnCurso.js'
+import { simulateRequest } from './request.js'
+import { ServiceError, validationError } from './ServiceError.js'
+
+function supervisorActivo(usuarios, id) {
+  const cuenta = usuarios.find((u) => u.id === id)
+  if (cuenta?.rol !== 'supervisor' || cuenta.estado !== 'activo') throw new ServiceError(403, 'FORBIDDEN', 'Solo un supervisor activo puede gestionar las cuentas.')
+}
+
+function buscar(usuarios, id) {
+  const cuenta = usuarios.find((u) => u.id === id)
+  if (!cuenta) throw new ServiceError(404, 'USER_NOT_FOUND', 'No encontramos la cuenta solicitada.')
+  return cuenta
+}
+
+function cuentaPublica(cuenta, tickets, categorias) {
+  return {
+    id: cuenta.id, nombres: cuenta.nombres, apellidos: cuenta.apellidos, nombre: getDisplayName(cuenta),
+    correo: cuenta.correo, telefono: cuenta.telefono, rol: cuenta.rol, unidad: cuenta.unidad,
+    vinculo: cuenta.vinculo, estado: cuenta.estado, creadoEn: cuenta.creadoEn,
+    ambienteHabitualId: cuenta.ambienteHabitualId, ultimoAccesoEn: cuenta.ultimoAccesoEn ?? null,
+    motivoBloqueo: cuenta.motivoBloqueo ?? null,
+    especialidad: (cuenta.especialidades ?? []).map((id) => categorias.find((cat) => cat.id === id)?.nombre).filter(Boolean).join(' · '),
+    ticketsReportados: tickets.filter((t) => t.usuarioId === cuenta.id).length,
+    criticosAsignados: tickets.filter((t) => t.asignadoA === cuenta.id && t.prioridad === 'critica' && esTicketEnCurso(t)).length,
+  }
+}
+
+export function listarCuentas(supervisorId) {
+  return simulateRequest(() => {
+    const usuarios = readTable('usuarios')
+    supervisorActivo(usuarios, supervisorId)
+    const tickets = readTable('tickets')
+    const categorias = readTable('categorias')
+    return usuarios.map((cuenta) => cuentaPublica(cuenta, tickets, categorias))
+  })
+}
+
+function anunciarCambio() {
+  window.dispatchEvent(new Event('mesa-ayuda:datos-actualizados'))
+  window.dispatchEvent(new Event('mesa-ayuda:cuentas-actualizadas'))
+}
+
+export function bloquearCuenta(cuentaId, { motivo, notificar = false }, supervisorId) {
+  return simulateRequest(() => {
+    if (typeof motivo !== 'string' || !motivo.trim() || motivo.trim().length > 240) throw validationError({ motivo: 'Escribe el motivo del bloqueo, con un máximo de 240 caracteres.' })
+    const resultado = updateTables(['usuarios'], (db) => {
+      supervisorActivo(db.usuarios, supervisorId)
+      const cuenta = buscar(db.usuarios, cuentaId)
+      if (cuentaId === supervisorId) throw new ServiceError(409, 'SELF_BLOCK', 'No puedes bloquear la cuenta con la que estás trabajando.')
+      if (cuenta.estado !== 'activo') throw new ServiceError(409, 'ACCOUNT_CHANGED', 'La cuenta ya no está activa. Actualiza la lista.')
+      const criticos = db.tickets.filter((t) => t.asignadoA === cuentaId && t.prioridad === 'critica' && esTicketEnCurso(t))
+      if (criticos.length) throw new ServiceError(409, 'CRITICAL_TICKETS', `Esta cuenta tiene ${criticos.length} tickets críticos abiertos. Reasígnalos antes de bloquearla.`)
+      Object.assign(cuenta, { estado: 'bloqueado', motivoBloqueo: motivo.trim(), bloqueadoEn: new Date().toISOString(), bloqueadoPor: supervisorId, notificacionBloqueoSolicitada: notificar === true, actualizadoEn: new Date().toISOString() })
+      return { id: cuenta.id, nombre: getDisplayName(cuenta) }
+    })
+    anunciarCambio()
+    return resultado
+  })
+}

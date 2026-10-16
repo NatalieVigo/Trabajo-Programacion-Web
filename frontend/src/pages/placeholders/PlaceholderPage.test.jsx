@@ -15,7 +15,6 @@ describe('PlaceholderPage', () => {
   it.each([
     ['/usuario/tickets/nuevo', 'usuario', 'Nuevo ticket', deOtroIntegrante('HU-3 (Registro de tickets)')],
     ['/usuario/tickets', 'usuario', 'Mis tickets', deOtroIntegrante('HU-3 (Registro de tickets)')],
-    ['/supervisor/usuarios', 'supervisor', 'Usuarios', deOtroIntegrante('HU-7 (Métricas y usuarios)')],
   ])('%s indica que la sección pendiente corresponde a su historia', async (ruta, rol, titulo, descripcion) => {
     await renderSeccion(ruta, rol)
 
@@ -27,11 +26,11 @@ describe('PlaceholderPage', () => {
   })
 
   it('ofrece volver a la vista principal del rol', async () => {
-    const { user } = await renderSeccion('/supervisor/usuarios', 'supervisor')
+    const { user } = await renderSeccion('/usuario/tickets/nuevo', 'usuario')
 
-    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Ir a Tablero' }))
+    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Ir a Mis tickets' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Tablero de métricas' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mis tickets' })).toBeInTheDocument()
   })
 
   it('sin código buscado no muestra el aviso de búsqueda', async () => {

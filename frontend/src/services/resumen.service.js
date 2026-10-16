@@ -1,4 +1,5 @@
 import { historialRepository } from '../repositories/atencion.repository.js'
+import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { encuestasRepository, ticketsRepository } from '../repositories/tickets.repository.js'
 import { fechaEnLima, hoyEnLima } from '../utils/fechaLima.js'
 import { simulateRequest } from './request.js'
@@ -57,7 +58,7 @@ const CONTADORES_POR_ROL = {
   },
   supervisor() {
     const enCola = ticketsRepository.findAll((ticket) => ticket.asignadoA === null && ESTADOS_EN_COLA.has(ticket.estado))
-    return { colaSinAsignar: enCola.length, colaTotal: ticketsRepository.findAll((ticket) => ticket.estado !== 'cerrado').length }
+    return { colaSinAsignar: enCola.length, colaTotal: ticketsRepository.findAll((ticket) => ticket.estado !== 'cerrado').length, usuariosTotal: usuariosRepository.findAll().length }
   },
 }
 

@@ -25,6 +25,7 @@ import MisEncuestasPage from '../pages/encuestas/MisEncuestasPage.jsx'
 import SatisfaccionSupervisorPage from '../pages/supervisor/SatisfaccionSupervisorPage.jsx'
 import SupervisorHomePage from '../pages/supervisor/SupervisorHomePage.jsx'
 import CargaTecnicosPage from '../pages/supervisor/CargaTecnicosPage.jsx'
+import UsuariosPage from '../pages/supervisor/UsuariosPage.jsx'
 import TechnicianHomePage from '../pages/technician/TechnicianHomePage.jsx'
 import GuestOnly from './GuestOnly.jsx'
 import RequireAuth from './RequireAuth.jsx'
@@ -60,7 +61,7 @@ const PRIVATE_PAGES = {
   [ROUTES.supervisorAmbientes]: <UbicacionesPage />,
   [ROUTES.supervisorTecnicos]: <TecnicosCategoriaPage />,
   [ROUTES.supervisorSatisfaccion]: <SatisfaccionSupervisorPage />,
-  [ROUTES.supervisorUsuarios]: pendiente('Usuarios', HISTORIAS.metricas),
+  [ROUTES.supervisorUsuarios]: <UsuariosPage />,
 
   [ROUTES.miCuenta]: <AccountPage />,
   [ROUTES.accesoDenegado]: <ForbiddenPage />,
