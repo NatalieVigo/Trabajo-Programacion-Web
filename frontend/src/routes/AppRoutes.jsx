@@ -20,6 +20,9 @@ import NotFoundPage from '../pages/errors/NotFoundPage.jsx'
 import { HISTORIAS } from '../pages/placeholders/historias.js'
 import PlaceholderPage from '../pages/placeholders/PlaceholderPage.jsx'
 import LandingPage from '../pages/public/LandingPage.jsx'
+import EncuestaPage from '../pages/encuestas/EncuestaPage.jsx'
+import MisEncuestasPage from '../pages/encuestas/MisEncuestasPage.jsx'
+import SatisfaccionSupervisorPage from '../pages/supervisor/SatisfaccionSupervisorPage.jsx'
 import SupervisorHomePage from '../pages/supervisor/SupervisorHomePage.jsx'
 import TechnicianHomePage from '../pages/technician/TechnicianHomePage.jsx'
 import GuestOnly from './GuestOnly.jsx'
@@ -36,8 +39,9 @@ const PRIVATE_PAGES = {
   [ROUTES.usuarioInicio]: <Navigate to={ROUTES.usuarioTickets} replace />,
   [ROUTES.usuarioNuevoTicket]: pendiente('Nuevo ticket', HISTORIAS.tickets),
   [ROUTES.usuarioTickets]: pendiente('Mis tickets', HISTORIAS.tickets),
-  [ROUTES.usuarioEncuestaPendiente]: pendiente('Encuesta pendiente', HISTORIAS.encuestas),
-  [ROUTES.usuarioEncuestas]: pendiente('Mis encuestas', HISTORIAS.encuestas),
+  [ROUTES.usuarioEncuestas]: <MisEncuestasPage />,
+  [ROUTES.usuarioEncuestaPendiente]: <EncuestaPage />,
+  [ROUTES.usuarioEncuestaEvaluar]: <EncuestaPage />,
 
   [ROUTES.tecnicoBandeja]: <TechnicianHomePage />,
   [ROUTES.tecnicoHistorial]: <HistorialAtencionPage />,
@@ -53,6 +57,7 @@ const PRIVATE_PAGES = {
   [ROUTES.supervisorCategoriaEditar]: <CategoriaFormPage />,
   [ROUTES.supervisorAmbientes]: <UbicacionesPage />,
   [ROUTES.supervisorTecnicos]: <TecnicosCategoriaPage />,
+  [ROUTES.supervisorSatisfaccion]: <SatisfaccionSupervisorPage />,
   [ROUTES.supervisorUsuarios]: pendiente('Usuarios', HISTORIAS.metricas),
 
   [ROUTES.miCuenta]: <AccountPage />,

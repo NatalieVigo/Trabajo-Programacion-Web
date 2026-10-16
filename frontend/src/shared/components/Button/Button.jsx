@@ -26,7 +26,7 @@ export default function Button({
   const classes = cx(
     'btn',
     `btn--${variant}`,
-    size === 'sm' && 'btn--sm',
+    (size === 'sm' || size === 'small') && 'btn--sm',
     block && 'btn--block',
     loading && 'is-loading',
     className,

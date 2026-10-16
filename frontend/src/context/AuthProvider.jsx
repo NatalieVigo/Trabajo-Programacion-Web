@@ -69,7 +69,7 @@ export default function AuthProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ ...sesion, iniciarSesion, cerrarSesion, refrescarUsuario }),
+    () => ({ ...sesion, user: sesion.usuario, iniciarSesion, cerrarSesion, refrescarUsuario }),
     [sesion, iniciarSesion, cerrarSesion, refrescarUsuario],
   )
 
