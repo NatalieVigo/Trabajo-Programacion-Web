@@ -1,7 +1,26 @@
 import { db } from '../repositories/db.js'
+import { ServiceError, validationError } from './ServiceError.js'
 
 /** Rango máximo de días para editar una encuesta respondida */
 export const DIAS_PLAZO_EDICION = 7
+
+const esPuntajeValido = (valor) => Number.isInteger(valor) && valor >= 1 && valor <= 5
+
+/**
+ * Lo que el servidor exige antes de guardar: el ticket es de quien responde, ya está cerrado y cada puntaje es un
+ * entero de 1 a 5. Falla con 404 TICKET_NOT_FOUND, 409 TICKET_NOT_CLOSED o 400 VALIDATION_ERROR.
+ */
+function validarEncuesta(ticket, usuarioId, puntajes) {
+  if (!ticket || ticket.usuarioId !== usuarioId) {
+    throw new ServiceError(404, 'TICKET_NOT_FOUND', 'No encontramos un ticket tuyo con ese código.')
+  }
+  if (ticket.estado !== 'cerrado') {
+    throw new ServiceError(409, 'TICKET_NOT_CLOSED', 'Solo puedes calificar la atención de un ticket cerrado.')
+  }
+  if (!puntajes.every(esPuntajeValido)) {
+    throw validationError({ puntaje: 'Califica cada aspecto del 1 al 5.' })
+  }
+}
 
 /**
  * Obtiene la encuesta asociada a un ticket por su código o id.
@@ -41,6 +60,7 @@ export async function registrarEncuesta({
   const encuestas = await db.get('encuestas')
   const tickets = await db.get('tickets')
   const ticket = tickets.find((t) => t.codigo === codigoTicket || t.id === codigoTicket)
+  validarEncuesta(ticket, usuarioId, [puntajeGeneral, rapidez, trato, solucion])
   const index = encuestas.findIndex(
     (e) => e.codigoTicket === codigoTicket || (ticket && (e.ticketId === ticket.id || e.codigoTicket === ticket.codigo)),
   )

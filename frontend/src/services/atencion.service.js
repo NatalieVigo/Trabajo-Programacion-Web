@@ -431,15 +431,13 @@ export function listarAtendidos(usuarioId) {
  * Obtiene la información enriquecida de un ticket para la vista de encuesta (HU-6).
  */
 export async function obtenerTicketPorCodigo(codigoTicket) {
+  // Sin código no hay ticket: antes se tomaba el primer ticket cerrado de cualquier cuenta.
+  if (!codigoTicket) return null
   let ticket
-  if (codigoTicket) {
-    try {
-      ticket = buscarTicket(codigoTicket)
-    } catch {
-      ticket = ticketsRepository.findAll().find((t) => t.codigo === codigoTicket || t.id === codigoTicket) || null
-    }
-  } else {
-    ticket = ticketsRepository.findAll().find((t) => t.estado === 'cerrado') || ticketsRepository.findAll()[0] || null
+  try {
+    ticket = buscarTicket(codigoTicket)
+  } catch {
+    ticket = ticketsRepository.findAll().find((t) => t.codigo === codigoTicket || t.id === codigoTicket) || null
   }
 
   if (!ticket) return null
