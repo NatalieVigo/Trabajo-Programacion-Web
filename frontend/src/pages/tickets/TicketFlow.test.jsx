@@ -72,20 +72,21 @@ describe('HU-3 · registro y seguimiento de tickets', () => {
     expect(await screen.findByText('La falla continúa en este momento.')).toBeInTheDocument()
   })
 
-  it('muestra el acceso a la encuesta cuando el ticket está resuelto y navega al formulario de HU-6', async () => {
-    writeTable(
-      'tickets',
-      readTable('tickets').map((ticket) =>
-        ticket.id === 'tck-00144' ? { ...ticket, estado: 'resuelto' } : ticket,
-      ),
-    )
-    const { user } = renderApp('/usuario/tickets/tck-00144', { usuario: DEMO.usuario })
+  it('no ofrece la encuesta mientras el ticket solo está resuelto', async () => {
+    renderApp('/usuario/tickets/tck-00141', { usuario: DEMO.usuario })
+
+    await screen.findByRole('heading', { name: 'TCK-2026-00141' })
+    expect(screen.queryByRole('button', { name: 'Responder encuesta' })).not.toBeInTheDocument()
+  })
+
+  it('muestra el acceso a la encuesta cuando el ticket está cerrado y navega al formulario de HU-6', async () => {
+    const { user } = renderApp('/usuario/tickets/tck-00131', { usuario: DEMO.usuario })
 
     const botonEncuesta = await screen.findByRole('button', { name: 'Responder encuesta' })
     await user.click(botonEncuesta)
 
     expect(await screen.findByText('¿Cómo fue la atención de tu ticket?')).toBeInTheDocument()
-    expect(screen.getByText('TCK-2026-00144')).toBeInTheDocument()
+    expect(screen.getByText('TCK-2026-00131')).toBeInTheDocument()
   })
 
   it('confirma la cancelación de un ticket propio que todavía no fue asignado', async () => {
