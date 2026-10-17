@@ -10,8 +10,10 @@ export const ROUTES = Object.freeze({
   restablecerContrasena: '/restablecer-contrasena/:token',
 
   usuarioInicio: '/usuario',
-  usuarioNuevoTicket: '/usuario/tickets/nuevo',
-  usuarioTickets: '/usuario/tickets',
+  usuarioNuevoTicket: '/usuario/tickets/nuevo', 
+  usuarioTickets: '/usuario/tickets', 
+  usuarioTicketDetalle: '/usuario/tickets/:id', // h3- export tickeDdetalle
+  usuarioTicketConfirmacion: '/usuario/tickets/confirmacion', // h3- export tickeconfirmación
   usuarioEncuestas: '/usuario/encuestas',
   usuarioEncuestaPendiente: '/usuario/encuestas/pendiente',
   usuarioEncuestaEvaluar: '/usuario/encuestas/:codigoTicket/evaluar',
@@ -46,6 +48,7 @@ export const LANDING_SECTIONS = Object.freeze({
   categorias: 'categorias',
   tiempos: 'tiempos',
 })
+export const usuarioTicketDetallePath = (id) => generatePath(ROUTES.usuarioTicketDetalle, { id }) // función -h3-generación de ruta
 
 export const landingSectionPath = (sectionId) => ({ pathname: ROUTES.home, hash: `#${sectionId}` })
 

@@ -75,7 +75,7 @@ function detalle(ticket, ahora) {
     categoria: categoria?.nombre ?? 'Sin categoría',
     subcategoria: subcategoria?.nombre ?? null,
     ambienteId: ticket.ambienteId,
-    ambiente: ambiente?.codigo ?? ambiente?.nombre ?? 'Sin ambiente',
+    ambiente: ambiente?.codigo ?? ambiente?.nombre ?? ticket.ambienteCodigo ?? 'Sin ambiente',
     solicitante: nombre(usuariosRepository.findById(ticket.usuarioId)),
     tecnicoId: ticket.asignadoA,
     tecnico: nombre(usuariosRepository.findById(ticket.asignadoA)),
