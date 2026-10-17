@@ -1,4 +1,9 @@
-import { categoriasRepository, ambientesRepository, habilitacionesRepository, subcategoriasRepository } from '../repositories/catalogo.repository.js'
+import {
+  categoriasRepository,
+  ambientesRepository,
+  habilitacionesRepository,
+  subcategoriasRepository,
+} from '../repositories/catalogo.repository.js'
 import { updateTables } from '../repositories/db.js'
 import { historialRepository } from '../repositories/atencion.repository.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
@@ -12,31 +17,53 @@ import { simulateRequest } from './request.js'
 import { ServiceError, validationError } from './ServiceError.js'
 import { exigirSupervisorActivo } from './supervisorActivo.js'
 
-export const HORAS_POR_PRIORIDAD = Object.freeze({ critica: 2, alta: 8, media: 24, baja: 72 })
-const ESTADOS_COLA = new Set(['abierto', 'reabierto', 'en_atencion', 'en_espera', 'resuelto'])
+export const HORAS_POR_PRIORIDAD = Object.freeze({
+  critica: 2,
+  alta: 8,
+  media: 24,
+  baja: 72,
+})
+const ESTADOS_COLA = new Set([
+  'abierto',
+  'reabierto',
+  'en_atencion',
+  'en_espera',
+  'resuelto',
+])
 
 function cuentaActiva(usuarioId, rol) {
   const cuenta = usuariosRepository.findById(usuarioId)
   if (cuenta?.rol !== rol || cuenta.estado !== 'activo') {
-    throw new ServiceError(403, 'FORBIDDEN', `Solo un ${rol === 'tecnico' ? 'técnico' : 'supervisor'} activo puede consultar esta vista.`)
+    throw new ServiceError(
+      403,
+      'FORBIDDEN',
+      `Solo un ${rol === 'tecnico' ? 'técnico' : 'supervisor'} activo puede consultar esta vista.`,
+    )
   }
   return cuenta
 }
 
-const nombre = (persona) => persona ? getDisplayName(persona) : null
+const nombre = (persona) => (persona ? getDisplayName(persona) : null)
 
 function horasEsperadas(ticket) {
   if (Number.isFinite(ticket.tiempoEsperadoHoras)) return ticket.tiempoEsperadoHoras
-  const categoria = subcategoriasRepository.findById(ticket.subcategoriaId) ?? categoriasRepository.findById(ticket.categoriaId)
+  const categoria =
+    subcategoriasRepository.findById(ticket.subcategoriaId) ??
+    categoriasRepository.findById(ticket.categoriaId)
   return categoria?.tiempoEsperadoHoras ?? HORAS_POR_PRIORIDAD[ticket.prioridad]
 }
 
 function detalle(ticket, ahora) {
-  const estados = historialRepository.findAll({ ticketId: ticket.id, tipo: 'estado' }).sort((a, b) => a.creadoEn.localeCompare(b.creadoEn))
+  const estados = historialRepository
+    .findAll({ ticketId: ticket.id, tipo: 'estado' })
+    .sort((a, b) => a.creadoEn.localeCompare(b.creadoEn))
   const { atencionMs } = tiemposDe(estados, ahora)
   const esperadoHoras = horasEsperadas(ticket)
   const restanteMs = esperadoHoras * HORA_MS - atencionMs
-  const espera = ticket.estado === 'en_espera' ? estados.findLast(({ estado }) => estado === 'en_espera') : null
+  const espera =
+    ticket.estado === 'en_espera'
+      ? estados.findLast(({ estado }) => estado === 'en_espera')
+      : null
   const categoria = categoriasRepository.findById(ticket.categoriaId)
   const subcategoria = subcategoriasRepository.findById(ticket.subcategoriaId)
   const ambiente = ambientesRepository.findById(ticket.ambienteId)
@@ -56,28 +83,36 @@ function detalle(ticket, ahora) {
     estado: ticket.estado,
     creadoEn: ticket.creadoEn,
     cerradoEn: ticket.cerradoEn,
-    resueltoEn: estados.findLast(({ estado }) => estado === 'resuelto')?.creadoEn ?? null,
+    resueltoEn:
+      estados.findLast(({ estado }) => estado === 'resuelto')?.creadoEn ?? null,
     antiguedadMs: Math.max(0, ahora - Date.parse(ticket.creadoEn)),
     esperadoHoras,
     restanteMs,
     vencimientoEn: new Date(ahora + restanteMs).toISOString(),
-    fueraDePlazo: esTicketEnCurso(ticket) && ticket.estado !== 'en_espera' && restanteMs < 0,
-    espera: espera ? { motivo: espera.motivo, retornoEstimado: espera.retornoEstimado } : null,
+    fueraDePlazo:
+      esTicketEnCurso(ticket) && ticket.estado !== 'en_espera' && restanteMs < 0,
+    espera: espera
+      ? { motivo: espera.motivo, retornoEstimado: espera.retornoEstimado }
+      : null,
   }
 }
 
 function tecnicosConCarga() {
   const tickets = ticketsRepository.findAll()
-  return usuariosRepository.findAll({ rol: 'tecnico', estado: 'activo' }).map((tecnico) => {
-    const propios = tickets.filter(({ asignadoA }) => asignadoA === tecnico.id)
-    return {
-      id: tecnico.id,
-      nombre: nombre(tecnico),
-      habilitadas: habilitacionesRepository.findAll({ tecnicoId: tecnico.id }).map(({ categoriaId }) => categoriaId),
-      carga: propios.length,
-      criticos: propios.filter(({ prioridad }) => prioridad === 'critica').length,
-    }
-  })
+  return usuariosRepository
+    .findAll({ rol: 'tecnico', estado: 'activo' })
+    .map((tecnico) => {
+      const propios = tickets.filter(({ asignadoA }) => asignadoA === tecnico.id)
+      return {
+        id: tecnico.id,
+        nombre: nombre(tecnico),
+        habilitadas: habilitacionesRepository
+          .findAll({ tecnicoId: tecnico.id })
+          .map(({ categoriaId }) => categoriaId),
+        carga: propios.length,
+        criticos: propios.filter(({ prioridad }) => prioridad === 'critica').length,
+      }
+    })
 }
 
 export function listarCola(usuarioId) {
@@ -85,10 +120,16 @@ export function listarCola(usuarioId) {
     cuentaActiva(usuarioId, 'supervisor')
     const ahora = Date.now()
     return {
-      tickets: ticketsRepository.findAll((ticket) => ESTADOS_COLA.has(ticket.estado)).map((ticket) => detalle(ticket, ahora)),
+      tickets: ticketsRepository
+        .findAll((ticket) => ESTADOS_COLA.has(ticket.estado))
+        .map((ticket) => detalle(ticket, ahora)),
       tecnicos: tecnicosConCarga(),
-      categorias: categoriasRepository.findAll().map(({ id, nombre }) => ({ id, nombre })),
-      ambientes: ambientesRepository.findAll().map(({ id, codigo, nombre }) => ({ id, nombre: codigo ?? nombre })),
+      categorias: categoriasRepository
+        .findAll()
+        .map(({ id, nombre }) => ({ id, nombre })),
+      ambientes: ambientesRepository
+        .findAll()
+        .map(({ id, codigo, nombre }) => ({ id, nombre: codigo ?? nombre })),
     }
   })
 }
@@ -98,8 +139,27 @@ export function listarBandeja(usuarioId) {
     const tecnico = cuentaActiva(usuarioId, 'tecnico')
     const ahora = Date.now()
     return {
-      tecnico: { nombre: nombre(tecnico), especialidades: (tecnico.especialidades ?? []).map((id) => categoriasRepository.findById(id)?.nombre).filter(Boolean) },
-      tickets: ticketsRepository.findAll({ asignadoA: tecnico.id }).map((ticket) => detalle(ticket, ahora)),
+      tecnico: {
+        nombre: nombre(tecnico),
+        especialidades: (tecnico.especialidades ?? [])
+          .map((id) => categoriasRepository.findById(id)?.nombre)
+          .filter(Boolean),
+      },
+      tickets: ticketsRepository
+        .findAll({ asignadoA: tecnico.id })
+        .map((ticket) => detalle(ticket, ahora)),
+      disponibles: ticketsRepository
+        .findAll((ticket) => {
+          const habilitaciones = habilitacionesRepository.findAll({
+            tecnicoId: tecnico.id,
+          })
+          return (
+            !ticket.asignadoA &&
+            esTicketEnCurso(ticket) &&
+            habilitaciones.some(({ categoriaId }) => categoriaId === ticket.categoriaId)
+          )
+        })
+        .map((ticket) => detalle(ticket, ahora)),
     }
   })
 }
@@ -114,17 +174,35 @@ function idsValidos(ids) {
 function ticketsDe(db, ids) {
   return idsValidos(ids).map((id) => {
     const ticket = db.tickets.find((fila) => fila.id === id)
-    if (!ticket) throw new ServiceError(404, 'TICKET_NOT_FOUND', 'Uno de los tickets ya no existe.')
-    if (!ESTADOS_COLA.has(ticket.estado)) throw new ServiceError(409, 'TICKET_NOT_IN_QUEUE', 'Un ticket seleccionado ya no está en la cola.')
+    if (!ticket)
+      throw new ServiceError(
+        404,
+        'TICKET_NOT_FOUND',
+        'Uno de los tickets ya no existe.',
+      )
+    if (!ESTADOS_COLA.has(ticket.estado))
+      throw new ServiceError(
+        409,
+        'TICKET_NOT_IN_QUEUE',
+        'Un ticket seleccionado ya no está en la cola.',
+      )
     return ticket
   })
 }
 
 function evento(db, ticket, tipo, supervisorId, datos = {}) {
   db.historial.push({
-    id: nextId('his', db.historial), ticketId: ticket.id, tipo, estado: null,
-    asignadoA: null, autorId: supervisorId, motivo: null, retornoEstimado: null,
-    solucion: null, creadoEn: new Date().toISOString(), ...datos,
+    id: nextId('his', db.historial),
+    ticketId: ticket.id,
+    tipo,
+    estado: null,
+    asignadoA: null,
+    autorId: supervisorId,
+    motivo: null,
+    retornoEstimado: null,
+    solucion: null,
+    creadoEn: new Date().toISOString(),
+    ...datos,
   })
 }
 
@@ -135,25 +213,52 @@ function avisarCambio() {
 export function asignarTickets(ids, tecnicoId, nota, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
-    if (typeof nota !== 'string' || nota.trim().length > 240) throw validationError({ nota: 'La nota debe tener como máximo 240 caracteres.' })
+    if (typeof nota !== 'string' || nota.trim().length > 240)
+      throw validationError({ nota: 'La nota debe tener como máximo 240 caracteres.' })
     const resultado = updateTables(['tickets', 'historial', 'bitacora'], (db) => {
       const seleccion = ticketsDe(db, ids)
       const tecnico = db.usuarios.find(({ id }) => id === tecnicoId)
-      if (tecnico?.rol !== 'tecnico' || tecnico.estado !== 'activo') throw validationError({ tecnico: 'Elige un técnico activo.' })
-      const habilitadas = new Set(db.habilitaciones.filter(({ tecnicoId: id }) => id === tecnicoId).map(({ categoriaId }) => categoriaId))
+      if (tecnico?.rol !== 'tecnico' || tecnico.estado !== 'activo')
+        throw validationError({ tecnico: 'Elige un técnico activo.' })
+      const habilitadas = new Set(
+        db.habilitaciones
+          .filter(({ tecnicoId: id }) => id === tecnicoId)
+          .map(({ categoriaId }) => categoriaId),
+      )
       if (seleccion.some(({ categoriaId }) => !habilitadas.has(categoriaId))) {
-        throw validationError({ tecnico: 'El técnico no está habilitado para todas las categorías seleccionadas.' })
+        throw validationError({
+          tecnico:
+            'El técnico no está habilitado para todas las categorías seleccionadas.',
+        })
       }
       if (seleccion.some(({ asignadoA }) => asignadoA === tecnicoId)) {
-        throw new ServiceError(409, 'ALREADY_ASSIGNED', 'Uno de los tickets ya está asignado a este técnico.')
+        throw new ServiceError(
+          409,
+          'ALREADY_ASSIGNED',
+          'Uno de los tickets ya está asignado a este técnico.',
+        )
+      }
+      if (seleccion.some((ticket) => ticket.asignadoA) && nota.trim().length < 10) {
+        throw validationError({
+          nota: 'Explica la reasignación con al menos 10 caracteres.',
+        })
       }
       for (const ticket of seleccion) {
+        const esReasignacion = Boolean(ticket.asignadoA)
         ticket.asignadoA = tecnicoId
-        evento(db, ticket, 'asignacion', supervisorId, { asignadoA: tecnicoId })
-        if (nota.trim()) db.bitacora.push({
-          id: nextId('bit', db.bitacora), ticketId: ticket.id, autorId: supervisorId,
-          tipo: 'interno', mensaje: nota.trim(), creadoEn: new Date().toISOString(),
+        evento(db, ticket, 'asignacion', supervisorId, {
+          asignadoA: tecnicoId,
+          motivo: esReasignacion ? nota.trim() : null,
         })
+        if (nota.trim())
+          db.bitacora.push({
+            id: nextId('bit', db.bitacora),
+            ticketId: ticket.id,
+            autorId: supervisorId,
+            tipo: 'interno',
+            mensaje: nota.trim(),
+            creadoEn: new Date().toISOString(),
+          })
       }
       return seleccion.length
     })
@@ -165,14 +270,23 @@ export function asignarTickets(ids, tecnicoId, nota, supervisorId) {
 export function cambiarPrioridadTickets(ids, prioridad, motivo, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
-    if (!Object.hasOwn(HORAS_POR_PRIORIDAD, prioridad)) throw validationError({ prioridad: 'Elige una prioridad válida.' })
-    if (typeof motivo !== 'string' || motivo.trim().length < 10 || motivo.trim().length > 240) {
-      throw validationError({ motivo: 'Explica el motivo con entre 10 y 240 caracteres.' })
+    if (!Object.hasOwn(HORAS_POR_PRIORIDAD, prioridad))
+      throw validationError({ prioridad: 'Elige una prioridad válida.' })
+    if (
+      typeof motivo !== 'string' ||
+      motivo.trim().length < 10 ||
+      motivo.trim().length > 240
+    ) {
+      throw validationError({
+        motivo: 'Explica el motivo con entre 10 y 240 caracteres.',
+      })
     }
     const resultado = updateTables(['tickets', 'historial'], (db) => {
       const seleccion = ticketsDe(db, ids)
       if (seleccion.every(({ prioridad: actual }) => actual === prioridad)) {
-        throw validationError({ prioridad: 'La nueva prioridad debe ser diferente de la actual.' })
+        throw validationError({
+          prioridad: 'La nueva prioridad debe ser diferente de la actual.',
+        })
       }
       let actualizados = 0
       for (const ticket of seleccion) {
@@ -182,7 +296,9 @@ export function cambiarPrioridadTickets(ids, prioridad, motivo, supervisorId) {
         ticket.prioridad = prioridad
         ticket.tiempoEsperadoHoras = HORAS_POR_PRIORIDAD[prioridad]
         evento(db, ticket, 'prioridad', supervisorId, {
-          prioridadAnterior: anterior, prioridadNueva: prioridad, motivo: motivo.trim(),
+          prioridadAnterior: anterior,
+          prioridadNueva: prioridad,
+          motivo: motivo.trim(),
         })
       }
       return actualizados
@@ -198,7 +314,11 @@ export function devolverTickets(ids, supervisorId) {
     const resultado = updateTables(['tickets', 'historial'], (db) => {
       const seleccion = ticketsDe(db, ids)
       if (seleccion.some(({ asignadoA }) => !asignadoA)) {
-        throw new ServiceError(409, 'TICKET_UNASSIGNED', 'Selecciona solo tickets que tengan un técnico asignado.')
+        throw new ServiceError(
+          409,
+          'TICKET_UNASSIGNED',
+          'Selecciona solo tickets que tengan un técnico asignado.',
+        )
       }
       for (const ticket of seleccion) {
         ticket.asignadoA = null
@@ -208,6 +328,48 @@ export function devolverTickets(ids, supervisorId) {
         evento(db, ticket, 'estado', supervisorId, { estado: 'abierto' })
       }
       return seleccion.length
+    })
+    avisarCambio()
+    return resultado
+  })
+}
+
+export function autoasignarTicket(ticketId, usuarioId) {
+  return simulateRequest(() => {
+    cuentaActiva(usuarioId, 'tecnico')
+    const resultado = updateTables(['tickets', 'historial'], (db) => {
+      const [ticket] = ticketsDe(db, [ticketId])
+      if (ticket.asignadoA) {
+        throw new ServiceError(
+          409,
+          'ALREADY_ASSIGNED',
+          'El ticket ya tiene un técnico asignado.',
+        )
+      }
+      if (!esTicketEnCurso(ticket)) {
+        throw new ServiceError(
+          409,
+          'TICKET_NOT_AVAILABLE',
+          'El ticket ya no está disponible.',
+        )
+      }
+      const habilitado = db.habilitaciones.some(
+        (fila) =>
+          fila.tecnicoId === usuarioId && fila.categoriaId === ticket.categoriaId,
+      )
+      if (!habilitado) {
+        throw new ServiceError(
+          403,
+          'CATEGORY_NOT_ALLOWED',
+          'No estás habilitado para esta categoría.',
+        )
+      }
+      ticket.asignadoA = usuarioId
+      evento(db, ticket, 'asignacion', usuarioId, {
+        asignadoA: usuarioId,
+        motivo: 'Autoasignación del técnico.',
+      })
+      return ticket.id
     })
     avisarCambio()
     return resultado
