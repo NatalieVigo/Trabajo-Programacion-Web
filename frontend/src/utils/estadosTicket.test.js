@@ -18,6 +18,7 @@ describe('estadosTicket', () => {
     ['en_espera', ['en_atencion', 'resuelto']],
     ['resuelto', ['en_atencion']],
     ['cerrado', []],
+    ['cancelado', []],
   ])('desde %s se pasa a %j', (estado, destinos) => {
     expect(transicionesDesde(estado)).toEqual(destinos)
   })

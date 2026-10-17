@@ -1,0 +1,289 @@
+.ticket-detail-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  box-sizing: border-box;
+}
+
+/* Header wa*/
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.breadcrumb-link {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.title-with-badges {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-with-badges h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0052cc;
+  margin: 0;
+}
+
+.ticket-subtitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 24px 0;
+}
+
+/* Rejilla */
+.ticket-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Tarjeta Bitácora */
+.bitacora-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.bitacora-card h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 20px 0;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.comment-item {
+  display: flex;
+  gap: 14px;
+  background-color: #fafafa;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.avatar-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background-color: #d97706;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-badge.usuario { background-color: #d97706; }
+.avatar-badge.supervisor { background-color: #4b5563; }
+.avatar-badge.técnico,
+.avatar-badge.tecnico { background-color: #1e3a8a; }
+
+.comment-content {
+  flex: 1;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.role-label, .date-label {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.comment-text {
+  margin: 0;
+  font-size: 13px;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+/* Formulario comentario */
+.add-comment-form {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-comment-form label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+}
+
+.add-comment-form textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 13px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.form-footer-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.disclaimer-text {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Sidebar */
+.detail-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.sidebar-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+/* Filas de datos del reporte */
+.report-data-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  border-bottom: 1px dashed #f3f4f6;
+  padding-bottom: 8px;
+}
+
+.data-row:last-child {
+  border-bottom: none;
+}
+
+.data-label {
+  color: #6b7280;
+}
+
+.data-value {
+  color: #111827;
+  font-weight: 500;
+}
+
+.data-value.highlight {
+  font-weight: 800;
+}
+
+/* Línea de Tiempo */
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  padding-left: 8px;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+
+/* Línea vertical conectora */
+.timeline-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 16px;
+  bottom: -16px;
+  width: 2px;
+  background-color: #e5e7eb;
+}
+
+.timeline-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #d1d5db;
+  margin-top: 2px;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.timeline-item.done .timeline-marker {
+  background-color: #16a34a; /* Verde */
+}
+
+.timeline-item.in-progress .timeline-marker {
+  background-color: #d97706; /* Naranja/Amarillo */
+}
+
+.timeline-item.pending .timeline-marker {
+  background-color: #e5e7eb; /* Gris */
+}
+
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.timeline-content strong {
+  color: #111827;
+  font-size: 13px;
+}
+
+.timeline-content span {
+  color: #6b7280;
+}

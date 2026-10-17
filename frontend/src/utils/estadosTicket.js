@@ -2,7 +2,15 @@
  * Estados de un ticket y los cambios que admite cada uno (HU-5 · 5.2). La interfaz ofrece solo estos cambios y el
  * servicio rechaza los demás.
  */
-export const ESTADOS = Object.freeze(['abierto', 'en_atencion', 'en_espera', 'resuelto', 'cerrado', 'reabierto'])
+export const ESTADOS = Object.freeze([
+  'abierto',
+  'en_atencion',
+  'en_espera',
+  'resuelto',
+  'cerrado',
+  'reabierto',
+  'cancelado',
+])
 
 /**
  * Cambios de estado que hace el técnico que atiende el ticket: estado actual → estados a los que puede pasar. A
@@ -16,6 +24,7 @@ export const TRANSICIONES = Object.freeze({
   en_espera: Object.freeze(['en_atencion', 'resuelto']),
   resuelto: Object.freeze(['en_atencion']),
   cerrado: Object.freeze([]),
+  cancelado: Object.freeze([]),
 })
 
 const SIN_TRANSICIONES = Object.freeze([])

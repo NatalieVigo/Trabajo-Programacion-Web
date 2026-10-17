@@ -17,8 +17,6 @@ import RegisterPage from '../pages/auth/RegisterPage.jsx'
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage.jsx'
 import ForbiddenPage from '../pages/errors/ForbiddenPage.jsx'
 import NotFoundPage from '../pages/errors/NotFoundPage.jsx'
-import { HISTORIAS } from '../pages/placeholders/historias.js'
-import PlaceholderPage from '../pages/placeholders/PlaceholderPage.jsx'
 import LandingPage from '../pages/public/LandingPage.jsx'
 import EncuestaPage from '../pages/encuestas/EncuestaPage.jsx'
 import MisEncuestasPage from '../pages/encuestas/MisEncuestasPage.jsx'
@@ -34,14 +32,21 @@ import RequireRole from './RequireRole.jsx'
 import { PRIVATE_ROUTES } from './routeAccess.js'
 import { ROUTES } from './routePaths.js'
 
-const pendiente = (title, historia) => <PlaceholderPage title={title} pendiente={historia} />
+import { MyTickets } from '../pages/tickets/MyTickets.jsx'
+import { TicketDetail } from '../pages/tickets/TicketDetail.jsx'
+import { NewTicket } from '../pages/tickets/NewTicket.jsx'
+import { TicketConfirmation } from '../pages/tickets/TicketConfirmation.jsx'
 
 /** Página de cada ruta privada. Quién puede verla lo define la tabla de routeAccess.js. */
 const PRIVATE_PAGES = {
-  // /usuario ya no tiene pantalla propia: lleva a la vista principal del usuario, «Mis tickets».
   [ROUTES.usuarioInicio]: <Navigate to={ROUTES.usuarioTickets} replace />,
-  [ROUTES.usuarioNuevoTicket]: pendiente('Nuevo ticket', HISTORIAS.tickets),
-  [ROUTES.usuarioTickets]: pendiente('Mis tickets', HISTORIAS.tickets),
+
+  
+  [ROUTES.usuarioNuevoTicket]: <NewTicket />,  
+  [ROUTES.usuarioTickets]: <MyTickets />,      
+  [ROUTES.usuarioTicketDetalle]: <TicketDetail />, 
+  [ROUTES.usuarioTicketConfirmacion]: <TicketConfirmation />, 
+
   [ROUTES.usuarioEncuestas]: <MisEncuestasPage />,
   [ROUTES.usuarioEncuestaPendiente]: <EncuestaPage />,
   [ROUTES.usuarioEncuestaEvaluar]: <EncuestaPage />,
