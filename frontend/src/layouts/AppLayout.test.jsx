@@ -120,9 +120,11 @@ describe('AppLayout · menú lateral', () => {
       ['Categorías', '/supervisor/categorias'],
       ['Sedes y ambientes', '/supervisor/ambientes'],
       ['Técnicos por categoría', '/supervisor/tecnicos'],
-      ['Usuarios', '/supervisor/usuarios'],
+      ['Satisfacción', '/supervisor/satisfaccion'],
+      ['Carga por técnico', '/supervisor/carga-tecnicos'],
+      ['Usuarios 10', '/supervisor/usuarios'],
     ])
-    expect(within(menu).getByRole('link', { name: 'Usuarios' })).toHaveAttribute('aria-current', 'page')
+    expect(within(menu).getByRole('link', { name: 'Usuarios 10' })).toHaveAttribute('aria-current', 'page')
     expect(within(menu).getByRole('link', { name: 'Tablero' })).not.toHaveAttribute('aria-current')
   })
 

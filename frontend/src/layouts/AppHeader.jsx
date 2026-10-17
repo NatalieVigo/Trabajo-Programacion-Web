@@ -16,7 +16,7 @@ export default function AppHeader({ usuario, contadores, menuId, menuOpen, onMen
   const valor = contadores?.[pill.contador]
 
   return (
-    <header className="app-header">
+    <header className={`app-header${usuario.rol === 'supervisor' ? ' app-header--supervisor' : ''}`}>
       <button
         ref={menuButtonRef}
         type="button"
