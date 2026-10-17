@@ -44,3 +44,12 @@ describe('HU-7.3 · administración de cuentas', () => {
     expect(readTable('usuarios')).toEqual(antes)
   })
 })
+
+describe('administracionUsuarios.service · orden de las validaciones', () => {
+  it('sin permiso responde 403 aunque el motivo también sea inválido', async () => {
+    await expect(bloquearCuenta('usr-001', { motivo: ' ' }, 'usr-002')).rejects.toMatchObject({
+      status: 403,
+      code: 'FORBIDDEN',
+    })
+  })
+})

@@ -471,3 +471,16 @@ describe('categorias.service · confirmación al desactivar con tickets en curso
     })
   })
 })
+
+describe('categorias.service · listarDisponibles sin subcategorías activas', () => {
+  it('no ofrece una categoría activa cuyas subcategorías están todas inactivas', async () => {
+    await cambiarEstado('sub-17', false, SUPERVISORA)
+    await cambiarEstado('sub-18', false, SUPERVISORA)
+
+    const disponibles = await listarDisponibles()
+
+    expect(disponibles.map(({ nombre }) => nombre)).not.toContain('Limpieza')
+    expect(disponibles).toHaveLength(6)
+    expect(categoriasRepository.findById('cat-06').activa).toBe(true)
+  })
+})
