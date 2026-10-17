@@ -3,9 +3,21 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth.js'
 import { obtenerEncuestaPorTicket, registrarEncuesta } from '../../services/encuestas.service.js'
 import { obtenerTicketPorCodigo } from '../../services/atencion.service.js'
+import { obtenerResumenCuenta } from '../../services/usuarios.service.js'
 import { useToast } from '../../shared/components/Toast/useToast.js'
 import Button from '../../shared/components/Button/Button.jsx'
+import { Card, EmptyState } from '../../shared/components'
 import './EncuestaPage.css'
+
+const SIN_PENDIENTES = {
+  titulo: 'No tienes encuestas pendientes',
+  descripcion: 'Cuando se cierre uno de tus tickets podrás calificar la atención durante 7 días.',
+}
+
+const TICKET_NO_DISPONIBLE = {
+  titulo: 'No encontramos un ticket cerrado tuyo con ese código',
+  descripcion: 'Solo puedes calificar la atención de tus propios tickets una vez cerrados.',
+}
 
 export default function EncuestaPage() {
   const { codigoTicket } = useParams()
@@ -21,13 +33,29 @@ export default function EncuestaPage() {
   const [solucion, setSolucion] = useState(5)
   const [comentario, setComentario] = useState('')
   const [cargando, setCargando] = useState(true)
+  const [noDisponible, setNoDisponible] = useState(null)
+  const usuarioId = currentUser?.id
 
   useEffect(() => {
     async function CargarDatos() {
       try {
-        const t = await obtenerTicketPorCodigo(codigoTicket)
+        // «Encuesta pendiente» (sin código): la que vence primero, igual que el contador del menú.
+        let codigo = codigoTicket
+        if (!codigo) {
+          const resumen = await obtenerResumenCuenta(usuarioId)
+          codigo = resumen.encuestaPendiente?.ticketCodigo
+          if (!codigo) {
+            setNoDisponible(SIN_PENDIENTES)
+            return
+          }
+        }
+        const t = await obtenerTicketPorCodigo(codigo)
+        if (!t || t.usuarioId !== usuarioId || t.estado !== 'cerrado') {
+          setNoDisponible(TICKET_NO_DISPONIBLE)
+          return
+        }
         setTicket(t)
-        const codigoBuscado = codigoTicket || t?.codigo
+        const codigoBuscado = t.codigo
         if (codigoBuscado) {
           const enc = await obtenerEncuestaPorTicket(codigoBuscado)
           if (enc) {
@@ -45,7 +73,7 @@ export default function EncuestaPage() {
       }
     }
     CargarDatos()
-  }, [codigoTicket, toast])
+  }, [codigoTicket, usuarioId, toast])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -89,6 +117,22 @@ export default function EncuestaPage() {
   }
 
   if (cargando) return <div className="page-loader">Cargando encuesta...</div>
+
+  if (noDisponible) {
+    return (
+      <Card>
+        <EmptyState
+          title={noDisponible.titulo}
+          description={noDisponible.descripcion}
+          action={
+            <Button variant="secondary" onClick={() => navigate('/usuario/encuestas')}>
+              Ver mis encuestas
+            </Button>
+          }
+        />
+      </Card>
+    )
+  }
 
   return (
     <div className="encuesta-page-container">

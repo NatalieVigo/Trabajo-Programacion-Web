@@ -1,5 +1,5 @@
 import { screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetDb } from '../../repositories/db.js'
 import { DEMO, renderApp } from '../../test/test-utils.jsx'
 
@@ -37,5 +37,42 @@ describe('EncuestaPage (Vista 6.1)', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 2, name: 'Mis encuestas' })).toBeInTheDocument()
     })
+  })
+})
+
+describe('EncuestaPage · encuesta pendiente', () => {
+  beforeEach(() => {
+    resetDb()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('abre la encuesta pendiente del propio usuario', async () => {
+    // TCK-2026-00131 se cerró el 28/09/2026 sin encuesta: está pendiente hasta el 05/10/2026.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime('2026-10-01T15:00:00.000Z')
+    renderApp('/usuario/encuestas/pendiente', { usuario: DEMO.usuario })
+
+    expect(await screen.findByText('Ticket evaluado')).toBeInTheDocument()
+    expect(screen.getByText('TCK-2026-00131')).toBeInTheDocument()
+  })
+
+  it('sin encuestas pendientes lo indica en lugar de abrir otro ticket', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime('2026-10-17T15:00:00.000Z')
+    renderApp('/usuario/encuestas/pendiente', { usuario: DEMO.usuario })
+
+    expect(await screen.findByRole('heading', { name: 'No tienes encuestas pendientes' })).toBeInTheDocument()
+    expect(screen.queryByText('Ticket evaluado')).not.toBeInTheDocument()
+  })
+
+  it('no abre la encuesta de un ticket de otra persona', async () => {
+    renderApp('/usuario/encuestas/TCK-2026-00143/evaluar', { usuario: DEMO.usuario })
+
+    expect(
+      await screen.findByRole('heading', { name: 'No encontramos un ticket cerrado tuyo con ese código' }),
+    ).toBeInTheDocument()
   })
 })

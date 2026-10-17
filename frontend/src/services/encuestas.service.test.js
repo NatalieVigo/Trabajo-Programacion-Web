@@ -99,3 +99,32 @@ describe('encuestas.service', () => {
     expect(reporteAltos.comentarios.every((c) => c.puntaje >= 4)).toBe(true)
   })
 })
+
+describe('encuestas.service · validaciones del servidor', () => {
+  beforeEach(() => {
+    resetDb()
+  })
+
+  const respuesta = { usuarioId: 'usr-001', puntajeGeneral: 5, rapidez: 4, trato: 5, solucion: 4, comentario: '' }
+
+  it('no deja calificar el ticket de otra persona', async () => {
+    await expect(registrarEncuesta({ ...respuesta, codigoTicket: 'TCK-2026-00143' })).rejects.toMatchObject({
+      status: 404,
+      code: 'TICKET_NOT_FOUND',
+    })
+  })
+
+  it('solo deja calificar un ticket cerrado', async () => {
+    await expect(registrarEncuesta({ ...respuesta, codigoTicket: 'TCK-2026-00144' })).rejects.toMatchObject({
+      status: 409,
+      code: 'TICKET_NOT_CLOSED',
+    })
+  })
+
+  it('exige puntajes enteros del 1 al 5', async () => {
+    await expect(registrarEncuesta({ ...respuesta, codigoTicket: 'TCK-2026-00131', trato: 7 })).rejects.toMatchObject({
+      status: 400,
+      code: 'VALIDATION_ERROR',
+    })
+  })
+})
