@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader, Alert, SelectInput, TextInput, Button } from "../../shared/components";
 import { TicketConfirmation } from "./TicketConfirmation";
 import { listarDisponibles } from "../../services/categorias.service.js";
+import { listarAmbientes } from "../../services/catalogo.service.js";
 import { crearTicket, existeTicketEnCurso } from "../../services/tickets.service.js";
 import { ServiceError } from "../../services/ServiceError.js";
 import { PRIORIDAD_LABELS } from "../../utils/format.js";
@@ -21,6 +22,7 @@ export const NewTicket = () => {
     const { usuario } = useAuth();
 
     const [categorias, setCategorias] = useState([]);
+    const [ambientes, setAmbientes] = useState([]);
     const [cargandoCatalogos, setCargandoCatalogos] = useState(true);
     const [errorCatalogos, setErrorCatalogos] = useState('');
     const [errorRegistro, setErrorRegistro] = useState('');
@@ -29,7 +31,7 @@ export const NewTicket = () => {
     const [datosTicket, setDatosTicket] = useState({
         categoriaId: '',
         subcategoriaId: '',
-        ambienteCodigo: '',
+        ambienteId: '',
         asunto: '',
         descripcion: ''
     });
@@ -40,16 +42,20 @@ export const NewTicket = () => {
     useEffect(() => {
         let activo = true;
 
-        listarDisponibles()
-            .then((categoriasDisponibles) => {
+        // Categorías y ambientes vienen del catálogo (HU-2): solo lo activo admite tickets nuevos.
+        Promise.all([listarDisponibles(), listarAmbientes()])
+            .then(([categoriasDisponibles, ambientesDelCatalogo]) => {
                 if (!activo) return;
                 setCategorias(categoriasDisponibles);
+                setAmbientes(ambientesDelCatalogo);
 
                 const primeraCategoria = categoriasDisponibles[0];
+                const habitual = ambientesDelCatalogo.find(({ id }) => id === usuario?.ambienteHabitualId);
                 setDatosTicket((actual) => ({
                     ...actual,
                     categoriaId: primeraCategoria?.id ?? '',
                     subcategoriaId: primeraCategoria?.subcategorias[0]?.id ?? '',
+                    ambienteId: habitual?.id ?? '',
                 }));
             })
             .catch((error) => {
@@ -60,11 +66,11 @@ export const NewTicket = () => {
             });
 
         return () => { activo = false; };
-    }, []);
+    }, [usuario?.ambienteHabitualId]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'ambienteCodigo') setDuplicado(false);
+        if (name === 'ambienteId' || name === 'categoriaId') setDuplicado(false);
         if (name === 'categoriaId') {
             const categoriaSeleccionada = categorias.find((categoria) => categoria.id === value);
             setDatosTicket((actual) => ({
@@ -81,12 +87,15 @@ export const NewTicket = () => {
     const subcategorias = categoriaActual?.subcategorias ?? [];
     const subcategoriaActual = subcategorias.find((subcategoria) => subcategoria.id === datosTicket.subcategoriaId);
 
-    const { ambienteCodigo } = datosTicket;
+    const ambienteActual = ambientes.find((ambiente) => ambiente.id === datosTicket.ambienteId);
+
+    // Aviso de duplicado (HU-3): ya hay un ticket en curso en el mismo ambiente y la misma categoría.
+    const { ambienteId, categoriaId } = datosTicket;
     useEffect(() => {
-        if (!ambienteCodigo.trim()) return undefined;
+        if (!ambienteId || !categoriaId) return undefined;
 
         let activo = true;
-        existeTicketEnCurso({ ambienteCodigo })
+        existeTicketEnCurso({ ambienteId, categoriaId })
             .then((hayDuplicado) => {
                 if (activo) setDuplicado(hayDuplicado);
             })
@@ -95,7 +104,7 @@ export const NewTicket = () => {
             });
 
         return () => { activo = false; };
-    }, [ambienteCodigo]);
+    }, [ambienteId, categoriaId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -145,10 +154,11 @@ export const NewTicket = () => {
                 <Alert variant="warning">No hay categorías disponibles para registrar un ticket.</Alert>
             )}
 
-            {duplicado && datosTicket.ambienteCodigo.trim() && (
+            {duplicado && ambienteActual && categoriaActual && (
                 <Alert variant="warning">
-                    Ya existe un ticket en curso para el aula <strong>{datosTicket.ambienteCodigo}</strong>.
-                    Revísalo antes de registrar otro. Puedes continuar si se trata de otro incidente.
+                    Ya existe un ticket de <strong>{categoriaActual.nombre}</strong> en curso para el aula{' '}
+                    <strong>{ambienteActual.codigo}</strong>. Revísalo antes de registrar otro. Puedes continuar si se
+                    trata de otro incidente.
                 </Alert>
             )}
 
@@ -184,18 +194,18 @@ export const NewTicket = () => {
 
                         <div className="form-row">
                             <div className="input-group">
-                                <label htmlFor="ambienteCodigo">AULA O AMBIENTE</label>
-                                <TextInput
-                                    id="ambienteCodigo"
-                                    name="ambienteCodigo"
-                                    value={datosTicket.ambienteCodigo}
+                                <label htmlFor="ambienteId">AULA O AMBIENTE</label>
+                                <SelectInput
+                                    id="ambienteId"
+                                    name="ambienteId"
+                                    value={datosTicket.ambienteId}
                                     onChange={handleChange}
                                     required
-                                    maxLength={80}
-                                    placeholder="Ej. A-201 o Laboratorio de cómputo"
+                                    placeholder="Selecciona el aula o ambiente"
+                                    options={ambientes.map(({ id, codigo, nombre }) => ({ value: id, label: `${codigo} · ${nombre}` }))}
                                 />
                                 <span className="field-help-text">
-                                    Escribe el código o nombre del lugar donde ocurre la falla.
+                                    El lugar donde ocurre la falla, tal como aparece en la puerta.
                                 </span>
                             </div>
 

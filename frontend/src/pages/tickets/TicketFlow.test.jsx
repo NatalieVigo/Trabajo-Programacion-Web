@@ -10,13 +10,15 @@ beforeEach(() => {
 })
 
 describe('HU-3 · registro y seguimiento de tickets', () => {
-  it('registra un ticket con aula escrita por la persona y conserva el enlace si coincide con el catálogo', async () => {
+  it('registra un ticket con el aula elegida del catálogo y su estado inicial en el historial', async () => {
     const { user } = renderApp('/usuario/tickets/nuevo', { usuario: DEMO.usuario })
 
     await screen.findByRole('heading', { name: 'Nuevo ticket' })
+    // El aula llega precargada con el ambiente habitual de la cuenta (A-201) y se puede cambiar.
+    expect(screen.getByLabelText('AULA O AMBIENTE')).toHaveValue('amb-01')
     await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-01')
     await user.selectOptions(screen.getByLabelText('SUBCATEGORÍA'), 'sub-01')
-    await user.type(screen.getByLabelText('AULA O AMBIENTE'), 'A-305')
+    await user.selectOptions(screen.getByLabelText('AULA O AMBIENTE'), 'A-305 · Aula A-305')
     await user.type(screen.getByLabelText('ASUNTO'), 'Proyector apagado')
     await user.type(screen.getByLabelText('DESCRIPCIÓN'), 'El proyector no enciende desde el inicio de la clase.')
     await user.click(screen.getByRole('button', { name: 'Registrar ticket' }))
@@ -28,22 +30,26 @@ describe('HU-3 · registro y seguimiento de tickets', () => {
       categoriaId: 'cat-01',
       subcategoriaId: 'sub-01',
       ambienteId: 'amb-02',
-      ambienteCodigo: 'A-305',
       prioridad: 'critica',
       estado: 'abierto',
     })
+    expect(readTable('historial').filter((evento) => evento.ticketId === ticket.id)).toEqual([
+      expect.objectContaining({ tipo: 'estado', estado: 'abierto', autorId: 'usr-001', creadoEn: ticket.creadoEn }),
+    ])
   })
 
-  it('advierte cuando ya hay un ticket abierto en el aula escrita', async () => {
+  it('advierte cuando ya hay un ticket en curso del mismo ambiente y la misma categoría', async () => {
     const { user } = renderApp('/usuario/tickets/nuevo', { usuario: DEMO.usuario })
 
     await screen.findByRole('heading', { name: 'Nuevo ticket' })
-    await user.type(screen.getByLabelText('AULA O AMBIENTE'), 'A-201')
+    // En A-201 hay un ticket en curso de Audiovisuales (TCK-2026-00147).
+    await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-01')
 
-    const alerta = await screen.findByRole('alert')
-    expect(alerta).toHaveTextContent(/Ya existe un ticket en curso para el aula A-201/)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Ya existe un ticket de Audiovisuales en curso para el aula A-201.',
+    )
     await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-02')
-    expect(alerta).toHaveTextContent(/Ya existe un ticket en curso para el aula A-201/)
+    await waitFor(() => expect(screen.queryByText(/Ya existe un ticket de/)).not.toBeInTheDocument())
   })
 
   it('filtra la lista por el código enviado desde el buscador global', async () => {

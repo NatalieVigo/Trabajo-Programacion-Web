@@ -75,19 +75,31 @@ describe('tickets.service · existeTicketEnCurso', () => {
     expect(await existeTicketEnCurso(coincidencia)).toBe(false)
   })
 
-  it('avisa por el aula aunque el ticket existente tenga otra categoría', async () => {
-    expect(await existeTicketEnCurso({ categoriaId: 'cat-02', ambienteCodigo: 'a-201' })).toBe(true)
+  it('solo avisa si coinciden el ambiente y la categoría', async () => {
+    expect(await existeTicketEnCurso({ categoriaId: 'cat-02', ambienteId: 'amb-01' })).toBe(false)
+    expect(await existeTicketEnCurso({ categoriaId: 'cat-01', ambienteCodigo: 'a-201' })).toBe(true)
   })
 
-  it('acepta un aula fuera del catálogo y la muestra en la cola sin crearla en el catálogo', async () => {
-    const ticket = await crearTicket({ ...NUEVO_TICKET, ambienteCodigo: 'Aula D-999' }, USUARIO)
+  it('rechaza un aula que no está en el catálogo', async () => {
+    const error = await crearTicket({ ...NUEVO_TICKET, ambienteId: '', ambienteCodigo: 'Aula D-999' }, USUARIO).catch(
+      (reason) => reason,
+    )
 
-    expect(ticket).toMatchObject({ ambienteId: null, ambienteCodigo: 'Aula D-999' })
+    expect(error).toMatchObject({ code: 'VALIDATION_ERROR', fieldErrors: { ambienteId: expect.any(String) } })
+    expect(readTable('tickets')).toHaveLength(14)
+  })
+
+  it('registra el estado inicial en el historial y el ticket aparece en la cola y en la atención', async () => {
+    const ticket = await crearTicket(NUEVO_TICKET, USUARIO)
+
+    expect(readTable('historial').filter((evento) => evento.ticketId === ticket.id)).toEqual([
+      expect.objectContaining({ tipo: 'estado', estado: 'abierto', autorId: USUARIO, creadoEn: ticket.creadoEn }),
+    ])
     expect((await listarCola('usr-003')).tickets).toContainEqual(
-      expect.objectContaining({ codigo: ticket.codigo, ambiente: 'Aula D-999' }),
+      expect.objectContaining({ codigo: ticket.codigo, ambiente: 'A-305' }),
     )
     await expect(obtenerAtencion(ticket.codigo, 'usr-003')).resolves.toMatchObject({
-      ticket: { ambiente: { id: null, codigo: 'Aula D-999' } },
+      ticket: { ambiente: { id: 'amb-02', codigo: 'A-305' } },
     })
   })
 
