@@ -12,6 +12,7 @@ import { simulateRequest } from './request.js'
 import { ServiceError, validationError } from './ServiceError.js'
 
 const TEXTO_REQUERIDO = 'Completa este campo.'
+const AMBIENTE_REQUERIDO = 'Elige el aula o ambiente de la lista.'
 export const DIAS_PLAZO_REAPERTURA = 7
 export const PLAZO_REAPERTURA_MS = DIAS_PLAZO_REAPERTURA * 24 * 60 * 60 * 1000
 const ESTADOS_CANCELABLES = new Set(['abierto', 'reabierto'])
@@ -24,12 +25,11 @@ function validarNuevoTicket(datos) {
   const errores = {
     categoriaId: datos.categoriaId ? null : TEXTO_REQUERIDO,
     subcategoriaId: datos.subcategoriaId ? null : TEXTO_REQUERIDO,
-    ambienteCodigo: datos.ambienteCodigo ? null : TEXTO_REQUERIDO,
+    ambienteId: datos.ambienteId ? null : AMBIENTE_REQUERIDO,
     asunto: datos.asunto ? null : TEXTO_REQUERIDO,
     descripcion: datos.descripcion ? null : TEXTO_REQUERIDO,
   }
 
-  if (datos.ambienteCodigo.length > 80) errores.ambienteCodigo = 'Usa como máximo 80 caracteres.'
   if (datos.asunto.length > 120) errores.asunto = 'Usa como máximo 120 caracteres.'
   if (datos.descripcion.length > 600) errores.descripcion = 'Usa como máximo 600 caracteres.'
 
@@ -44,18 +44,24 @@ function normalizarAmbiente(valor) {
     .toLocaleLowerCase('es')
 }
 
+/** Ambiente del catálogo (HU-2) por su id o, para lo que se escribió a mano, por su código o nombre. */
 function buscarAmbienteCatalogo(valor) {
+  if (!valor) return null
   const buscado = normalizarAmbiente(valor)
-  return ambientesRepository.findAll().find(
-    (ambiente) =>
-      ambiente.id === valor ||
-      normalizarAmbiente(ambiente.codigo) === buscado ||
-      normalizarAmbiente(ambiente.nombre) === buscado,
+  return (
+    ambientesRepository.findAll().find(
+      (ambiente) =>
+        ambiente.id === valor ||
+        normalizarAmbiente(ambiente.codigo) === buscado ||
+        normalizarAmbiente(ambiente.nombre) === buscado,
+    ) ?? null
   )
 }
 
-function codigoAmbienteDe(ticket) {
-  return ticket.ambienteCodigo ?? ambientesRepository.findById(ticket.ambienteId)?.codigo ?? ''
+/** Si el ticket es de ese ambiente: por su id o, en tickets antiguos sin id, por el código que se escribió. */
+function esDelAmbiente(ticket, ambiente) {
+  if (ticket.ambienteId) return ticket.ambienteId === ambiente.id
+  return normalizarAmbiente(ticket.ambienteCodigo) === normalizarAmbiente(ambiente.codigo)
 }
 
 function exigirUsuarioActivo(usuarioId) {
@@ -69,13 +75,12 @@ function exigirUsuarioActivo(usuarioId) {
   return usuario
 }
 
-function encontrarDuplicado({ ambienteCodigo, ambienteId }) {
-  const codigoBuscado = ambienteCodigo ?? ambientesRepository.findById(ambienteId)?.codigo ?? ambienteId
-  const codigoNormalizado = normalizarAmbiente(codigoBuscado)
+/** Ticket en curso del mismo ambiente y la misma categoría (enunciado HU-3), o null. */
+function encontrarDuplicado({ ambienteId, ambienteCodigo, categoriaId }) {
+  const ambiente = buscarAmbienteCatalogo(ambienteId || ambienteCodigo)
+  if (!ambiente || !categoriaId) return null
   return ticketsRepository.findOne(
-    (ticket) =>
-      normalizarAmbiente(codigoAmbienteDe(ticket)) === codigoNormalizado &&
-      esTicketEnCurso(ticket),
+    (ticket) => ticket.categoriaId === categoriaId && esTicketEnCurso(ticket) && esDelAmbiente(ticket, ambiente),
   )
 }
 
@@ -128,22 +133,24 @@ export function estaDentroDelPlazoDeReapertura(ticket, ahora = Date.now()) {
 }
 
 /**
- * Indica si ya hay un ticket en curso en el aula indicada. No revela datos del ticket de otra persona.
+ * Indica si ya hay un ticket en curso en el mismo ambiente y la misma categoría. No revela datos del ticket de otra
+ * persona.
  */
-export function existeTicketEnCurso({ ambienteCodigo, ambienteId }) {
-  return simulateRequest(() => Boolean(encontrarDuplicado({ ambienteCodigo, ambienteId })))
+export function existeTicketEnCurso({ ambienteId, ambienteCodigo, categoriaId }) {
+  return simulateRequest(() => Boolean(encontrarDuplicado({ ambienteId, ambienteCodigo, categoriaId })))
 }
 
 /**
- * Crea un ticket con los ids y valores que consumen las historias de catálogo, cola y atención.
- * La posible coincidencia se informa al usuario, pero no impide enviar el reporte.
+ * Crea un ticket con los ids y valores que consumen las historias de catálogo, cola y atención, y registra en el
+ * historial su estado inicial «abierto» (HU-5). El ambiente debe ser uno del catálogo. La posible coincidencia se
+ * informa al usuario, pero no impide enviar el reporte.
  */
 export function crearTicket(datos, usuarioId) {
   return simulateRequest(() => {
     const valores = {
       categoriaId: String(datos?.categoriaId ?? '').trim(),
       subcategoriaId: String(datos?.subcategoriaId ?? '').trim(),
-      ambienteCodigo: String(datos?.ambienteCodigo ?? datos?.ambienteId ?? '').trim(),
+      ambienteId: String(datos?.ambienteId || datos?.ambienteCodigo || '').trim(),
       asunto: String(datos?.asunto ?? '').trim(),
       descripcion: String(datos?.descripcion ?? '').trim(),
     }
@@ -162,30 +169,44 @@ export function crearTicket(datos, usuarioId) {
       throw validationError({ subcategoriaId: 'Elige una subcategoría disponible para esta categoría.' })
     }
 
-    const ambiente = buscarAmbienteCatalogo(valores.ambienteCodigo)
+    const ambiente = buscarAmbienteCatalogo(valores.ambienteId)
+    if (!ambiente) throw validationError({ ambienteId: AMBIENTE_REQUERIDO })
 
-    const tickets = ticketsRepository.findAll()
-    const id = nextId('tck', tickets, 5)
-    const ahora = new Date()
-    const ticket = {
-      id,
-      codigo: `TCK-${ahora.getFullYear()}-${id.slice('tck-'.length)}`,
-      usuarioId,
-      categoriaId: categoria.id,
-      subcategoriaId: subcategoria.id,
-      ambienteId: ambiente?.id ?? null,
-      ambienteCodigo: ambiente?.codigo ?? valores.ambienteCodigo,
-      asunto: valores.asunto,
-      descripcion: valores.descripcion,
-      prioridad: subcategoria.prioridadPorDefecto ?? categoria.prioridadPorDefecto,
-      tiempoEsperadoHoras: subcategoria.tiempoEsperadoHoras ?? categoria.tiempoEsperadoHoras,
-      estado: 'abierto',
-      creadoEn: ahora.toISOString(),
-      cerradoEn: null,
-      asignadoA: null,
-    }
-
-    const creado = ticketsRepository.insert(ticket)
+    const creado = updateTables(['tickets', 'historial'], (db) => {
+      const id = nextId('tck', db.tickets, 5)
+      const ahora = new Date()
+      const ticket = {
+        id,
+        codigo: `TCK-${ahora.getFullYear()}-${id.slice('tck-'.length)}`,
+        usuarioId,
+        categoriaId: categoria.id,
+        subcategoriaId: subcategoria.id,
+        ambienteId: ambiente.id,
+        asunto: valores.asunto,
+        descripcion: valores.descripcion,
+        prioridad: subcategoria.prioridadPorDefecto ?? categoria.prioridadPorDefecto,
+        tiempoEsperadoHoras: subcategoria.tiempoEsperadoHoras ?? categoria.tiempoEsperadoHoras,
+        estado: 'abierto',
+        creadoEn: ahora.toISOString(),
+        cerradoEn: null,
+        asignadoA: null,
+      }
+      db.tickets.push(ticket)
+      // El historial de HU-5 empieza con el registro del ticket, como en el seed.
+      db.historial.push({
+        id: nextId('his', db.historial),
+        ticketId: id,
+        tipo: 'estado',
+        estado: 'abierto',
+        asignadoA: null,
+        autorId: usuarioId,
+        motivo: null,
+        retornoEstimado: null,
+        solucion: null,
+        creadoEn: ticket.creadoEn,
+      })
+      return ticket
+    })
     avisarCambio()
     return creado
   })
