@@ -1,289 +1,104 @@
-.ticket-detail-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 20px;
-  box-sizing: border-box;
-}
-
-/* Header wa*/
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 12px;
-}
-
-.breadcrumb-link {
-  color: #2563eb;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.breadcrumb-link:hover {
-  text-decoration: underline;
-}
-
-.title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.title-with-badges {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.title-with-badges h1 {
-  font-size: 24px;
-  font-weight: 800;
-  color: #0052cc;
-  margin: 0;
-}
-
-.ticket-subtitle {
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 24px 0;
-}
-
-/* Rejilla */
-.ticket-detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 24px;
-  align-items: start;
-}
-
-/* Tarjeta Bitácora */
-.bitacora-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 24px;
-}
-
-.bitacora-card h2 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 20px 0;
-}
-
-.comments-list {
+/* Detalle del ticket, vista del usuario (HU-3 · 3.4, p20–p21). La cabecera, la ruta de navegación, las columnas y las
+   tarjetas de datos son las de la atención del técnico (TicketAtencionPage.css), para que ambas vistas se vean igual. */
+.detalle-ticket__avisos {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 28px;
+  gap: var(--space-3);
 }
 
-.comment-item {
-  display: flex;
-  gap: 14px;
-  background-color: #fafafa;
-  border: 1px solid #f3f4f6;
-  border-radius: 8px;
-  padding: 16px;
+.detalle-ticket__avisos:not(:empty) {
+  margin-bottom: var(--space-4);
 }
 
-.avatar-badge {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  background-color: #d97706;
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.detalle-ticket__titulo {
+  margin-bottom: var(--space-4);
 }
 
-.avatar-badge.usuario { background-color: #d97706; }
-.avatar-badge.supervisor { background-color: #4b5563; }
-.avatar-badge.técnico,
-.avatar-badge.tecnico { background-color: #1e3a8a; }
-
-.comment-content {
-  flex: 1;
-}
-
-.comment-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #374151;
-  margin-bottom: 6px;
-}
-
-.role-label, .date-label {
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.comment-text {
-  margin: 0;
-  font-size: 13px;
-  color: #1f2937;
-  line-height: 1.4;
-}
-
-/* Formulario comentario */
-.add-comment-form {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 20px;
+.detalle-ticket__formulario {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
-.add-comment-form label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #6b7280;
-  letter-spacing: 0.5px;
+/* Agregar información: separado de las entradas, como la nueva entrada del técnico. */
+.detalle-ticket__comentario {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
 }
 
-.add-comment-form textarea {
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 12px;
-  font-size: 13px;
-  box-sizing: border-box;
+.detalle-ticket__texto {
+  min-height: 88px;
   resize: vertical;
 }
 
-.form-footer-row {
+.detalle-ticket__envio {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-3);
 }
 
-.disclaimer-text {
-  font-size: 12px;
-  color: #6b7280;
+.detalle-ticket__nota {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
 }
 
-/* Sidebar */
-.detail-sidebar {
+/* Línea de tiempo (p20): un punto por paso, unidos por una línea; verde hecho, ámbar en curso y gris pendiente. */
+.detalle-ticket__linea {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.sidebar-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.sidebar-card h3 {
-  font-size: 15px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 16px 0;
-}
-
-/* Filas de datos del reporte */
-.report-data-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.data-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  border-bottom: 1px dashed #f3f4f6;
-  padding-bottom: 8px;
-}
-
-.data-row:last-child {
-  border-bottom: none;
-}
-
-.data-label {
-  color: #6b7280;
-}
-
-.data-value {
-  color: #111827;
-  font-weight: 500;
-}
-
-.data-value.highlight {
-  font-weight: 800;
-}
-
-/* Línea de Tiempo */
-.timeline-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.detalle-ticket__paso {
   position: relative;
-  padding-left: 8px;
-}
-
-.timeline-item {
   display: flex;
-  gap: 12px;
-  position: relative;
+  flex-direction: column;
+  padding-left: var(--space-6);
+  font-size: var(--font-size-aux);
+  line-height: var(--line-height-aux);
 }
 
-/* Línea vertical conectora */
-.timeline-item:not(:last-child)::after {
+.detalle-ticket__paso::before {
   content: '';
   position: absolute;
-  left: 6px;
-  top: 16px;
-  bottom: -16px;
-  width: 2px;
-  background-color: #e5e7eb;
-}
-
-.timeline-marker {
-  width: 14px;
-  height: 14px;
+  top: 3px;
+  left: 0;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background-color: #d1d5db;
-  margin-top: 2px;
-  flex-shrink: 0;
-  z-index: 1;
+  background: var(--color-border);
 }
 
-.timeline-item.done .timeline-marker {
-  background-color: #16a34a; /* Verde */
+.detalle-ticket__paso:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 17px;
+  bottom: calc(-1 * var(--space-3));
+  left: 5px;
+  width: 2px;
+  background: var(--color-border);
 }
 
-.timeline-item.in-progress .timeline-marker {
-  background-color: #d97706; /* Naranja/Amarillo */
+.detalle-ticket__paso span {
+  color: var(--color-text-muted);
 }
 
-.timeline-item.pending .timeline-marker {
-  background-color: #e5e7eb; /* Gris */
+.detalle-ticket__paso--hecho::before {
+  background: var(--color-success);
 }
 
-.timeline-content {
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
+.detalle-ticket__paso--en-curso::before {
+  background: var(--color-warning);
 }
 
-.timeline-content strong {
-  color: #111827;
-  font-size: 13px;
-}
-
-.timeline-content span {
-  color: #6b7280;
+.detalle-ticket__paso--pendiente strong {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-regular);
 }

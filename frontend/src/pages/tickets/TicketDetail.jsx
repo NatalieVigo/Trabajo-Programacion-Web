@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Button, useConfirm } from "../../shared/components";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import {
+    Alert,
+    Bitacora,
+    Button,
+    Card,
+    EmptyState,
+    PriorityBadge,
+    StatusBadge,
+    useConfirm,
+} from "../../shared/components";
 import { encuestaEvaluarPath, ROUTES } from "../../routes/routePaths";
 import { ticketsRepository } from "../../repositories/tickets.repository.js";
 import { agregarEntrada, obtenerAtencion } from "../../services/atencion.service.js";
@@ -10,8 +19,9 @@ import {
     estaDentroDelPlazoDeReapertura,
     reabrirTicket,
 } from "../../services/tickets.service.js";
-import { ESTADO_LABELS, PRIORIDAD_LABELS, ROL_LABELS, formatDateTime, getInitials } from "../../utils/format.js";
+import { formatDateTime, getDisplayName } from "../../utils/format.js";
 import { useAuth } from "../../hooks/useAuth.js";
+import '../atencion/TicketAtencionPage.css';
 import './TicketDetail.css';
 
 export const TicketDetail = () => {
@@ -91,37 +101,38 @@ export const TicketDetail = () => {
 
     if (errorCarga) {
         return (
-            <div className="ticket-detail-container" style={{ textAlign: 'center', padding: '50px' }}>
-                <h2>No se encontró el ticket</h2>
-                <p>{errorCarga}</p>
-                <Button onClick={handleVolver}>Volver a mis tickets</Button>
-            </div>
+            <Card>
+                <EmptyState
+                    title="No se encontró el ticket"
+                    description={errorCarga}
+                    action={<Button onClick={handleVolver}>Volver a mis tickets</Button>}
+                />
+            </Card>
         );
     }
 
-    if (!detalle) return <div className="ticket-detail-container">Cargando ticket...</div>;
+    if (!detalle) {
+        return (
+            <Card aria-busy="true">
+                <p role="status" className="text-muted">Cargando ticket…</p>
+            </Card>
+        );
+    }
 
     const { ticket, bitacora, eventos, permisos } = detalle;
     const estado = ticket.estado || 'abierto';
     const prioridad = ticket.prioridad || 'baja';
-    const estadoEtiqueta = ESTADO_LABELS[estado] || estado;
-    const prioridadEtiqueta = PRIORIDAD_LABELS[prioridad] || prioridad;
-    const estadoClase = estado.replaceAll('_', '-');
-    const prioridadClase = prioridad.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const fechaLimpia = formatDateTime(ticket.creadoEn) || '—';
     const estadosEnAtencion = ['en_atencion', 'en_espera', 'resuelto', 'cerrado'];
     const pasoAsignado = Boolean(ticket.tecnico) || estadosEnAtencion.includes(estado);
     const pasoAtencion = estadosEnAtencion.includes(estado);
     const pasoResuelto = ['resuelto', 'cerrado'].includes(estado);
-    const tecnicoNombre = ticket.tecnico
-        ? `${ticket.tecnico.nombres} ${ticket.tecnico.apellidos}`.trim()
-        : 'Pendiente';
+    const tecnicoNombre = ticket.tecnico ? getDisplayName(ticket.tecnico) : 'Pendiente';
     const asignacion = eventos.findLast((evento) => evento.tipo === 'asignacion');
-    const supervisorNombre = asignacion?.autor
-        ? `${asignacion.autor.nombres} ${asignacion.autor.apellidos}`.trim()
-        : 'El supervisor';
+    const supervisorNombre = asignacion?.autor ? getDisplayName(asignacion.autor) : 'El supervisor';
     const puedeCancelar = !ticket.tecnico && ['abierto', 'reabierto'].includes(estado);
     const puedeReabrir = estaDentroDelPlazoDeReapertura(ticket);
+    const pasoDeAtencion = pasoResuelto ? 'hecho' : pasoAtencion ? 'en-curso' : 'pendiente';
 
     const refrescarDetalle = async () => {
         const actualizada = await obtenerAtencion(ticket.codigo, usuarioId);
@@ -173,20 +184,25 @@ export const TicketDetail = () => {
     };
 
     return (
-        <div className="ticket-detail-container">
-            <div className="ticket-detail-header">
-                <div className="breadcrumb">
-                    <span className="breadcrumb-link" onClick={handleVolver}>Mis tickets</span>
-                    <span className="breadcrumb-separator">·</span>
-                    <span className="breadcrumb-current">{ticket.codigo}</span>
-                </div>
+        <div className="detalle-ticket">
+            <nav className="ticket-atencion__breadcrumb" aria-label="Ruta de navegación">
+                <Link to={ROUTES.usuarioTickets}>Mis tickets</Link> · <span aria-current="page">{ticket.codigo}</span>
+            </nav>
 
-                <div className="title-row">
-                    <div className="title-with-badges">
-                        <h1>{ticket.codigo}</h1>
-                        <span className={`priority-tag ${prioridadClase}`}>{prioridadEtiqueta}</span>
-                        <span className={`status-tag ${estadoClase}`}>{estadoEtiqueta}</span>
+            <div className="ticket-cabecera">
+                <div className="ticket-cabecera__texto">
+                    <div className="ticket-cabecera__linea">
+                        <h1 className="ticket-cabecera__codigo">{ticket.codigo}</h1>
+                        <p className="ticket-cabecera__etiquetas">
+                            <span className="visually-hidden">Prioridad: </span>
+                            <PriorityBadge prioridad={prioridad} />
+                            <span className="visually-hidden">. Estado: </span>
+                            <StatusBadge estado={estado} />
+                        </p>
                     </div>
+                    <p className="ticket-cabecera__asunto">{ticket.asunto}</p>
+                </div>
+                <div className="ticket-cabecera__acciones">
                     {permisos.comentar && (
                         <Button variant="secondary" onClick={() => document.getElementById('comentario-input')?.focus()}>
                             Agregar información
@@ -194,169 +210,156 @@ export const TicketDetail = () => {
                     )}
                     {/* La encuesta (HU-6) está disponible una vez cerrado el ticket, no al resolverlo. */}
                     {estado === 'cerrado' && (
-                        <Button
-                            variant="primary"
-                            onClick={() => navigate(encuestaEvaluarPath(ticket.codigo))}
-                        >
+                        <Button onClick={() => navigate(encuestaEvaluarPath(ticket.codigo))}>
                             Responder encuesta
                         </Button>
                     )}
-                </div>
-                {puedeCancelar && (
-                    <Button variant="secondary" onClick={handleCancelarTicket} disabled={guardandoAccion}>
-                        Cancelar ticket
-                    </Button>
-                )}
-                {puedeReabrir && !mostrarFormularioReapertura && (
-                    <Button
-                        variant="secondary"
-                        onClick={() => setMostrarFormularioReapertura(true)}
-                        disabled={guardandoAccion}
-                    >
-                        Reabrir ticket
-                    </Button>
-                )}
-                {estado === 'cerrado' && !puedeReabrir && (
-                    <p>El plazo de {DIAS_PLAZO_REAPERTURA} días para reabrir este ticket ya venció.</p>
-                )}
-                {errorAccion && <p role="alert">{errorAccion}</p>}
-                {exitoAccion && <p role="status">{exitoAccion}</p>}
-                {mostrarFormularioReapertura && puedeReabrir && (
-                    <form className="add-comment-form" onSubmit={handleReabrirTicket}>
-                        <label htmlFor="motivo-reapertura">MOTIVO DE REAPERTURA</label>
-                        <textarea
-                            id="motivo-reapertura"
-                            rows={3}
-                            maxLength={600}
-                            required
-                            value={motivoReapertura}
-                            onChange={(event) => setMotivoReapertura(event.target.value)}
-                            placeholder="Describe por qué el problema necesita atención nuevamente."
-                        />
-                        <Button type="submit" variant="primary" disabled={guardandoAccion}>
-                            {guardandoAccion ? 'Reabriendo…' : 'Confirmar reapertura'}
+                    {puedeReabrir && !mostrarFormularioReapertura && (
+                        <Button
+                            variant="secondary"
+                            onClick={() => setMostrarFormularioReapertura(true)}
+                            disabled={guardandoAccion}
+                        >
+                            Reabrir ticket
                         </Button>
-                    </form>
-                )}
-
-                <p className="ticket-subtitle">{ticket.asunto}</p>
-                {ticket.descripcion && <p>{ticket.descripcion}</p>}
+                    )}
+                    {puedeCancelar && (
+                        <Button variant="secondary" onClick={handleCancelarTicket} disabled={guardandoAccion}>
+                            Cancelar ticket
+                        </Button>
+                    )}
+                </div>
             </div>
 
-            <div className="ticket-detail-grid">
-                <div className="bitacora-card">
-                    <h2>Bitácora de la atención</h2>
-                    {errorComentario && <p role="alert">{errorComentario}</p>}
-                    <div className="comments-list">
-                        {bitacora.map((item) => (
-                            <div key={item.id} className="comment-item">
-                                <div className={`avatar-badge ${(item.autor?.rol || 'usuario').toLowerCase()}`}>
-                                    {getInitials(item.autor?.nombres, item.autor?.apellidos) || 'US'}
-                                </div>
-                                <div className="comment-content">
-                                    <div className="comment-meta">
-                                        <strong>
-                                            {`${item.autor?.nombres || ''} ${item.autor?.apellidos || ''}`.trim() || 'Usuario'}
-                                        </strong>
-                                        <span className="role-label">{ROL_LABELS[item.autor?.rol] || 'Usuario'}</span>
-                                        <span className="dot-separator">·</span>
-                                        <span className="date-label">{formatDateTime(item.creadoEn)}</span>
-                                    </div>
-                                    <p className="comment-text">{item.mensaje}</p>
+            <div className="detalle-ticket__avisos">
+                {estado === 'cerrado' && !puedeReabrir && (
+                    <Alert variant="info">
+                        El plazo de {DIAS_PLAZO_REAPERTURA} días para reabrir este ticket ya venció.
+                    </Alert>
+                )}
+                {errorAccion && <Alert variant="error">{errorAccion}</Alert>}
+                {exitoAccion && <Alert variant="success">{exitoAccion}</Alert>}
+                {mostrarFormularioReapertura && puedeReabrir && (
+                    <Card>
+                        <form className="detalle-ticket__formulario" onSubmit={handleReabrirTicket}>
+                            <div className="field">
+                                <label className="field__label" htmlFor="motivo-reapertura">MOTIVO DE REAPERTURA</label>
+                                <div className="control">
+                                    <textarea
+                                        id="motivo-reapertura"
+                                        className="control__input detalle-ticket__texto"
+                                        rows={3}
+                                        maxLength={600}
+                                        required
+                                        value={motivoReapertura}
+                                        onChange={(event) => setMotivoReapertura(event.target.value)}
+                                        placeholder="Describe por qué el problema necesita atención nuevamente."
+                                    />
                                 </div>
                             </div>
-                        ))}
-                    </div>
+                            <div className="detalle-ticket__envio">
+                                <Button type="submit" variant="primary" disabled={guardandoAccion}>
+                                    {guardandoAccion ? 'Reabriendo…' : 'Confirmar reapertura'}
+                                </Button>
+                            </div>
+                        </form>
+                    </Card>
+                )}
+            </div>
+
+            <div className="ticket-atencion__layout">
+                <Card as="section" aria-labelledby="detalle-bitacora-titulo">
+                    <h2 id="detalle-bitacora-titulo" className="bitacora-panel__titulo detalle-ticket__titulo">
+                        Bitácora de la atención
+                    </h2>
+                    {errorComentario && <Alert variant="error">{errorComentario}</Alert>}
+                    {bitacora.length > 0 && <Bitacora entradas={bitacora} aria-label="Entradas de la bitácora" />}
 
                     {permisos.comentar && estado !== 'cerrado' ? (
-                        <form className="add-comment-form" onSubmit={handleEnviarComentario}>
-                            <label htmlFor="comentario-input">AGREGAR INFORMACIÓN</label>
-                            <textarea
-                                id="comentario-input"
-                                rows={3}
-                                maxLength={600}
-                                placeholder="Escribe aquí si tienes un dato nuevo que ayude al técnico..."
-                                value={nuevoComentario}
-                                onChange={(e) => setNuevoComentario(e.target.value)}
-                            />
-                            <div className="form-footer-row">
+                        <form className="detalle-ticket__formulario detalle-ticket__comentario" onSubmit={handleEnviarComentario}>
+                            <div className="field">
+                                <label className="field__label" htmlFor="comentario-input">AGREGAR INFORMACIÓN</label>
+                                <div className="control">
+                                    <textarea
+                                        id="comentario-input"
+                                        className="control__input detalle-ticket__texto"
+                                        rows={3}
+                                        maxLength={600}
+                                        placeholder="Escribe aquí si tienes un dato nuevo que ayude al técnico..."
+                                        value={nuevoComentario}
+                                        onChange={(e) => setNuevoComentario(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="detalle-ticket__envio">
                                 <Button type="submit" variant="primary" disabled={guardandoComentario || !nuevoComentario.trim()}>
                                     {guardandoComentario ? 'Enviando…' : 'Enviar comentario'}
                                 </Button>
-                                <span className="disclaimer-text">
+                                <span className="detalle-ticket__nota">
                                     Las notas internas del equipo técnico no se muestran aquí.
                                 </span>
                             </div>
                         </form>
                     ) : (
-                        <p className="disclaimer-text">Este ticket ya no admite comentarios.</p>
+                        <p className="bitacora-panel__lectura">Este ticket ya no admite comentarios.</p>
                     )}
-                </div>
+                </Card>
 
-                <aside className="detail-sidebar">
-                    <div className="sidebar-card">
-                        <h3>Datos del reporte</h3>
-                        <div className="report-data-list">
-                            <div className="data-row">
-                                <span className="data-label">Categoría</span>
-                                <span className="data-value">{ticket.categoria?.nombre || 'General'}</span>
+                <aside className="ticket-atencion__lateral" aria-label="Datos del ticket">
+                    <Card as="section" className="ticket-dato-card" aria-labelledby="detalle-datos-titulo">
+                        <h2 id="detalle-datos-titulo" className="ticket-dato-card__titulo">Datos del reporte</h2>
+                        <dl className="ticket-datos">
+                            <div className="ticket-datos__fila">
+                                <dt>Categoría</dt>
+                                <dd>{ticket.categoria?.nombre || 'General'}</dd>
                             </div>
-                            <div className="data-row">
-                                <span className="data-label">Subcategoría</span>
-                                <span className="data-value">{ticket.subcategoria?.nombre || '-'}</span>
+                            {ticket.subcategoria && (
+                                <div className="ticket-datos__fila">
+                                    <dt>Subcategoría</dt>
+                                    <dd>{ticket.subcategoria.nombre}</dd>
+                                </div>
+                            )}
+                            <div className="ticket-datos__fila">
+                                <dt>Ambiente</dt>
+                                <dd className="text-mono">{ticket.ambiente?.codigo || '—'}</dd>
                             </div>
-                            <div className="data-row">
-                                <span className="data-label">Ambiente</span>
-                                <span className="data-value highlight">{ticket.ambiente?.codigo || '-'}</span>
+                            <div className="ticket-datos__fila">
+                                <dt>Registrado</dt>
+                                <dd>{fechaLimpia}</dd>
                             </div>
-                            <div className="data-row">
-                                <span className="data-label">Registrado</span>
-                                <span className="data-value">{fechaLimpia}</span>
+                            <div className="ticket-datos__fila">
+                                <dt>Técnico asignado</dt>
+                                <dd>{tecnicoNombre}</dd>
                             </div>
-                            <div className="data-row">
-                                <span className="data-label">Técnico asignado</span>
-                                <span className="data-value">{tecnicoNombre}</span>
+                            <div className="ticket-datos__fila">
+                                <dt>Atención esperada</dt>
+                                <dd>{detalle.tiempos.esperadoHoras} h</dd>
                             </div>
-                            <div className="data-row">
-                                <span className="data-label">Atención esperada</span>
-                                <span className="data-value">{detalle.tiempos.esperadoHoras} h</span>
-                            </div>
-                        </div>
-                    </div>
+                        </dl>
+                        {ticket.descripcion && <blockquote className="ticket-dato-card__cita">«{ticket.descripcion}»</blockquote>}
+                    </Card>
 
-                    <div className="sidebar-card">
-                        <h3>Línea de tiempo</h3>
-                        <div className="timeline-list">
-                            <div className="timeline-item done">
-                                <div className="timeline-marker"></div>
-                                <div className="timeline-content">
-                                    <strong>Abierto</strong>
-                                    <span>{fechaLimpia} · registrado por ti</span>
-                                </div>
-                            </div>
-                            <div className={`timeline-item ${pasoAsignado ? 'done' : 'pending'}`}>
-                                <div className="timeline-marker"></div>
-                                <div className="timeline-content">
-                                    <strong>Asignado</strong>
-                                    <span>{pasoAsignado ? `${supervisorNombre} asignó el caso` : 'Pendiente'}</span>
-                                </div>
-                            </div>
-                            <div className={`timeline-item ${pasoAtencion ? 'in-progress' : pasoResuelto ? 'done' : 'pending'}`}>
-                                <div className="timeline-marker"></div>
-                                <div className="timeline-content">
-                                    <strong>En atención</strong>
-                                    <span>{pasoAtencion || pasoResuelto ? `${tecnicoNombre} trabajando` : 'Pendiente'}</span>
-                                </div>
-                            </div>
-                            <div className={`timeline-item ${pasoResuelto ? 'done' : 'pending'}`}>
-                                <div className="timeline-marker"></div>
-                                <div className="timeline-content">
-                                    <strong>Resuelto</strong>
-                                    <span>{pasoResuelto ? 'Problema solucionado' : 'Pendiente'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <Card as="section" className="ticket-dato-card" aria-labelledby="detalle-linea-titulo">
+                        <h2 id="detalle-linea-titulo" className="ticket-dato-card__titulo">Línea de tiempo</h2>
+                        <ol className="detalle-ticket__linea">
+                            <li className="detalle-ticket__paso detalle-ticket__paso--hecho">
+                                <strong>Abierto</strong>
+                                <span>{fechaLimpia} · registrado por ti</span>
+                            </li>
+                            <li className={`detalle-ticket__paso detalle-ticket__paso--${pasoAsignado ? 'hecho' : 'pendiente'}`}>
+                                <strong>Asignado</strong>
+                                <span>{pasoAsignado ? `${supervisorNombre} asignó el caso` : 'Pendiente'}</span>
+                            </li>
+                            <li className={`detalle-ticket__paso detalle-ticket__paso--${pasoDeAtencion}`}>
+                                <strong>En atención</strong>
+                                <span>{pasoAtencion || pasoResuelto ? `${tecnicoNombre} trabajando` : 'Pendiente'}</span>
+                            </li>
+                            <li className={`detalle-ticket__paso detalle-ticket__paso--${pasoResuelto ? 'hecho' : 'pendiente'}`}>
+                                <strong>Resuelto</strong>
+                                <span>{pasoResuelto ? 'Problema solucionado' : 'Pendiente'}</span>
+                            </li>
+                        </ol>
+                    </Card>
                 </aside>
             </div>
         </div>

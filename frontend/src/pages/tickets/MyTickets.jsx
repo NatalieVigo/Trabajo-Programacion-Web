@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Alert, Button, TextInput, SelectInput } from "../../shared/components";
+import { Alert, Button, PageHeader, PriorityBadge, SelectInput, StatusBadge, TextInput } from "../../shared/components";
 import { ROUTES, usuarioTicketDetallePath } from "../../routes/routePaths";
 import { ticketsRepository } from "../../repositories/tickets.repository.js";
 import { ambientesRepository, categoriasRepository, subcategoriasRepository } from "../../repositories/catalogo.repository.js";
-import { ESTADO_LABELS, PRIORIDAD_LABELS, formatDate } from "../../utils/format.js";
+import { formatDate } from "../../utils/format.js";
 import { esTicketEnCurso } from "../../services/ticketsEnCurso.js";
 import { useAuth } from "../../hooks/useAuth.js";
+import Paginacion from "../catalogo/Paginacion.jsx";
 import './MyTickets.css';
 
 export const MyTickets = () => {
@@ -166,39 +167,38 @@ export const MyTickets = () => {
         navigate(usuarioTicketDetallePath(ticketId));
     };
 
+    const primeroVisible = ticketsFiltrados.length > 0 ? (paginaVisible - 1) * registrosPorPagina + 1 : 0;
+    const ultimoVisible = Math.min(paginaVisible * registrosPorPagina, ticketsFiltrados.length);
+
     return (
-        <div className="my-tickets-container">
-            <div className="my-tickets-header">
-                <div>
-                    <h1 className="page-title">Mis tickets</h1>
-                    <p className="page-subtitle">
-                        {totalTickets} tickets registrados · {ticketsEnCursoCount} en curso
-                    </p>
-                </div>
-                <Button variant="primary" onClick={irANuevoTicket}>
-                    Registrar un ticket
-                </Button>
-            </div>
+        <div className="mis-tickets">
+            <PageHeader
+                title="Mis tickets"
+                subtitle={`${totalTickets} tickets registrados · ${ticketsEnCursoCount} en curso`}
+                actions={<Button onClick={irANuevoTicket}>Registrar un ticket</Button>}
+            />
 
             {codigoBuscado && (
-                <Alert variant="info">
+                <Alert variant="info" className="mis-tickets__aviso">
                     Buscaste el código <code>{codigoBuscado}</code>; estos son tus resultados.
                 </Alert>
             )}
 
             {/* Filtros superiores */}
-            <div className="filters-bar" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div className="search-box">
+            <div className="mis-tickets__filtros">
+                <div className="mis-tickets__busqueda">
                     <TextInput
-                        placeholder="Buscar ticket..."
+                        placeholder="TCK-2026-…"
+                        aria-label="Buscar por código, asunto o ambiente"
                         value={busquedaActual}
                         onChange={actualizarBusqueda}
                     />
                 </div>
 
                 {/* Combo estado */}
-                <div className="category-select-wrapper">
+                <div className="mis-tickets__filtro">
                     <SelectInput
+                        aria-label="Estado"
                         value={filtroEstado}
                         onChange={actualizarFiltro(setFiltroEstado)}
                         options={[
@@ -216,42 +216,40 @@ export const MyTickets = () => {
                 </div>
 
                 {/* Rango de fechas */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 
-                    '#fff', padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc' }}>
-                    <input 
-                        type="date" 
-                        value={fechaInicio} 
+                <div className="mis-tickets__fechas" role="group" aria-label="Registrado entre">
+                    <TextInput
+                        type="date"
+                        aria-label="Desde"
+                        value={fechaInicio}
                         onChange={actualizarFiltro(setFechaInicio)}
-                        style={{ border: 'none', outline: 'none', color: '#555' }}
-                        title="Fecha Desde"
                     />
-                    <span style={{ color: '#aaa' }}>–</span>
-                    <input 
-                        type="date" 
-                        value={fechaFin} 
+                    <span className="mis-tickets__guion" aria-hidden="true">–</span>
+                    <TextInput
+                        type="date"
+                        aria-label="Hasta"
+                        value={fechaFin}
                         onChange={actualizarFiltro(setFechaFin)}
-                        style={{ border: 'none', outline: 'none', color: '#555' }}
-                        title="Fecha Hasta"
                     />
                 </div>
 
                 {/* Combo categorias */}
-                <div className="category-select-wrapper">
+                <div className="mis-tickets__filtro">
                     <SelectInput
+                        aria-label="Categoría"
                         value={filtroCategoria}
                         onChange={actualizarFiltro(setFiltroCategoria)}
                         options={opcionesCategorias}
                     />
                 </div>
 
-                <button type="button" className="btn-clean-filters" onClick={limpiarFiltros}>
+                <Button variant="tertiary" size="sm" onClick={limpiarFiltros}>
                     Limpiar filtros
-                </button>
+                </Button>
             </div>
 
             {/* Tabla de tickets */}
-            <div className="table-card">
-                <table className="tickets-table">
+            <div className="mis-tickets__tabla">
+                <table>
                     <thead>
                         <tr>
                             <th>CÓDIGO</th>
@@ -267,87 +265,55 @@ export const MyTickets = () => {
                         {ticketsPaginados.length > 0 ? (
                             ticketsPaginados.map((ticket) => (
                                 <tr key={ticket.id || ticket.codigo}>
-                                    <td className="code-cell">
+                                    <td>
                                         <button
                                             type="button"
-                                            className="btn-link-code"
+                                            className="mis-tickets__codigo"
                                             onClick={() => irADetalle(ticket.id || ticket.codigo)}
                                         >
                                             {ticket.codigo}
                                         </button>
                                     </td>
-                                    <td className="subject-cell">{ticket.asunto || ticket.descripcion || 'Sin asunto'}</td>
-                                    <td className="category-cell">
+                                    <td className="mis-tickets__asunto">{ticket.asunto || ticket.descripcion || 'Sin asunto'}</td>
+                                    <td className="mis-tickets__secundario">
                                         {obtenerCategoriaTexto(ticket)}
                                     </td>
-                                    <td className="location-cell">
+                                    <td className="mis-tickets__ambiente">
                                         {obtenerAmbienteTexto(ticket)}
                                     </td>
-                                    <td className="date-cell">
+                                    <td className="mis-tickets__secundario">
                                         {obtenerFechaTexto(ticket)}
                                     </td>
                                     <td>
-                                        <span className={`priority-tag ${(ticket.prioridad || 
-                                            'baja').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`}>
-                                            {PRIORIDAD_LABELS[ticket.prioridad] || ticket.prioridad || 'Baja'}
-                                        </span>
+                                        <PriorityBadge prioridad={ticket.prioridad} />
                                     </td>
                                     <td>
-                                        <span className={`status-tag ${(ticket.estado || 
-                                            'abierto').toLowerCase().replaceAll(' ', '-').replaceAll('_', '-')}`}>
-                                            {ESTADO_LABELS[ticket.estado] || ticket.estado || 'Abierto'}
-                                        </span>
+                                        <StatusBadge estado={ticket.estado || 'abierto'} />
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="7" className="empty-table-msg">
+                                <td colSpan="7" className="mis-tickets__vacio">
                                     No se encontraron tickets con los filtros aplicados.
                                 </td>
                             </tr>
                         )}
                     </tbody>
                 </table>
+            </div>
 
-                {/* Controles de paginacion */}
-                <div className="table-pagination">
-                    <span className="pagination-info">
-                        Mostrando {ticketsFiltrados.length > 0 ? (paginaVisible - 1) * registrosPorPagina + 1 : 0}–
-                        {Math.min(paginaVisible * registrosPorPagina, ticketsFiltrados.length)} de {ticketsFiltrados.length} tickets
-                    </span>
-
-                    <div className="pagination-buttons">
-                        <button
-                            type="button"
-                            className="btn-page"
-                            disabled={paginaVisible === 1}
-                            onClick={() => setPaginaActual(p => Math.max(Math.min(p, totalPaginas) - 1, 1))}
-                        >
-                            Anterior
-                        </button>
-
-                        {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((numPage) => (
-                            <button
-                                key={numPage}
-                                type="button"
-                                className={`btn-page ${paginaVisible === numPage ? 'active' : ''}`}
-                                onClick={() => setPaginaActual(numPage)}
-                            >
-                                {numPage}
-                            </button>
-                        ))}
-
-                        <button
-                            type="button"
-                            className="btn-page"
-                            disabled={paginaVisible === totalPaginas}
-                            onClick={() => setPaginaActual(p => Math.min(Math.min(p, totalPaginas) + 1, totalPaginas))}
-                        >
-                            Siguiente
-                        </button>
-                    </div>
-                </div>
+            {/* Conteo y paginación */}
+            <div className="mis-tickets__pie">
+                <p className="mis-tickets__conteo">
+                    Mostrando {primeroVisible}–{ultimoVisible} de {ticketsFiltrados.length} tickets
+                </p>
+                <Paginacion
+                    pagina={paginaVisible}
+                    totalPaginas={totalPaginas}
+                    onCambiar={setPaginaActual}
+                    etiqueta="Páginas de mis tickets"
+                />
             </div>
         </div>
     );

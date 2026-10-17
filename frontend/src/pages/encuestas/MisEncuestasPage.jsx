@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth.js'
 import { obtenerEncuestasUsuario } from '../../services/encuestas.service.js'
-import Button from '../../shared/components/Button/Button.jsx'
+import { Button, Card, EmptyState, PageHeader } from '../../shared/components'
+import { formatDate } from '../../utils/format.js'
 import './MisEncuestasPage.css'
 
 export default function MisEncuestasPage() {
@@ -28,28 +29,33 @@ export default function MisEncuestasPage() {
     cargar()
   }, [currentUser?.id])
 
-  if (cargando) return <div className="page-loader">Cargando encuestas...</div>
+  if (cargando) {
+    return (
+      <Card aria-busy="true">
+        <p role="status" className="text-muted">
+          Cargando encuestas…
+        </p>
+      </Card>
+    )
+  }
+
+  const respondidas = `${data.totalRespondidas} ${data.totalRespondidas === 1 ? 'encuesta respondida' : 'encuestas respondidas'}`
 
   return (
-    <div className="mis-encuestas-page">
-      <div className="header-summary">
-        <h2>Mis encuestas</h2>
-        <p>
-          {data.totalRespondidas} {data.totalRespondidas === 1 ? 'encuesta respondida' : 'encuestas respondidas'} | Promedio que diste: <strong>{data.promedioGeneral} de 5</strong>
-        </p>
-      </div>
+    <div className="mis-encuestas">
+      <PageHeader title="Mis encuestas" subtitle={`${respondidas} · promedio que diste: ${data.promedioGeneral} de 5`} />
 
       {data.encuestas.length === 0 ? (
-        <div className="estado-vacio-encuestas">
-          <p className="vacio-titulo">Aún no respondes encuestas</p>
-          <p className="vacio-subtitulo">Cuando se cierre uno de tus tickets te pediremos calificar la atención.</p>
-          <Button variant="primary" onClick={() => navigate('/usuario/tickets')}>
-            Ver mis tickets
-          </Button>
-        </div>
+        <Card>
+          <EmptyState
+            title="Aún no respondes encuestas"
+            description="Cuando se cierre uno de tus tickets te pediremos calificar la atención."
+            action={<Button onClick={() => navigate('/usuario/tickets')}>Ver mis tickets</Button>}
+          />
+        </Card>
       ) : (
-        <div className="table-responsive">
-          <table className="encuestas-table">
+        <div className="mis-encuestas__tabla">
+          <table>
             <thead>
               <tr>
                 <th>TICKET / ASUNTO</th>
@@ -63,13 +69,13 @@ export default function MisEncuestasPage() {
               {data.encuestas.map((e) => (
                 <tr key={e.id}>
                   <td>
-                    <strong className="mono-code">{e.codigoTicket}</strong>
-                    <div className="asunto-text">{e.asunto}</div>
+                    <span className="mis-encuestas__codigo">{e.codigoTicket}</span>
+                    <span className="mis-encuestas__asunto">{e.asunto}</span>
                   </td>
                   <td>{e.tecnicoNombre}</td>
-                  <td>{new Date(e.fechaRespuesta).toLocaleDateString('es-PE')}</td>
+                  <td>{formatDate(e.fechaRespuesta)}</td>
                   <td>
-                    <span className="badge-rating">{e.puntajeGeneral}/5</span>
+                    <span className="mis-encuestas__puntaje">{e.puntajeGeneral} / 5</span>
                   </td>
                   <td>
                     {e.editable ? (
@@ -81,7 +87,7 @@ export default function MisEncuestasPage() {
                         Editar encuesta
                       </Button>
                     ) : (
-                      <span className="text-muted">Plazo vencido</span>
+                      <span className="mis-encuestas__vencido">Plazo vencido</span>
                     )}
                   </td>
                 </tr>

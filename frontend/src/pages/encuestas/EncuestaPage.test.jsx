@@ -35,7 +35,7 @@ describe('EncuestaPage (Vista 6.1)', () => {
     await user.click(botonEnviar)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 2, name: 'Mis encuestas' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1, name: 'Mis encuestas' })).toBeInTheDocument()
     })
   })
 })

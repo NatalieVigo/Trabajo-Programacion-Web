@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageHeader, Alert, SelectInput, TextInput, Button } from "../../shared/components";
+import { PageHeader, Alert, SelectInput, TextInput, Button, Card, PriorityBadge } from "../../shared/components";
 import { TicketConfirmation } from "./TicketConfirmation";
 import { listarDisponibles } from "../../services/categorias.service.js";
 import { listarAmbientes } from "../../services/catalogo.service.js";
@@ -9,13 +9,6 @@ import { ServiceError } from "../../services/ServiceError.js";
 import { PRIORIDAD_LABELS } from "../../utils/format.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import './NewTicket.css';
-
-const normalizarClaseCSS = (prioridadStr) => {
-    return (prioridadStr || 'alta')
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-};
 
 export const NewTicket = () => {
     const navigate = useNavigate();
@@ -134,40 +127,42 @@ export const NewTicket = () => {
 
     if (cargandoCatalogos) {
         return (
-            <div className="new-ticket-container" style={{ padding: '40px', textAlign: 'center' }}>
-                <p>Cargando categorías...</p>
-            </div>
+            <Card aria-busy="true">
+                <p role="status" className="text-muted">Cargando categorías…</p>
+            </Card>
         );
     }
 
     return (
-        <div className="new-ticket-container">
+        <div className="nuevo-ticket">
             <PageHeader
                 title="Nuevo ticket"
-                description="Indica qué falla y dónde. La prioridad se sugiere según la categoría y el supervisor puede ajustarla."
+                subtitle="Indica qué falla y dónde. La prioridad se sugiere según la categoría y el supervisor puede ajustarla."
             />
 
-            {errorCatalogos && <Alert variant="error">{errorCatalogos}</Alert>}
-            {errorRegistro && <Alert variant="error">{errorRegistro}</Alert>}
+            <div className="nuevo-ticket__avisos">
+                {errorCatalogos && <Alert variant="error">{errorCatalogos}</Alert>}
+                {errorRegistro && <Alert variant="error">{errorRegistro}</Alert>}
 
-            {!errorCatalogos && categorias.length === 0 && (
-                <Alert variant="warning">No hay categorías disponibles para registrar un ticket.</Alert>
-            )}
+                {!errorCatalogos && categorias.length === 0 && (
+                    <Alert variant="warning">No hay categorías disponibles para registrar un ticket.</Alert>
+                )}
 
-            {duplicado && ambienteActual && categoriaActual && (
-                <Alert variant="warning">
-                    Ya existe un ticket de <strong>{categoriaActual.nombre}</strong> en curso para el aula{' '}
-                    <strong>{ambienteActual.codigo}</strong>. Revísalo antes de registrar otro. Puedes continuar si se
-                    trata de otro incidente.
-                </Alert>
-            )}
+                {duplicado && ambienteActual && categoriaActual && (
+                    <Alert variant="warning">
+                        Ya existe un ticket de <strong>{categoriaActual.nombre}</strong> en curso para el aula{' '}
+                        <strong>{ambienteActual.codigo}</strong>. Revísalo antes de registrar otro. Puedes continuar si se
+                        trata de otro incidente.
+                    </Alert>
+                )}
+            </div>
 
-            <div className="new-ticket-grid">
-                <div className="main-form-card">
-                    <form className="ticket-form" onSubmit={handleSubmit}>
-                        <div className="form-row">
-                            <div className="input-group">
-                                <label htmlFor="categoriaId">CATEGORÍA</label>
+            <div className="nuevo-ticket__layout">
+                <Card>
+                    <form className="nuevo-ticket__form" onSubmit={handleSubmit}>
+                        <div className="form-grid">
+                            <div className="field">
+                                <label className="field__label" htmlFor="categoriaId">CATEGORÍA</label>
                                 <SelectInput
                                     id="categoriaId"
                                     name="categoriaId"
@@ -178,8 +173,8 @@ export const NewTicket = () => {
                                 />
                             </div>
 
-                            <div className="input-group">
-                                <label htmlFor="subcategoriaId">SUBCATEGORÍA</label>
+                            <div className="field">
+                                <label className="field__label" htmlFor="subcategoriaId">SUBCATEGORÍA</label>
                                 <SelectInput
                                     id="subcategoriaId"
                                     name="subcategoriaId"
@@ -188,13 +183,11 @@ export const NewTicket = () => {
                                     required
                                     options={subcategorias.map(({ id, nombre }) => ({ value: id, label: nombre }))}
                                 />
-                                <span className="field-help-text">Depende de la categoría elegida.</span>
+                                <p className="field__message">Depende de la categoría elegida.</p>
                             </div>
-                        </div>
 
-                        <div className="form-row">
-                            <div className="input-group">
-                                <label htmlFor="ambienteId">AULA O AMBIENTE</label>
+                            <div className="field">
+                                <label className="field__label" htmlFor="ambienteId">AULA O AMBIENTE</label>
                                 <SelectInput
                                     id="ambienteId"
                                     name="ambienteId"
@@ -204,58 +197,60 @@ export const NewTicket = () => {
                                     placeholder="Selecciona el aula o ambiente"
                                     options={ambientes.map(({ id, codigo, nombre }) => ({ value: id, label: `${codigo} · ${nombre}` }))}
                                 />
-                                <span className="field-help-text">
+                                <p className="field__message">
                                     El lugar donde ocurre la falla, tal como aparece en la puerta.
-                                </span>
+                                </p>
                             </div>
 
-                            <div className="input-group">
-                                <label>PRIORIDAD SUGERIDA</label>
-                                <div className="priority-badge-box">
-                                    <span className={`priority-tag ${normalizarClaseCSS(subcategoriaActual?.prioridadPorDefecto)}`}>
-                                        {PRIORIDAD_LABELS[subcategoriaActual?.prioridadPorDefecto] || '—'}
-                                    </span>
-                                    <span className="priority-label-text">Sugerida por la subcategoría</span>
+                            <div className="field">
+                                <span className="field__label">PRIORIDAD SUGERIDA</span>
+                                <p className="nuevo-ticket__prioridad">
+                                    {subcategoriaActual?.prioridadPorDefecto
+                                        ? <PriorityBadge prioridad={subcategoriaActual.prioridadPorDefecto} />
+                                        : '—'}
+                                    <span className="text-muted">Sugerida por la subcategoría</span>
+                                </p>
+                            </div>
+
+                            <div className="field form-grid__full">
+                                <label className="field__label" htmlFor="asunto">ASUNTO</label>
+                                <TextInput
+                                    id="asunto"
+                                    name="asunto"
+                                    value={datosTicket.asunto}
+                                    onChange={handleChange}
+                                    placeholder="Resumen breve del problema"
+                                    maxLength={120}
+                                    required
+                                />
+                            </div>
+
+                            <div className="field form-grid__full">
+                                <label className="field__label" htmlFor="descripcion">DESCRIPCIÓN</label>
+                                <div className="control">
+                                    <textarea
+                                        id="descripcion"
+                                        name="descripcion"
+                                        className="control__input nuevo-ticket__descripcion"
+                                        value={datosTicket.descripcion}
+                                        onChange={handleChange}
+                                        rows={4}
+                                        maxLength={600}
+                                        required
+                                        placeholder="El proyector enciende el foco pero la imagen no llega a la pantalla..."
+                                    />
                                 </div>
+                                <p className="field__message nuevo-ticket__ayuda">
+                                    <span>Indica qué probaste y desde cuándo ocurre.</span>
+                                    <span>{datosTicket.descripcion.length} / 600</span>
+                                </p>
                             </div>
-                        </div>
 
-                        <div className="input-group">
-                            <label htmlFor="asunto">ASUNTO</label>
-                            <TextInput
-                                id="asunto"
-                                name="asunto"
-                                value={datosTicket.asunto}
-                                onChange={handleChange}
-                                placeholder="Resumen breve del problema"
-                                maxLength={120}
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label htmlFor="descripcion">DESCRIPCIÓN</label>
-                            <textarea
-                                id="descripcion"
-                                name="descripcion"
-                                className="text-area-input"
-                                value={datosTicket.descripcion}
-                                onChange={handleChange}
-                                rows={4}
-                                maxLength={600}
-                                required
-                                placeholder="El proyector enciende el foco pero la imagen no llega a la pantalla..."
-                            />
-                            <div className="field-help-row">
-                                <span>Indica qué probaste y desde cuándo ocurre.</span>
-                                <span>{datosTicket.descripcion.length} / 600</span>
-                            </div>
-                        </div>
-
-                        <div className="input-group">
-                            <label>EVIDENCIA (OPCIONAL)</label>
-                            <div className="file-dropzone">
-                                <span>Arrastra una foto o pulsa para elegir · JPG o PNG hasta 5 MB</span>
+                            <div className="field form-grid__full">
+                                <span className="field__label">EVIDENCIA (OPCIONAL)</span>
+                                <div className="nuevo-ticket__evidencia">
+                                    Arrastra una foto o pulsa para elegir · JPG o PNG hasta 5 MB
+                                </div>
                             </div>
                         </div>
 
@@ -265,27 +260,25 @@ export const NewTicket = () => {
                             </Button>
                             <Button type="button" variant="secondary" onClick={() => navigate(-1)}>Cancelar</Button>
                         </div>
-
                     </form>
-                </div>
+                </Card>
 
-                <aside className="info-sidebar">
-                    <div className="info-card">
-                        <h3>Qué conviene incluir</h3>
-                        <ul className="info-list">
+                <aside className="nuevo-ticket__lateral">
+                    <Card title="Qué conviene incluir">
+                        <ul className="nuevo-ticket__consejos">
                             <li>El aula o ambiente tal como aparece en la puerta.</li>
                             <li>Desde cuándo ocurre la falla y si es intermitente.</li>
                             <li>Qué ya intentaste (cambiar cable, reiniciar equipo).</li>
                             <li>Si hay clase o evento en las próximas horas.</li>
                             <li>Un teléfono de contacto si hay que coordinar el acceso.</li>
                         </ul>
-                    </div>
+                    </Card>
 
-                    <div className="info-card time-card">
-                        <h4>Tiempo esperado para esta categoría</h4>
+                    <div className="nuevo-ticket__tiempo">
+                        <p className="nuevo-ticket__tiempo-titulo">Tiempo esperado para esta categoría</p>
                         <p>
-                            Prioridad {PRIORIDAD_LABELS[subcategoriaActual?.prioridadPorDefecto] || '—'}: atención dentro de{' '}
-                            <strong>{subcategoriaActual?.tiempoEsperadoHoras ?? categoriaActual?.tiempoEsperadoHoras ?? '—'} h</strong> desde el registro.
+                            Prioridad {PRIORIDAD_LABELS[subcategoriaActual?.prioridadPorDefecto]?.toLowerCase() || '—'}: atención dentro de{' '}
+                            {subcategoriaActual?.tiempoEsperadoHoras ?? categoriaActual?.tiempoEsperadoHoras ?? '—'} horas desde el registro.
                         </p>
                     </div>
                 </aside>

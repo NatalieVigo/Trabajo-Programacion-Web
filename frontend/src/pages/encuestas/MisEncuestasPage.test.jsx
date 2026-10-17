@@ -12,7 +12,7 @@ describe('MisEncuestasPage (Vista 6.2)', () => {
   it('muestra el listado de encuestas respondidas del usuario con sus métricas', async () => {
     renderApp('/usuario/encuestas', { usuario: DEMO.usuario })
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Mis encuestas' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mis encuestas' })).toBeInTheDocument()
     expect(screen.getByText(/encuestas respondidas/i)).toBeInTheDocument()
     expect(screen.getByText(/TICKET \/ ASUNTO/i)).toBeInTheDocument()
     expect(screen.getByText(/PLAZO DE EDICIÓN/i)).toBeInTheDocument()
