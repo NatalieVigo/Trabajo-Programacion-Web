@@ -31,7 +31,9 @@ export const ROUTES = Object.freeze({
   supervisorAmbientes: '/supervisor/ambientes',
   supervisorTecnicos: '/supervisor/tecnicos',
   supervisorSatisfaccion: '/supervisor/satisfaccion',
+  supervisorCarga: '/supervisor/carga-tecnicos',
   supervisorUsuarios: '/supervisor/usuarios',
+  supervisorUsuarioFicha: '/supervisor/usuarios/:id',
 
   miCuenta: '/mi-cuenta',
   accesoDenegado: '/acceso-denegado',
@@ -53,6 +55,8 @@ export const restablecerContrasenaPath = (token) => generatePath(ROUTES.restable
 
 /** Edición de una categoría o subcategoría del catálogo (HU-2): /supervisor/categorias/cat-01/editar. */
 export const categoriaEditarPath = (id) => generatePath(ROUTES.supervisorCategoriaEditar, { id })
+
+export const usuarioFichaPath = (id) => generatePath(ROUTES.supervisorUsuarioFicha, { id })
 
 /** Atención de un ticket (HU-5) en el panel del rol: /tecnico/tickets/TCK-2026-00144 o /supervisor/tickets/TCK-2026-00144. */
 export const ticketAtencionPath = (rol, codigo) =>
