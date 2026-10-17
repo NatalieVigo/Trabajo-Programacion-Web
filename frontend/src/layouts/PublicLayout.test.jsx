@@ -25,15 +25,30 @@ describe('PublicLayout', () => {
     expect(within(banner).getByRole('link', { name: 'Registrarme' })).toHaveAttribute('href', '/registro')
   })
 
-  it('con la sesión iniciada la cabecera es la misma y «Iniciar sesión» lleva a la vista del rol', async () => {
+  it('con la sesión iniciada la cabecera muestra la cuenta y lleva a la vista del rol en lugar del acceso', async () => {
     const { user } = renderApp(RUTA_PUBLICA, { usuario: DEMO.tecnico })
 
     const banner = await screen.findByRole('banner')
-    expect(within(banner).getByRole('link', { name: 'Registrarme' })).toBeInTheDocument()
-    await user.click(within(banner).getByRole('link', { name: 'Iniciar sesión' }))
+    expect(within(banner).getByText('Julio Paredes Soto')).toBeInTheDocument()
+    expect(within(banner).getByText('Técnico')).toBeInTheDocument()
+    expect(within(banner).getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument()
+    expect(within(banner).queryByRole('link', { name: 'Iniciar sesión' })).not.toBeInTheDocument()
+    expect(within(banner).queryByRole('link', { name: 'Registrarme' })).not.toBeInTheDocument()
+    await user.click(within(banner).getByRole('link', { name: 'Mi bandeja' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Mi bandeja' })).toBeInTheDocument()
     expect(ubicacionActual()).toBe('/tecnico')
+  })
+
+  it('«Cerrar sesión» desde la cabecera pública vuelve a mostrar el acceso', async () => {
+    const { user } = renderApp(RUTA_PUBLICA, { usuario: DEMO.usuario })
+
+    const banner = await screen.findByRole('banner')
+    await user.click(within(banner).getByRole('button', { name: 'Cerrar sesión' }))
+
+    expect(await screen.findByText('Cerraste sesión correctamente.')).toBeInTheDocument()
+    expect(await within(screen.getByRole('banner')).findByRole('link', { name: 'Iniciar sesión' })).toBeInTheDocument()
+    expect(within(screen.getByRole('banner')).queryByRole('button', { name: 'Cerrar sesión' })).not.toBeInTheDocument()
   })
 
   it('el botón «Menú» despliega y pliega la navegación', async () => {
