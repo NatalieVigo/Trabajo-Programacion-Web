@@ -10,15 +10,18 @@ beforeEach(() => {
 })
 
 describe('HU-3 · registro y seguimiento de tickets', () => {
-  it('registra un ticket con el aula elegida del catálogo y su estado inicial en el historial', async () => {
+  it('registra un ticket con el ambiente escrito y su estado inicial en el historial', async () => {
     const { user } = renderApp('/usuario/tickets/nuevo', { usuario: DEMO.usuario })
 
-    await screen.findByRole('heading', { name: 'Nuevo ticket' })
-    // viene precargada el aula habitual de la cuenta (A-201)
-    expect(screen.getByLabelText('AULA O AMBIENTE')).toHaveValue('amb-01')
+    await screen.findByRole('heading', { name: 'Registrar un ticket' })
+    // viene precargado el ambiente habitual de la cuenta, con su ubicación debajo
+    expect(screen.getByLabelText('AMBIENTE')).toHaveValue('A-201')
+    expect(screen.getByText('Aula · Pabellón A · piso 2')).toBeInTheDocument()
     await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-01')
     await user.selectOptions(screen.getByLabelText('SUBCATEGORÍA'), 'sub-01')
-    await user.selectOptions(screen.getByLabelText('AULA O AMBIENTE'), 'A-305 · Aula A-305')
+    await user.clear(screen.getByLabelText('AMBIENTE'))
+    await user.type(screen.getByLabelText('AMBIENTE'), 'A-305')
+    expect(screen.getByText('Aula · Pabellón A · piso 3')).toBeInTheDocument()
     await user.type(screen.getByLabelText('ASUNTO'), 'Proyector apagado')
     await user.type(screen.getByLabelText('DESCRIPCIÓN'), 'El proyector no enciende desde el inicio de la clase.')
     await user.click(screen.getByRole('button', { name: 'Registrar ticket' }))
@@ -38,18 +41,58 @@ describe('HU-3 · registro y seguimiento de tickets', () => {
     ])
   })
 
-  it('advierte cuando ya hay un ticket en curso del mismo ambiente y la misma categoría', async () => {
+  it('«Buscar» completa el código con una parte y avisa si el ambiente no existe', async () => {
     const { user } = renderApp('/usuario/tickets/nuevo', { usuario: DEMO.usuario })
 
-    await screen.findByRole('heading', { name: 'Nuevo ticket' })
-    // en A-201 ya hay un ticket de Audiovisuales en curso
+    await screen.findByRole('heading', { name: 'Registrar un ticket' })
+    const campo = screen.getByLabelText('AMBIENTE')
+    await user.clear(campo)
+    await user.type(campo, 'a-30')
+    await user.click(screen.getByRole('button', { name: 'Buscar' }))
+    expect(campo).toHaveValue('A-305')
+    expect(screen.getByText('Aula · Pabellón A · piso 3')).toBeInTheDocument()
+
+    await user.clear(campo)
+    await user.type(campo, 'Z-999')
+    await user.type(screen.getByLabelText('ASUNTO'), 'Proyector apagado')
+    await user.type(screen.getByLabelText('DESCRIPCIÓN'), 'El proyector no enciende desde el inicio de la clase.')
+    await user.click(screen.getByRole('button', { name: 'Registrar ticket' }))
+
+    expect(campo).toHaveAccessibleDescription('No encontramos ese ambiente. Revisa el código que aparece en la puerta.')
+    expect(campo).toHaveAttribute('aria-invalid', 'true')
+    expect(readTable('tickets')).toHaveLength(14)
+  })
+
+  it('si el ticket repetido es propio muestra su código y enlaza a él', async () => {
+    const { user } = renderApp('/usuario/tickets/nuevo', { usuario: DEMO.usuario })
+
+    await screen.findByRole('heading', { name: 'Registrar un ticket' })
+    // en A-201 ya hay un ticket de Audiovisuales en curso, y es de Camila
     await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-01')
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Ya existe un ticket de Audiovisuales en curso para el aula A-201.',
+    const aviso = await screen.findByRole('alert')
+    expect(aviso).toHaveTextContent('Ya existe un ticket abierto para A-201 en Audiovisuales: TCK-2026-00147, registrado hace')
+    expect(within(aviso).getByRole('link', { name: 'Ver ese ticket' })).toHaveAttribute(
+      'href',
+      '/usuario/tickets/TCK-2026-00147',
     )
     await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-02')
-    await waitFor(() => expect(screen.queryByText(/Ya existe un ticket de/)).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.queryByText(/Ya existe un ticket/)).not.toBeInTheDocument())
+  })
+
+  it('si el ticket repetido es de otra persona solo avisa, sin mostrar su código', async () => {
+    const { user } = renderApp('/usuario/tickets/nuevo', { usuario: DEMO.usuario })
+
+    await screen.findByRole('heading', { name: 'Registrar un ticket' })
+    // en N-402 hay un ticket de Eléctrico en curso, reportado por Renzo
+    await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-04')
+    await user.clear(screen.getByLabelText('AMBIENTE'))
+    await user.type(screen.getByLabelText('AMBIENTE'), 'N-402')
+
+    const aviso = await screen.findByRole('alert')
+    expect(aviso).toHaveTextContent('Ya existe un ticket abierto para N-402 en Eléctrico, reportado por otra persona.')
+    expect(aviso).not.toHaveTextContent('TCK-2026-00146')
+    expect(within(aviso).queryByRole('link')).not.toBeInTheDocument()
   })
 
   it('filtra la lista por el código enviado desde el buscador global', async () => {

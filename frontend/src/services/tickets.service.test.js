@@ -4,6 +4,7 @@ import { agregarEntrada, obtenerAtencion } from './atencion.service.js'
 import { listarCola } from './cola.service.js'
 import { ServiceError } from './ServiceError.js'
 import {
+  buscarTicketEnCurso,
   cancelarTicket,
   crearTicket,
   estaDentroDelPlazoDeReapertura,
@@ -73,6 +74,19 @@ describe('tickets.service · existeTicketEnCurso', () => {
     )
 
     expect(await existeTicketEnCurso(coincidencia)).toBe(false)
+  })
+
+  it('da el código del repetido solo si es de la misma persona', async () => {
+    await expect(buscarTicketEnCurso({ categoriaId: 'cat-01', ambienteId: 'amb-01' }, USUARIO)).resolves.toEqual({
+      propio: true,
+      codigo: 'TCK-2026-00147',
+      creadoEn: expect.any(String),
+    })
+    // el de N-402 es de Renzo: se avisa sin datos del ticket
+    await expect(buscarTicketEnCurso({ categoriaId: 'cat-04', ambienteId: 'amb-06' }, USUARIO)).resolves.toEqual({
+      propio: false,
+    })
+    await expect(buscarTicketEnCurso({ categoriaId: 'cat-02', ambienteId: 'amb-01' }, USUARIO)).resolves.toBeNull()
   })
 
   it('solo avisa si coinciden el ambiente y la categoría', async () => {

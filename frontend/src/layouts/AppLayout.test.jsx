@@ -148,7 +148,7 @@ describe('AppLayout · menú lateral', () => {
 
     await user.click(botonMenu())
     await user.click(within(screen.getByRole('navigation', { name: 'Mis servicios' })).getByRole('link', { name: 'Nuevo ticket' }))
-    expect(await screen.findByRole('heading', { level: 1, name: 'Nuevo ticket' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Registrar un ticket' })).toBeInTheDocument()
     expect(botonMenu()).toHaveAttribute('aria-expanded', 'false')
 
     await user.click(botonMenu())

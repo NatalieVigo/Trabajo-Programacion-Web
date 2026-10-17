@@ -3,12 +3,30 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader, Alert, SelectInput, TextInput, Button, Card, PriorityBadge } from "../../shared/components";
 import { TicketConfirmation } from "./TicketConfirmation";
 import { listarDisponibles } from "../../services/categorias.service.js";
-import { listarAmbientes } from "../../services/catalogo.service.js";
-import { crearTicket, existeTicketEnCurso } from "../../services/tickets.service.js";
+import { listarAmbientes } from "../../services/ubicaciones.service.js";
+import { buscarTicketEnCurso, crearTicket } from "../../services/tickets.service.js";
 import { ServiceError } from "../../services/ServiceError.js";
+import { usuarioTicketDetallePath } from "../../routes/routePaths";
 import { PRIORIDAD_LABELS } from "../../utils/format.js";
+import { TIPOS_AMBIENTE } from "../../utils/catalogoValidators.js";
+import { formatDuracion } from "../../utils/duracion.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import './NewTicket.css';
+
+const AYUDA_AMBIENTE = 'Escribe el código que aparece en la puerta, por ejemplo A-201.';
+
+const normalizar = (texto) => String(texto ?? '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLocaleLowerCase('es');
+
+// "Aula · Pabellón A · piso 2", como en el mockup
+const ubicacionDe = (ambiente) => [
+    TIPOS_AMBIENTE[ambiente.tipo] ?? ambiente.tipo,
+    ambiente.pabellonNombre && `Pabellón ${ambiente.pabellonNombre}`,
+    ambiente.piso != null && `piso ${ambiente.piso}`,
+].filter(Boolean).join(' · ');
 
 export const NewTicket = () => {
     const navigate = useNavigate();
@@ -28,8 +46,10 @@ export const NewTicket = () => {
         asunto: '',
         descripcion: ''
     });
+    const [ambienteTexto, setAmbienteTexto] = useState('');
+    const [errorAmbiente, setErrorAmbiente] = useState('');
 
-    const [duplicado, setDuplicado] = useState(false);
+    const [duplicado, setDuplicado] = useState(null);
     const [ticketCreado, setTicketCreado] = useState(null);
 
     useEffect(() => {
@@ -44,6 +64,7 @@ export const NewTicket = () => {
 
                 const primeraCategoria = categoriasDisponibles[0];
                 const habitual = ambientesDelCatalogo.find(({ id }) => id === usuario?.ambienteHabitualId);
+                setAmbienteTexto(habitual?.codigo ?? '');
                 setDatosTicket((actual) => ({
                     ...actual,
                     categoriaId: primeraCategoria?.id ?? '',
@@ -63,8 +84,8 @@ export const NewTicket = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'ambienteId' || name === 'categoriaId') setDuplicado(false);
         if (name === 'categoriaId') {
+            setDuplicado(null);
             const categoriaSeleccionada = categorias.find((categoria) => categoria.id === value);
             setDatosTicket((actual) => ({
                 ...actual,
@@ -76,6 +97,50 @@ export const NewTicket = () => {
         }
     };
 
+    // el código exacto o el nombre completo; Buscar también acepta una parte
+    const ambienteExacto = (texto) => {
+        const buscado = normalizar(texto);
+        if (!buscado) return null;
+        return ambientes.find((a) => normalizar(a.codigo) === buscado || normalizar(a.nombre) === buscado) ?? null;
+    };
+
+    const ambienteParecido = (texto) => {
+        const buscado = normalizar(texto);
+        if (!buscado) return null;
+        return ambientes.find((a) => normalizar(a.codigo).includes(buscado) || normalizar(a.nombre).includes(buscado)) ?? null;
+    };
+
+    const cambiarAmbiente = (e) => {
+        const texto = e.target.value;
+        setAmbienteTexto(texto);
+        setErrorAmbiente('');
+        setDuplicado(null);
+        setDatosTicket((actual) => ({ ...actual, ambienteId: ambienteExacto(texto)?.id ?? '' }));
+    };
+
+    const buscarAmbiente = () => {
+        const encontrado = ambienteExacto(ambienteTexto) ?? ambienteParecido(ambienteTexto);
+        if (!encontrado) {
+            setErrorAmbiente(ambienteTexto.trim()
+                ? 'No encontramos ese ambiente. Revisa el código que aparece en la puerta.'
+                : 'Escribe el código del aula o ambiente.');
+            setDatosTicket((actual) => ({ ...actual, ambienteId: '' }));
+            return null;
+        }
+        setAmbienteTexto(encontrado.codigo);
+        setErrorAmbiente('');
+        setDatosTicket((actual) => ({ ...actual, ambienteId: encontrado.id }));
+        return encontrado;
+    };
+
+    // Enter en el campo busca el ambiente en vez de enviar el formulario
+    const teclaEnAmbiente = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            buscarAmbiente();
+        }
+    };
+
     const categoriaActual = categorias.find((categoria) => categoria.id === datosTicket.categoriaId);
     const subcategorias = categoriaActual?.subcategorias ?? [];
     const subcategoriaActual = subcategorias.find((subcategoria) => subcategoria.id === datosTicket.subcategoriaId);
@@ -84,28 +149,40 @@ export const NewTicket = () => {
 
     // avisa si ya hay un ticket en curso con el mismo ambiente y categoría
     const { ambienteId, categoriaId } = datosTicket;
+    const usuarioId = usuario?.id;
     useEffect(() => {
         if (!ambienteId || !categoriaId) return undefined;
 
         let activo = true;
-        existeTicketEnCurso({ ambienteId, categoriaId })
-            .then((hayDuplicado) => {
-                if (activo) setDuplicado(hayDuplicado);
+        buscarTicketEnCurso({ ambienteId, categoriaId }, usuarioId)
+            .then((repetido) => {
+                if (!activo) return;
+                // el "hace X min" se calcula al recibir el aviso
+                setDuplicado(repetido?.propio
+                    ? { ...repetido, hace: formatDuracion(Date.now() - Date.parse(repetido.creadoEn)) }
+                    : repetido);
             })
             .catch((error) => {
                 if (activo) setErrorRegistro(error.message || 'No se pudo verificar si ya existe un ticket en el aula.');
             });
 
         return () => { activo = false; };
-    }, [ambienteId, categoriaId]);
+    }, [ambienteId, categoriaId, usuarioId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // si no se pulsó Buscar se busca ahora; sin un ambiente del catálogo no se envía
+        const ambiente = ambienteActual ?? buscarAmbiente();
+        if (!ambiente) {
+            document.getElementById('ambiente')?.focus();
+            return;
+        }
+
         setGuardando(true);
         setErrorRegistro('');
         try {
-            const ticket = await crearTicket(datosTicket, usuario?.id);
+            const ticket = await crearTicket({ ...datosTicket, ambienteId: ambiente.id }, usuario?.id);
             setTicketCreado(ticket);
         } catch (error) {
             const detalleError = error instanceof ServiceError
@@ -136,7 +213,7 @@ export const NewTicket = () => {
     return (
         <div className="nuevo-ticket">
             <PageHeader
-                title="Nuevo ticket"
+                title="Registrar un ticket"
                 subtitle="Indica qué falla y dónde. La prioridad se sugiere según la categoría y el supervisor puede ajustarla."
             />
 
@@ -148,13 +225,26 @@ export const NewTicket = () => {
                     <Alert variant="warning">No hay categorías disponibles para registrar un ticket.</Alert>
                 )}
 
-                {duplicado && ambienteActual && categoriaActual && (
-                    <Alert variant="warning">
-                        Ya existe un ticket de <strong>{categoriaActual.nombre}</strong> en curso para el aula{' '}
-                        <strong>{ambienteActual.codigo}</strong>. Revísalo antes de registrar otro. Puedes continuar si se
-                        trata de otro incidente.
+                {duplicado && ambienteActual && categoriaActual && (duplicado.propio ? (
+                    <Alert
+                        variant="warning"
+                        className="nuevo-ticket__duplicado"
+                        actions={
+                            <Button variant="secondary" size="sm" to={usuarioTicketDetallePath(duplicado.codigo)}>
+                                Ver ese ticket
+                            </Button>
+                        }
+                    >
+                        Ya existe un ticket abierto para <span className="text-mono">{ambienteActual.codigo}</span> en{' '}
+                        {categoriaActual.nombre}: <span className="text-mono">{duplicado.codigo}</span>, registrado hace{' '}
+                        {duplicado.hace}. Revísalo antes de crear otro.
                     </Alert>
-                )}
+                ) : (
+                    <Alert variant="warning">
+                        Ya existe un ticket abierto para <span className="text-mono">{ambienteActual.codigo}</span> en{' '}
+                        {categoriaActual.nombre}, reportado por otra persona. Revisa si es la misma falla antes de crear otro.
+                    </Alert>
+                ))}
             </div>
 
             <div className="nuevo-ticket__layout">
@@ -187,18 +277,34 @@ export const NewTicket = () => {
                             </div>
 
                             <div className="field">
-                                <label className="field__label" htmlFor="ambienteId">AULA O AMBIENTE</label>
-                                <SelectInput
-                                    id="ambienteId"
-                                    name="ambienteId"
-                                    value={datosTicket.ambienteId}
-                                    onChange={handleChange}
-                                    required
-                                    placeholder="Selecciona el aula o ambiente"
-                                    options={ambientes.map(({ id, codigo, nombre }) => ({ value: id, label: `${codigo} · ${nombre}` }))}
+                                <label className="field__label" htmlFor="ambiente">AMBIENTE</label>
+                                <TextInput
+                                    id="ambiente"
+                                    mono
+                                    value={ambienteTexto}
+                                    onChange={cambiarAmbiente}
+                                    onKeyDown={teclaEnAmbiente}
+                                    list="ambientes-del-catalogo"
+                                    autoComplete="off"
+                                    placeholder="A-201"
+                                    status={errorAmbiente ? 'error' : undefined}
+                                    aria-describedby="ambiente-mensaje"
+                                    endAdornment={
+                                        <Button variant="tertiary" size="sm" onClick={buscarAmbiente}>
+                                            Buscar
+                                        </Button>
+                                    }
                                 />
-                                <p className="field__message">
-                                    El lugar donde ocurre la falla, tal como aparece en la puerta.
+                                <datalist id="ambientes-del-catalogo">
+                                    {ambientes.map(({ id, codigo, nombre }) => (
+                                        <option key={id} value={codigo}>{nombre}</option>
+                                    ))}
+                                </datalist>
+                                <p
+                                    id="ambiente-mensaje"
+                                    className={`field__message${errorAmbiente ? ' field__message--error' : ''}`}
+                                >
+                                    {errorAmbiente || (ambienteActual ? ubicacionDe(ambienteActual) : AYUDA_AMBIENTE)}
                                 </p>
                             </div>
 

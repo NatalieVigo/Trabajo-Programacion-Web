@@ -96,3 +96,16 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* aviso de duplicado con el botón a la derecha */
+.alert.nuevo-ticket__duplicado {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.nuevo-ticket__duplicado .alert__actions {
+  margin-top: 0;
+}

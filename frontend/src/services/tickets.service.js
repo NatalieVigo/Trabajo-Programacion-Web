@@ -76,12 +76,12 @@ function exigirUsuarioActivo(usuarioId) {
 }
 
 // mismo ambiente y misma categoría, todavía en curso
-function encontrarDuplicado({ ambienteId, ambienteCodigo, categoriaId }) {
+function ticketsRepetidos({ ambienteId, ambienteCodigo, categoriaId }) {
   const ambiente = buscarAmbienteCatalogo(ambienteId || ambienteCodigo)
-  if (!ambiente || !categoriaId) return null
-  return ticketsRepository.findOne(
-    (ticket) => ticket.categoriaId === categoriaId && esTicketEnCurso(ticket) && esDelAmbiente(ticket, ambiente),
-  )
+  if (!ambiente || !categoriaId) return []
+  return ticketsRepository
+    .findAll()
+    .filter((ticket) => ticket.categoriaId === categoriaId && esTicketEnCurso(ticket) && esDelAmbiente(ticket, ambiente))
 }
 
 function exigirTicketPropio(ticketId, usuarioId) {
@@ -133,7 +133,18 @@ export function estaDentroDelPlazoDeReapertura(ticket, ahora = Date.now()) {
 
 // solo dice si existe, sin revelar datos del ticket de otra persona
 export function existeTicketEnCurso({ ambienteId, ambienteCodigo, categoriaId }) {
-  return simulateRequest(() => Boolean(encontrarDuplicado({ ambienteId, ambienteCodigo, categoriaId })))
+  return simulateRequest(() => ticketsRepetidos({ ambienteId, ambienteCodigo, categoriaId }).length > 0)
+}
+
+// Para el aviso del formulario: si el repetido es de la misma persona devuelve su código para enlazarlo,
+// si es de otra solo avisa que existe.
+export function buscarTicketEnCurso({ ambienteId, ambienteCodigo, categoriaId }, usuarioId) {
+  return simulateRequest(() => {
+    const repetidos = ticketsRepetidos({ ambienteId, ambienteCodigo, categoriaId })
+    if (repetidos.length === 0) return null
+    const propio = repetidos.find((ticket) => ticket.usuarioId === usuarioId)
+    return propio ? { propio: true, codigo: propio.codigo, creadoEn: propio.creadoEn } : { propio: false }
+  })
 }
 
 // Registra el ticket (HU-3). Un posible duplicado se avisa, pero no impide enviarlo.
