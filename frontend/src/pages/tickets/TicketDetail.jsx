@@ -1,118 +1,84 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "../../shared/components";
+import { Button, useConfirm } from "../../shared/components";
 import { ROUTES } from "../../routes/routePaths";
-import { sessionRepository } from "../../repositories/session.repository.js";
+import { ticketsRepository } from "../../repositories/tickets.repository.js";
+import { agregarEntrada, obtenerAtencion } from "../../services/atencion.service.js";
+import {
+    cancelarTicket,
+    DIAS_PLAZO_REAPERTURA,
+    estaDentroDelPlazoDeReapertura,
+    reabrirTicket,
+} from "../../services/tickets.service.js";
+import { ESTADO_LABELS, PRIORIDAD_LABELS, ROL_LABELS, formatDateTime, getInitials } from "../../utils/format.js";
+import { useAuth } from "../../hooks/useAuth.js";
 import './TicketDetail.css';
 
 export const TicketDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { usuario } = useAuth();
+    const confirm = useConfirm();
 
-    const [ticket, setTicket] = useState(null);
+    const [detalle, setDetalle] = useState(null);
     const [nuevoComentario, setNuevoComentario] = useState('');
-    const [bitacora, setBitacora] = useState([]);
-    const [error, setError] = useState(false);
-    
-    const [nombreUsuario, setNombreUsuario] = useState('Camila Quispe Ramos');
-    const [inicialesUsuario, setInicialesUsuario] = useState('CQ');
+    const [errorCarga, setErrorCarga] = useState('');
+    const [errorComentario, setErrorComentario] = useState('');
+    const [guardandoComentario, setGuardandoComentario] = useState(false);
+    const [guardandoAccion, setGuardandoAccion] = useState(false);
+    const [errorAccion, setErrorAccion] = useState('');
+    const [exitoAccion, setExitoAccion] = useState('');
+    const [mostrarFormularioReapertura, setMostrarFormularioReapertura] = useState(false);
+    const [motivoReapertura, setMotivoReapertura] = useState('');
+    const [usuarioId, setUsuarioId] = useState('');
 
-    // Cargar la sesion del usuario y buscar el ticket en el local storage
     useEffect(() => {
-        // Sacar datos del usuario que inicio sesion
-        const sesion = sessionRepository.read();
-        if (sesion?.nombre) {
-            setNombreUsuario(sesion.nombre);
-            const inits = sesion.nombre.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-            setInicialesUsuario(inits || 'CQ');
-        }
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (!usuario) throw new Error('Inicia sesión con una cuenta activa para consultar este ticket.');
 
-        // Jalamos la BD de tickets
-        const dbString = localStorage.getItem('mesa-ayuda:db');
-        if (!dbString) {
-            setError(true);
-            return;
-        }
+            const ticketPropio = ticketsRepository.findOne(
+                (ticket) =>
+                    (ticket.id === id || ticket.codigo === id) &&
+                    ticket.usuarioId === usuario.id,
+            );
+            if (!ticketPropio) throw new Error('El ticket no existe o no pertenece a tu cuenta.');
 
-        const db = JSON.parse(dbString);
-        const ticketsGuardados = db.tickets || [];
-
-        // Buscar si coincide por el ID o por el codigo
-        const ticketEncontrado = ticketsGuardados.find(t =>
-            t && (t.id?.toString() === id || t.codigo === id)
+            return obtenerAtencion(ticketPropio.codigo, usuario.id);
+        }).then(
+            (atencion) => {
+                if (activo) {
+                    setUsuarioId(usuario.id);
+                    setDetalle(atencion);
+                }
+            },
+            (reason) => {
+                if (activo) setErrorCarga(reason.message || 'No se pudo cargar el detalle del ticket.');
+            },
         );
 
-        if (ticketEncontrado) {
-            setTicket(ticketEncontrado);
+        return () => { activo = false; };
+    }, [id, usuario]);
 
-            // Cargar los comentarios de la bitacora filtrando las notas internas del tecnico
-            let listaComentarios = [];
-
-            if (Array.isArray(ticketEncontrado.bitacora) && ticketEncontrado.bitacora.length > 0) {
-                listaComentarios = ticketEncontrado.bitacora.filter(
-                    item => !item.esInterna && !item.esInterno && item.tipo !== 'nota_interna'
-                );
-            } else if (Array.isArray(ticketEncontrado.comentarios) && ticketEncontrado.comentarios.length > 0) {
-                listaComentarios = ticketEncontrado.comentarios.filter(
-                    item => !item.esInterna && !item.esInterno && item.tipo !== 'nota_interna'
-                );
-            } else {
-                // Si recien se crea y no hay bitacora, mostramos la descripcion inicial
-                const fechaReg = ticketEncontrado.fechaCreacion || ticketEncontrado.creadoEn || ticketEncontrado.fecha || new Date().toLocaleString();
-                listaComentarios = [
-                    {
-                        id: `bit-${Date.now()}`,
-                        autor: sesion?.nombre || 'Camila Quispe Ramos',
-                        rol: 'Usuario',
-                        iniciales: sesion?.nombre ? sesion.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CQ',
-                        fecha: fechaReg,
-                        texto: ticketEncontrado.descripcion || ticketEncontrado.asunto || 'Reporte inicial registrado.'
-                    }
-                ];
-            }
-
-            setBitacora(listaComentarios);
-        } else {
-            setError(true);
-        }
-    }, [id]);
-
-    // Agregar un nuevo comentario público
-    const handleEnviarComentario = (e) => {
+    const handleEnviarComentario = async (e) => {
         e.preventDefault();
-        if (!nuevoComentario.trim() || !ticket) return;
+        if (!nuevoComentario.trim() || !detalle || guardandoComentario) return;
 
-        const nuevaEntrada = {
-            id: `bit-${Date.now()}`,
-            autor: nombreUsuario,
-            rol: 'Usuario',
-            iniciales: inicialesUsuario,
-            fecha: new Date().toLocaleString('es-PE'),
-            texto: nuevoComentario.trim(),
-            esInterna: false
-        };
-
-        const bitacoraActualizada = [...bitacora, nuevaEntrada];
-        setBitacora(bitacoraActualizada);
-
-        // Guardar el comentario en el local storage
+        setGuardandoComentario(true);
+        setErrorComentario('');
         try {
-            const dbString = localStorage.getItem('mesa-ayuda:db');
-            if (dbString) {
-                const db = JSON.parse(dbString);
-                const index = db.tickets.findIndex(t => t.id?.toString() === ticket.id?.toString() || t.codigo === ticket.codigo);
-                if (index !== -1) {
-                    db.tickets[index].bitacora = db.tickets[index].bitacora 
-                        ? [...db.tickets[index].bitacora, nuevaEntrada]
-                        : bitacoraActualizada;
-                    localStorage.setItem('mesa-ayuda:db', JSON.stringify(db));
-                }
-            }
-        } catch (err) {
-            console.error("Error guardando comentario:", err);
+            const atencionActualizada = await agregarEntrada(
+                detalle.ticket.codigo,
+                { tipo: 'publico', mensaje: nuevoComentario },
+                usuarioId,
+            );
+            setDetalle(atencionActualizada);
+            setNuevoComentario('');
+        } catch (reason) {
+            setErrorComentario(reason.message || 'No se pudo guardar el comentario.');
+        } finally {
+            setGuardandoComentario(false);
         }
-
-        setNuevoComentario('');
     };
 
     const handleVolver = () => {
@@ -123,36 +89,88 @@ export const TicketDetail = () => {
         }
     };
 
-    if (error) {
+    if (errorCarga) {
         return (
             <div className="ticket-detail-container" style={{ textAlign: 'center', padding: '50px' }}>
                 <h2>No se encontró el ticket</h2>
-                <p>El ticket que buscas no existe o ha sido eliminado.</p>
+                <p>{errorCarga}</p>
                 <Button onClick={handleVolver}>Volver a mis tickets</Button>
             </div>
         );
     }
 
-    if (!ticket) return null;
+    if (!detalle) return <div className="ticket-detail-container">Cargando ticket...</div>;
 
-    const estadoSeguro = ticket.estado || 'Abierto';
-    const prioridadSegura = ticket.prioridad || 'Baja';
-    const estadoClase = estadoSeguro.toLowerCase().replace(' ', '-');
-    const prioridadClase = prioridadSegura.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    
-    const fechaMostrar = ticket.fechaCreacion || ticket.creadoEn || ticket.fecha || '-';
-    const fechaLimpia = String(fechaMostrar).split(',')[0];
+    const { ticket, bitacora, eventos, permisos } = detalle;
+    const estado = ticket.estado || 'abierto';
+    const prioridad = ticket.prioridad || 'baja';
+    const estadoEtiqueta = ESTADO_LABELS[estado] || estado;
+    const prioridadEtiqueta = PRIORIDAD_LABELS[prioridad] || prioridad;
+    const estadoClase = estado.replaceAll('_', '-');
+    const prioridadClase = prioridad.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const fechaLimpia = formatDateTime(ticket.creadoEn) || '—';
+    const estadosEnAtencion = ['en_atencion', 'en_espera', 'resuelto', 'cerrado'];
+    const pasoAsignado = Boolean(ticket.tecnico) || estadosEnAtencion.includes(estado);
+    const pasoAtencion = estadosEnAtencion.includes(estado);
+    const pasoResuelto = ['resuelto', 'cerrado'].includes(estado);
+    const tecnicoNombre = ticket.tecnico
+        ? `${ticket.tecnico.nombres} ${ticket.tecnico.apellidos}`.trim()
+        : 'Pendiente';
+    const asignacion = eventos.findLast((evento) => evento.tipo === 'asignacion');
+    const supervisorNombre = asignacion?.autor
+        ? `${asignacion.autor.nombres} ${asignacion.autor.apellidos}`.trim()
+        : 'El supervisor';
+    const puedeCancelar = !ticket.tecnico && ['abierto', 'reabierto'].includes(estado);
+    const puedeReabrir = estaDentroDelPlazoDeReapertura(ticket);
 
-    // Verificar en que estado esta para marcar los hitos de la linea de tiempo
-    const estadoLower = estadoSeguro.toLowerCase();
-    const tieneTecnico = !!(ticket.tecnicoAsignado || ticket.tecnicoNombre || ticket.asignadoA);
-    
-    const pasoAsignado = tieneTecnico || estadoLower === 'en atención' || estadoLower === 'en espera' || estadoLower === 'resuelto' || estadoLower === 'cerrado';
-    const pasoAtencion = estadoLower === 'en atención' || estadoLower === 'resuelto' || estadoLower === 'cerrado';
-    const pasoResuelto = estadoLower === 'resuelto' || estadoLower === 'cerrado';
+    const refrescarDetalle = async () => {
+        const actualizada = await obtenerAtencion(ticket.codigo, usuarioId);
+        setDetalle(actualizada);
+    };
 
-    const tecnicoNombre = ticket.tecnicoNombre || ticket.tecnicoAsignado || (pasoAsignado ? 'Técnico de soporte' : 'Pendiente');
-    const supervisorNombre = ticket.supervisorNombre || 'Lucía Mendoza Ríos';
+    const handleCancelarTicket = async () => {
+        const confirmado = await confirm({
+            title: '¿Cancelar este ticket?',
+            message: 'No podrás continuar su seguimiento después de cancelarlo.',
+            confirmText: 'Cancelar ticket',
+            cancelText: 'Mantener ticket',
+            variant: 'destructive',
+        });
+        if (!confirmado || guardandoAccion) return;
+
+        setGuardandoAccion(true);
+        setErrorAccion('');
+        setExitoAccion('');
+        try {
+            await cancelarTicket(ticket.id, usuarioId);
+            await refrescarDetalle();
+            setExitoAccion('El ticket fue cancelado.');
+        } catch (reason) {
+            setErrorAccion(reason.message || 'No se pudo cancelar el ticket.');
+        } finally {
+            setGuardandoAccion(false);
+        }
+    };
+
+    const handleReabrirTicket = async (event) => {
+        event.preventDefault();
+        if (guardandoAccion) return;
+
+        setGuardandoAccion(true);
+        setErrorAccion('');
+        setExitoAccion('');
+        try {
+            await reabrirTicket(ticket.id, motivoReapertura, usuarioId);
+            await refrescarDetalle();
+            setMotivoReapertura('');
+            setMostrarFormularioReapertura(false);
+            setExitoAccion('El ticket fue reabierto y volvió a la cola de atención.');
+        } catch (reason) {
+            setErrorAccion(reason.message || 'No se pudo reabrir el ticket.');
+        } finally {
+            setGuardandoAccion(false);
+        }
+    };
 
     return (
         <div className="ticket-detail-container">
@@ -166,77 +184,121 @@ export const TicketDetail = () => {
                 <div className="title-row">
                     <div className="title-with-badges">
                         <h1>{ticket.codigo}</h1>
-                        <span className={`priority-tag ${prioridadClase}`}>{prioridadSegura}</span>
-                        <span className={`status-tag ${estadoClase}`}>{estadoSeguro}</span>
+                        <span className={`priority-tag ${prioridadClase}`}>{prioridadEtiqueta}</span>
+                        <span className={`status-tag ${estadoClase}`}>{estadoEtiqueta}</span>
                     </div>
-                    <Button variant="secondary" onClick={() => document.getElementById('comentario-input')?.focus()}>
-                        Agregar información
-                    </Button>
+                    {permisos.comentar && (
+                        <Button variant="secondary" onClick={() => document.getElementById('comentario-input')?.focus()}>
+                            Agregar información
+                        </Button>
+                    )}
                 </div>
+                {puedeCancelar && (
+                    <Button variant="secondary" onClick={handleCancelarTicket} disabled={guardandoAccion}>
+                        Cancelar ticket
+                    </Button>
+                )}
+                {puedeReabrir && !mostrarFormularioReapertura && (
+                    <Button
+                        variant="secondary"
+                        onClick={() => setMostrarFormularioReapertura(true)}
+                        disabled={guardandoAccion}
+                    >
+                        Reabrir ticket
+                    </Button>
+                )}
+                {estado === 'cerrado' && !puedeReabrir && (
+                    <p>El plazo de {DIAS_PLAZO_REAPERTURA} días para reabrir este ticket ya venció.</p>
+                )}
+                {errorAccion && <p role="alert">{errorAccion}</p>}
+                {exitoAccion && <p role="status">{exitoAccion}</p>}
+                {mostrarFormularioReapertura && puedeReabrir && (
+                    <form className="add-comment-form" onSubmit={handleReabrirTicket}>
+                        <label htmlFor="motivo-reapertura">MOTIVO DE REAPERTURA</label>
+                        <textarea
+                            id="motivo-reapertura"
+                            rows={3}
+                            maxLength={600}
+                            required
+                            value={motivoReapertura}
+                            onChange={(event) => setMotivoReapertura(event.target.value)}
+                            placeholder="Describe por qué el problema necesita atención nuevamente."
+                        />
+                        <Button type="submit" variant="primary" disabled={guardandoAccion}>
+                            {guardandoAccion ? 'Reabriendo…' : 'Confirmar reapertura'}
+                        </Button>
+                    </form>
+                )}
 
-                <p className="ticket-subtitle">{ticket.asunto || ticket.descripcion}</p>
+                <p className="ticket-subtitle">{ticket.asunto}</p>
+                {ticket.descripcion && <p>{ticket.descripcion}</p>}
             </div>
 
             <div className="ticket-detail-grid">
-                
-                {/* Comentarios y bitacora */}
                 <div className="bitacora-card">
                     <h2>Bitácora de la atención</h2>
+                    {errorComentario && <p role="alert">{errorComentario}</p>}
                     <div className="comments-list">
                         {bitacora.map((item) => (
-                            <div key={item.id || Math.random()} className="comment-item">
-                                <div className={`avatar-badge ${(item.rol || 'usuario').toLowerCase()}`}>
-                                    {item.iniciales || 'TU'}
+                            <div key={item.id} className="comment-item">
+                                <div className={`avatar-badge ${(item.autor?.rol || 'usuario').toLowerCase()}`}>
+                                    {getInitials(item.autor?.nombres, item.autor?.apellidos) || 'US'}
                                 </div>
                                 <div className="comment-content">
                                     <div className="comment-meta">
-                                        <strong>{item.autor || 'Usuario'}</strong>
-                                        <span className="role-label">{item.rol || 'Usuario'}</span>
+                                        <strong>
+                                            {`${item.autor?.nombres || ''} ${item.autor?.apellidos || ''}`.trim() || 'Usuario'}
+                                        </strong>
+                                        <span className="role-label">{ROL_LABELS[item.autor?.rol] || 'Usuario'}</span>
                                         <span className="dot-separator">·</span>
-                                        <span className="date-label">{item.fecha}</span>
+                                        <span className="date-label">{formatDateTime(item.creadoEn)}</span>
                                     </div>
-                                    <p className="comment-text">{item.texto}</p>
+                                    <p className="comment-text">{item.mensaje}</p>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    <form className="add-comment-form" onSubmit={handleEnviarComentario}>
-                        <label htmlFor="comentario-input">AGREGAR INFORMACIÓN</label>
-                        <textarea
-                            id="comentario-input"
-                            rows={3}
-                            placeholder="Escribe aquí si tienes un dato nuevo que ayude al técnico..."
-                            value={nuevoComentario}
-                            onChange={(e) => setNuevoComentario(e.target.value)}
-                        />
-                        <div className="form-footer-row">
-                            <Button type="submit" variant="primary">
-                                Enviar comentario
-                            </Button>
-                            <span className="disclaimer-text">
-                                Las notas internas del equipo técnico no se muestran aquí.
-                            </span>
-                        </div>
-                    </form>
+                    {permisos.comentar && estado !== 'cerrado' ? (
+                        <form className="add-comment-form" onSubmit={handleEnviarComentario}>
+                            <label htmlFor="comentario-input">AGREGAR INFORMACIÓN</label>
+                            <textarea
+                                id="comentario-input"
+                                rows={3}
+                                maxLength={600}
+                                placeholder="Escribe aquí si tienes un dato nuevo que ayude al técnico..."
+                                value={nuevoComentario}
+                                onChange={(e) => setNuevoComentario(e.target.value)}
+                            />
+                            <div className="form-footer-row">
+                                <Button type="submit" variant="primary" disabled={guardandoComentario || !nuevoComentario.trim()}>
+                                    {guardandoComentario ? 'Enviando…' : 'Enviar comentario'}
+                                </Button>
+                                <span className="disclaimer-text">
+                                    Las notas internas del equipo técnico no se muestran aquí.
+                                </span>
+                            </div>
+                        </form>
+                    ) : (
+                        <p className="disclaimer-text">Este ticket ya no admite comentarios.</p>
+                    )}
                 </div>
 
-                {/* Lateral con resumen del ticket y linea de tiempo */}
                 <aside className="detail-sidebar">
                     <div className="sidebar-card">
                         <h3>Datos del reporte</h3>
                         <div className="report-data-list">
                             <div className="data-row">
                                 <span className="data-label">Categoría</span>
-                                <span className="data-value">{ticket.categoriaNombre || ticket.categoria || 'General'}</span>
+                                <span className="data-value">{ticket.categoria?.nombre || 'General'}</span>
                             </div>
                             <div className="data-row">
                                 <span className="data-label">Subcategoría</span>
-                                <span className="data-value">{ticket.subcategoriaNombre || ticket.subcategoria || '-'}</span>
+                                <span className="data-value">{ticket.subcategoria?.nombre || '-'}</span>
                             </div>
                             <div className="data-row">
                                 <span className="data-label">Ambiente</span>
-                                <span className="data-value highlight">{ticket.ambiente || ticket.ambienteCodigo || '-'}</span>
+                                <span className="data-value highlight">{ticket.ambiente?.codigo || '-'}</span>
                             </div>
                             <div className="data-row">
                                 <span className="data-label">Registrado</span>
@@ -248,7 +310,7 @@ export const TicketDetail = () => {
                             </div>
                             <div className="data-row">
                                 <span className="data-label">Atención esperada</span>
-                                <span className="data-value">{ticket.tiempoEsperado || 'No especificado'}</span>
+                                <span className="data-value">{detalle.tiempos.esperadoHoras} h</span>
                             </div>
                         </div>
                     </div>

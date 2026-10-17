@@ -20,6 +20,9 @@ import NotFoundPage from '../pages/errors/NotFoundPage.jsx'
 import { HISTORIAS } from '../pages/placeholders/historias.js'
 import PlaceholderPage from '../pages/placeholders/PlaceholderPage.jsx'
 import LandingPage from '../pages/public/LandingPage.jsx'
+import EncuestaPage from '../pages/encuestas/EncuestaPage.jsx'
+import MisEncuestasPage from '../pages/encuestas/MisEncuestasPage.jsx'
+import SatisfaccionSupervisorPage from '../pages/supervisor/SatisfaccionSupervisorPage.jsx'
 import SupervisorHomePage from '../pages/supervisor/SupervisorHomePage.jsx'
 import TechnicianHomePage from '../pages/technician/TechnicianHomePage.jsx'
 import GuestOnly from './GuestOnly.jsx'
@@ -27,7 +30,7 @@ import RequireAuth from './RequireAuth.jsx'
 import RequireRole from './RequireRole.jsx'
 import { PRIVATE_ROUTES } from './routeAccess.js'
 import { ROUTES } from './routePaths.js'
-/*h3-imports de tickets */
+
 import { MyTickets } from '../pages/tickets/MyTickets.jsx'   
 import { TicketDetail } from '../pages/tickets/TicketDetail.jsx' 
 import { NewTicket } from '../pages/tickets/NewTicket.jsx'
@@ -38,14 +41,16 @@ const pendiente = (title, historia) => <PlaceholderPage title={title} pendiente=
 /** Página de cada ruta privada. Quién puede verla lo define la tabla de routeAccess.js. */
 const PRIVATE_PAGES = {
   [ROUTES.usuarioInicio]: <Navigate to={ROUTES.usuarioTickets} replace />,
-  // h3-tickets
+
+  
   [ROUTES.usuarioNuevoTicket]: <NewTicket />,  
   [ROUTES.usuarioTickets]: <MyTickets />,      
   [ROUTES.usuarioTicketDetalle]: <TicketDetail />, 
   [ROUTES.usuarioTicketConfirmacion]: <TicketConfirmation />, 
 
-  [ROUTES.usuarioEncuestaPendiente]: pendiente('Encuesta pendiente', HISTORIAS.encuestas),
-  [ROUTES.usuarioEncuestas]: pendiente('Mis encuestas', HISTORIAS.encuestas),
+  [ROUTES.usuarioEncuestas]: <MisEncuestasPage />,
+  [ROUTES.usuarioEncuestaPendiente]: <EncuestaPage />,
+  [ROUTES.usuarioEncuestaEvaluar]: <EncuestaPage />,
 
   [ROUTES.tecnicoBandeja]: <TechnicianHomePage />,
   [ROUTES.tecnicoHistorial]: <HistorialAtencionPage />,
@@ -61,6 +66,7 @@ const PRIVATE_PAGES = {
   [ROUTES.supervisorCategoriaEditar]: <CategoriaFormPage />,
   [ROUTES.supervisorAmbientes]: <UbicacionesPage />,
   [ROUTES.supervisorTecnicos]: <TecnicosCategoriaPage />,
+  [ROUTES.supervisorSatisfaccion]: <SatisfaccionSupervisorPage />,
   [ROUTES.supervisorUsuarios]: pendiente('Usuarios', HISTORIAS.metricas),
 
   [ROUTES.miCuenta]: <AccountPage />,

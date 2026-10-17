@@ -14,7 +14,7 @@ export function etapasDe(estados, ahora = Date.now()) {
     const desde = Date.parse(evento.creadoEn)
     const siguiente = estados[indice + 1]
     const hasta = siguiente ? Date.parse(siguiente.creadoEn) : ahora
-    const cerrado = evento.estado === 'cerrado'
+    const cerrado = ['cerrado', 'cancelado'].includes(evento.estado)
     return {
       estado: evento.estado,
       desde: evento.creadoEn,

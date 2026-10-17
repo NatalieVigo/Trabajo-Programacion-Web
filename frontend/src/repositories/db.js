@@ -81,3 +81,8 @@ export function updateTables(names, operation) {
 export function resetDb() {
   saveDb(createSeedDb())
 }
+
+export const db = {
+  get: async (name) => readTable(name),
+  set: async (name, rows) => writeTable(name, rows),
+}

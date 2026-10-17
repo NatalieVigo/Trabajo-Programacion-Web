@@ -1,80 +1,32 @@
-import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button, TextInput, SelectInput } from "../../shared/components";
+import { useState, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Alert, Button, TextInput, SelectInput } from "../../shared/components";
 import { ROUTES, usuarioTicketDetallePath } from "../../routes/routePaths";
 import { ticketsRepository } from "../../repositories/tickets.repository.js";
-import { sessionRepository } from "../../repositories/session.repository.js";
-import { listar as listarCategorias } from "../../services/categorias.service.js";
+import { ambientesRepository, categoriasRepository, subcategoriasRepository } from "../../repositories/catalogo.repository.js";
+import { ESTADO_LABELS, PRIORIDAD_LABELS, formatDate } from "../../utils/format.js";
+import { esTicketEnCurso } from "../../services/ticketsEnCurso.js";
+import { useAuth } from "../../hooks/useAuth.js";
 import './MyTickets.css';
 
 export const MyTickets = () => {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { usuario } = useAuth();
 
-    // Sacamos los tickets del usuario logueado en la sesion
     const [tickets] = useState(() => {
-        const sesion = sessionRepository.read();
-        
-        if (!sesion || !sesion.usuarioId) {
-            return [];
-        }
-        
-        return ticketsRepository.findAll({ usuarioId: sesion.usuarioId });
+        return usuario?.id ? ticketsRepository.findAll({ usuarioId: usuario.id }) : [];
     });
 
-    // Mapeos de IDs a nombres para no mostrar cat-01 o amb-01 pelado
-    const [opcionesCategorias, setOpcionesCategorias] = useState([
-        { value: '', label: 'Categoría: todas' }
-    ]);
-    const [mapaCategorias, setMapaCategorias] = useState({});
-    const [mapaAmbientes, setMapaAmbientes] = useState({});
-
-    useEffect(() => {
-        // Cargar categorias desde el servicio para los combos
-        listarCategorias()
-            .then((listaCat) => {
-                if (!Array.isArray(listaCat)) return;
-
-                const mapaCat = {};
-                const opts = [{ value: '', label: 'Categoría: todas' }];
-
-                listaCat.forEach(cat => {
-                    const nombre = cat.nombre || cat.label;
-                    const val = cat.id || cat.value || nombre.toLowerCase();
-                    
-                    if (cat.id) mapaCat[cat.id] = nombre;
-
-                    if (!cat.categoriaPadreId && !cat.categoriaId && !cat.parentId) {
-                        if (!opts.some(o => o.label.toLowerCase() === nombre.toLowerCase())) {
-                            opts.push({ value: val, label: nombre });
-                        }
-                    }
-                });
-
-                setMapaCategorias(mapaCat);
-                setOpcionesCategorias(opts);
-            })
-            .catch(err => console.error("Error al cargar categorias:", err));
-
-        // Leer los ambientes guardados en el local storage
-        try {
-            const dbString = localStorage.getItem('mesa-ayuda:db');
-            if (dbString) {
-                const db = JSON.parse(dbString);
-                if (Array.isArray(db.ambientes)) {
-                    const mapaAmb = {};
-                    db.ambientes.forEach(a => {
-                        mapaAmb[a.id] = a.codigo || a.nombre || a.id;
-                    });
-                    setMapaAmbientes(mapaAmb);
-                }
-            }
-        } catch (e) {
-            console.error("Error leyendo ambientes:", e);
-        }
-    }, []);
+    const opcionesCategorias = [
+        { value: '', label: 'Categoría: todas' },
+        ...categoriasRepository.findAll().map(({ id, nombre }) => ({ value: id, label: nombre })),
+    ];
 
     // Inputs para controlar la busqueda y los combos
     const [busqueda, setBusqueda] = useState('');
+    const codigoBuscado = searchParams.get('codigo')?.trim() || '';
+    const busquedaActual = codigoBuscado || busqueda;
     const [filtroEstado, setFiltroEstado] = useState('');
     const [filtroCategoria, setFiltroCategoria] = useState('');
     const [fechaInicio, setFechaInicio] = useState('');
@@ -83,51 +35,25 @@ export const MyTickets = () => {
     const [paginaActual, setPaginaActual] = useState(1);
     const registrosPorPagina = 8;
 
-    // Conteo para la cabecera
     const totalTickets = tickets.length;
-    const ticketsEnCursoCount = useMemo(() => {
-        return tickets.filter(t => {
-            const estado = (t.estado || 'Abierto').toLowerCase();
-            return estado === 'abierto' || estado === 'en atención' || estado === 'en espera';
-        }).length;
-    }, [tickets]);
+    const ticketsEnCursoCount = useMemo(() => tickets.filter(esTicketEnCurso).length, [tickets]);
 
-    // Formateadores para armar las celdas de la tabla
     const obtenerCategoriaTexto = (t) => {
-        if (t.categoriaNombre && t.subcategoriaNombre) {
-            return `${t.categoriaNombre} · ${t.subcategoriaNombre}`;
-        }
-        if (t.categoriaNombre) return t.categoriaNombre;
-        
-        const catId = t.categoriaId || t.categoria;
-        if (mapaCategorias[catId]) return mapaCategorias[catId];
-        
-        return t.categoria || 'General';
+        const categoria = categoriasRepository.findById(t.categoriaId);
+        const subcategoria = subcategoriasRepository.findById(t.subcategoriaId);
+        return [categoria?.nombre || t.categoriaNombre || t.categoria, subcategoria?.nombre || t.subcategoriaNombre]
+            .filter(Boolean)
+            .join(' · ') || 'General';
     };
 
     const obtenerAmbienteTexto = (t) => {
-        if (t.ambiente) return t.ambiente;
-        if (t.ambienteCodigo) return t.ambienteCodigo;
-        if (t.ambienteId && mapaAmbientes[t.ambienteId]) return mapaAmbientes[t.ambienteId];
-        if (t.ambienteId) return t.ambienteId;
-        return '-';
+        const ambiente = ambientesRepository.findById(t.ambienteId);
+        return ambiente?.codigo || t.ambienteCodigo || t.ambiente || '-';
     };
 
     const obtenerFechaTexto = (t) => {
         const f = t.creadoEn || t.fechaCreacion || t.fecha || t.registrado;
-        if (!f) return 'Reciente';
-
-        if (typeof f === 'string' && (f.includes('T') || f.includes('-'))) {
-            const dateObj = new Date(f);
-            if (!isNaN(dateObj.getTime())) {
-                return dateObj.toLocaleDateString('es-PE', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                });
-            }
-        }
-        return String(f).split(',')[0];
+        return f ? formatDate(f) || String(f).split(',')[0] : 'Reciente';
     };
 
     const parseFecha = (t) => {
@@ -144,27 +70,25 @@ export const MyTickets = () => {
         return 0;
     };
 
-    // Aplicar los filtros seleccionados
     const ticketsFiltrados = useMemo(() => {
         return tickets.filter(ticket => {
             const codigo = ticket.codigo || '';
             const asunto = ticket.asunto || ticket.descripcion || '';
             const ambiente = obtenerAmbienteTexto(ticket);
-            const estado = ticket.estado || 'Abierto';
+            const estado = String(ticket.estado || 'abierto').toLowerCase().replaceAll(' ', '_');
             
             // Texto libre
             const coincideBusqueda =
-                codigo.toLowerCase().includes(busqueda.toLowerCase()) ||
-                asunto.toLowerCase().includes(busqueda.toLowerCase()) ||
-                ambiente.toLowerCase().includes(busqueda.toLowerCase());
+                codigo.toLowerCase().includes(busquedaActual.toLowerCase()) ||
+                asunto.toLowerCase().includes(busquedaActual.toLowerCase()) ||
+                ambiente.toLowerCase().includes(busquedaActual.toLowerCase());
 
             // Estado del ticket
             let coincideEstado = true;
-            const estadoLower = estado.toLowerCase();
-            if (filtroEstado === 'en curso') {
-                coincideEstado = (estadoLower === 'abierto' || estadoLower === 'en atención' || estadoLower === 'en espera');
+            if (filtroEstado === 'en_curso') {
+                coincideEstado = esTicketEnCurso(ticket);
             } else if (filtroEstado !== '') {
-                coincideEstado = estadoLower === filtroEstado.toLowerCase();
+                coincideEstado = estado === filtroEstado;
             }
 
             // Categoria principal o ID
@@ -172,9 +96,7 @@ export const MyTickets = () => {
             if (filtroCategoria !== '') {
                 const catFiltroLower = filtroCategoria.toLowerCase().trim();
                 const catNombreVal = obtenerCategoriaTexto(ticket).toLowerCase().trim();
-                const catIdVal = String(ticket.categoriaId || ticket.categoria || '').toLowerCase().trim();
-                
-                coincideCategoria = catNombreVal.includes(catFiltroLower) || catIdVal === catFiltroLower;
+                coincideCategoria = ticket.categoriaId === filtroCategoria || catNombreVal.includes(catFiltroLower);
             }
 
             // Rango de fechas
@@ -194,14 +116,29 @@ export const MyTickets = () => {
 
             return coincideBusqueda && coincideEstado && coincideCategoria && coincideFecha;
         });
-    }, [tickets, busqueda, filtroEstado, filtroCategoria, fechaInicio, fechaFin, mapaCategorias, mapaAmbientes]);
+    }, [tickets, busquedaActual, filtroEstado, filtroCategoria, fechaInicio, fechaFin]);
 
-    // Paginacion
     const totalPaginas = Math.ceil(ticketsFiltrados.length / registrosPorPagina) || 1;
+    const paginaVisible = Math.min(paginaActual, totalPaginas);
     const ticketsPaginados = useMemo(() => {
-        const inicio = (paginaActual - 1) * registrosPorPagina;
+        const inicio = (paginaVisible - 1) * registrosPorPagina;
         return ticketsFiltrados.slice(inicio, inicio + registrosPorPagina);
-    }, [ticketsFiltrados, paginaActual]);
+    }, [ticketsFiltrados, paginaVisible]);
+
+    const actualizarFiltro = (setter) => (event) => {
+        setter(event.target.value);
+        setPaginaActual(1);
+    };
+
+    const actualizarBusqueda = (event) => {
+        setBusqueda(event.target.value);
+        setPaginaActual(1);
+        if (searchParams.has('codigo')) {
+            const siguientesParametros = new URLSearchParams(searchParams);
+            siguientesParametros.delete('codigo');
+            setSearchParams(siguientesParametros, { replace: true });
+        }
+    };
 
     const limpiarFiltros = () => {
         setBusqueda('');
@@ -210,6 +147,11 @@ export const MyTickets = () => {
         setFechaInicio('');
         setFechaFin('');
         setPaginaActual(1);
+        if (searchParams.has('codigo')) {
+            const siguientesParametros = new URLSearchParams(searchParams);
+            siguientesParametros.delete('codigo');
+            setSearchParams(siguientesParametros, { replace: true });
+        }
     };
 
     const irANuevoTicket = () => {
@@ -221,15 +163,7 @@ export const MyTickets = () => {
     };
 
     const irADetalle = (ticketId) => {
-        if (ROUTES?.usuarioTicketDetalle) {
-            try {
-                navigate(usuarioTicketDetallePath(ticketId));
-            } catch(e) {
-                navigate(`/usuario/tickets/${ticketId}`);
-            }
-        } else {
-            navigate(`/usuario/tickets/${ticketId}`);
-        }
+        navigate(usuarioTicketDetallePath(ticketId));
     };
 
     return (
@@ -246,13 +180,19 @@ export const MyTickets = () => {
                 </Button>
             </div>
 
+            {codigoBuscado && (
+                <Alert variant="info">
+                    Buscaste el código <code>{codigoBuscado}</code>; estos son tus resultados.
+                </Alert>
+            )}
+
             {/* Filtros superiores */}
             <div className="filters-bar" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div className="search-box">
                     <TextInput
                         placeholder="Buscar ticket..."
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
+                        value={busquedaActual}
+                        onChange={actualizarBusqueda}
                     />
                 </div>
 
@@ -260,24 +200,28 @@ export const MyTickets = () => {
                 <div className="category-select-wrapper">
                     <SelectInput
                         value={filtroEstado}
-                        onChange={(e) => setFiltroEstado(e.target.value)}
+                        onChange={actualizarFiltro(setFiltroEstado)}
                         options={[
                             { value: '', label: 'Estado: todos' },
-                            { value: 'en curso', label: 'Estado: en curso' },
+                            { value: 'en_curso', label: 'Estado: en curso' },
                             { value: 'abierto', label: 'Abierto' },
-                            { value: 'en atención', label: 'En atención' },
+                            { value: 'en_atencion', label: 'En atención' },
+                            { value: 'en_espera', label: 'En espera' },
+                            { value: 'reabierto', label: 'Reabierto' },
                             { value: 'resuelto', label: 'Resuelto' },
-                            { value: 'cerrado', label: 'Cerrado' }
+                            { value: 'cerrado', label: 'Cerrado' },
+                            { value: 'cancelado', label: 'Cancelado' }
                         ]}
                     />
                 </div>
 
                 {/* Rango de fechas */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#fff', padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 
+                    '#fff', padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc' }}>
                     <input 
                         type="date" 
                         value={fechaInicio} 
-                        onChange={(e) => setFechaInicio(e.target.value)} 
+                        onChange={actualizarFiltro(setFechaInicio)}
                         style={{ border: 'none', outline: 'none', color: '#555' }}
                         title="Fecha Desde"
                     />
@@ -285,7 +229,7 @@ export const MyTickets = () => {
                     <input 
                         type="date" 
                         value={fechaFin} 
-                        onChange={(e) => setFechaFin(e.target.value)} 
+                        onChange={actualizarFiltro(setFechaFin)}
                         style={{ border: 'none', outline: 'none', color: '#555' }}
                         title="Fecha Hasta"
                     />
@@ -295,7 +239,7 @@ export const MyTickets = () => {
                 <div className="category-select-wrapper">
                     <SelectInput
                         value={filtroCategoria}
-                        onChange={(e) => setFiltroCategoria(e.target.value)}
+                        onChange={actualizarFiltro(setFiltroCategoria)}
                         options={opcionesCategorias}
                     />
                 </div>
@@ -343,13 +287,15 @@ export const MyTickets = () => {
                                         {obtenerFechaTexto(ticket)}
                                     </td>
                                     <td>
-                                        <span className={`priority-tag ${(ticket.prioridad || 'baja').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`}>
-                                            {ticket.prioridad || 'Baja'}
+                                        <span className={`priority-tag ${(ticket.prioridad || 
+                                            'baja').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`}>
+                                            {PRIORIDAD_LABELS[ticket.prioridad] || ticket.prioridad || 'Baja'}
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`status-tag ${(ticket.estado || 'abierto').toLowerCase().replace(' ', '-')}`}>
-                                            {ticket.estado || 'Abierto'}
+                                        <span className={`status-tag ${(ticket.estado || 
+                                            'abierto').toLowerCase().replaceAll(' ', '-').replaceAll('_', '-')}`}>
+                                            {ESTADO_LABELS[ticket.estado] || ticket.estado || 'Abierto'}
                                         </span>
                                     </td>
                                 </tr>
@@ -367,16 +313,16 @@ export const MyTickets = () => {
                 {/* Controles de paginacion */}
                 <div className="table-pagination">
                     <span className="pagination-info">
-                        Mostrando {ticketsFiltrados.length > 0 ? (paginaActual - 1) * registrosPorPagina + 1 : 0}–
-                        {Math.min(paginaActual * registrosPorPagina, ticketsFiltrados.length)} de {ticketsFiltrados.length} tickets
+                        Mostrando {ticketsFiltrados.length > 0 ? (paginaVisible - 1) * registrosPorPagina + 1 : 0}–
+                        {Math.min(paginaVisible * registrosPorPagina, ticketsFiltrados.length)} de {ticketsFiltrados.length} tickets
                     </span>
 
                     <div className="pagination-buttons">
                         <button
                             type="button"
                             className="btn-page"
-                            disabled={paginaActual === 1}
-                            onClick={() => setPaginaActual(p => Math.max(p - 1, 1))}
+                            disabled={paginaVisible === 1}
+                            onClick={() => setPaginaActual(p => Math.max(Math.min(p, totalPaginas) - 1, 1))}
                         >
                             Anterior
                         </button>
@@ -385,7 +331,7 @@ export const MyTickets = () => {
                             <button
                                 key={numPage}
                                 type="button"
-                                className={`btn-page ${paginaActual === numPage ? 'active' : ''}`}
+                                className={`btn-page ${paginaVisible === numPage ? 'active' : ''}`}
                                 onClick={() => setPaginaActual(numPage)}
                             >
                                 {numPage}
@@ -395,8 +341,8 @@ export const MyTickets = () => {
                         <button
                             type="button"
                             className="btn-page"
-                            disabled={paginaActual === totalPaginas}
-                            onClick={() => setPaginaActual(p => Math.min(p + 1, totalPaginas))}
+                            disabled={paginaVisible === totalPaginas}
+                            onClick={() => setPaginaActual(p => Math.min(Math.min(p, totalPaginas) + 1, totalPaginas))}
                         >
                             Siguiente
                         </button>

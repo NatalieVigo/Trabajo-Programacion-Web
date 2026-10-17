@@ -1,5 +1,5 @@
-import { createReadOnlyRepository } from './createRepository.js'
+import { createReadOnlyRepository, createRepository } from './createRepository.js'
 
-// Entidades de HU-3 (tickets) y HU-6 (encuestas): HU-1 solo las lee para sus contadores.
-export const ticketsRepository = createReadOnlyRepository('tickets')
+// HU-3 es responsable de crear tickets; las demás historias consumen este mismo repositorio.
+export const ticketsRepository = createRepository('tickets')
 export const encuestasRepository = createReadOnlyRepository('encuestas')

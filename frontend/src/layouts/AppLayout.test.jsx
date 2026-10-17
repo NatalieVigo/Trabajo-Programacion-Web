@@ -179,9 +179,9 @@ describe('AppLayout · buscador de la cabecera', () => {
     await user.type(buscador(), ' tck-2026-00147 {Enter}')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Mis tickets' })).toBeInTheDocument()
-    expect(screen.getByText('TCK-2026-00147')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'TCK-2026-00147' })).toBeInTheDocument()
     expect(screen.getByText(/^Buscaste el código/)).toHaveTextContent(
-      'Buscaste el código TCK-2026-00147. El resultado aparecerá aquí cuando esta sección esté disponible.',
+      'Buscaste el código TCK-2026-00147; estos son tus resultados.',
     )
     expect(buscador()).toHaveValue('')
   })
