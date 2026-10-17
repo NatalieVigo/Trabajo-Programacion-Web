@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button, useConfirm } from "../../shared/components";
-import { ROUTES } from "../../routes/routePaths";
+import { encuestaEvaluarPath, ROUTES } from "../../routes/routePaths";
 import { ticketsRepository } from "../../repositories/tickets.repository.js";
 import { agregarEntrada, obtenerAtencion } from "../../services/atencion.service.js";
 import {
@@ -190,6 +190,14 @@ export const TicketDetail = () => {
                     {permisos.comentar && (
                         <Button variant="secondary" onClick={() => document.getElementById('comentario-input')?.focus()}>
                             Agregar información
+                        </Button>
+                    )}
+                    {['resuelto', 'cerrado'].includes(estado) && (
+                        <Button
+                            variant="primary"
+                            onClick={() => navigate(encuestaEvaluarPath(ticket.codigo))}
+                        >
+                            Responder encuesta
                         </Button>
                     )}
                 </div>
