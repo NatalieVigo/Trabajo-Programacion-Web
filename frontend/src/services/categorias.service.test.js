@@ -25,7 +25,7 @@ const nueva = {
 
 const fallo = (promise) => promise.catch((error) => error)
 
-/** Simula que HU-3 ya guarda la subcategoría de los tickets: el catálogo la lee si existe. */
+// como si HU-3 ya guardara la subcategoría del ticket
 function marcarSubcategoria(ticketId, subcategoriaId) {
   writeTable(
     'tickets',
@@ -349,7 +349,7 @@ describe('categorias.service · eliminar', () => {
 
 describe('categorias.service · cambiarEstado', () => {
   it('desactiva una categoría: sus subcategorías dejan de estar disponibles sin cambiar su propio estado', async () => {
-    // Climatización tiene un ticket en curso: desactivarla exige confirmarlo (2.6).
+    // tiene un ticket en curso, por eso va confirmado
     await expect(cambiarEstado('cat-03', false, SUPERVISORA, { confirmado: true })).resolves.toMatchObject({
       tipo: 'categoria',
       activa: false,

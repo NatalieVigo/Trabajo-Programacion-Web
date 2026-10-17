@@ -3,16 +3,12 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { Alert, Button, Card, MessageCard } from '../../shared/components'
 import { origenDelTicket } from './origenDelTicket.js'
 
-/** Contenido mientras no hay ticket que mostrar, con el título de pestaña que le corresponde. */
 function Estado({ titulo, children }) {
   useDocumentTitle(titulo)
   return children
 }
 
-/**
- * Lo que muestran las páginas de un ticket mientras no lo tienen: la carga, el 404 si el `codigo` no es de ningún
- * ticket o el error con «Reintentar». `status` y `error` son los de useAsyncData.
- */
+// carga, 404 o error con reintentar mientras todavía no hay ticket
 export default function CargaDelTicket({ status, error, codigo, onReintentar }) {
   const { usuario } = useAuth()
   const origen = origenDelTicket(usuario.rol)

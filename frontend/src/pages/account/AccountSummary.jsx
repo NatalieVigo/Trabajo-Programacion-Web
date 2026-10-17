@@ -14,12 +14,11 @@ const FILAS_POR_ROL = {
     { clave: 'abiertosAhora', etiqueta: 'Abiertos ahora' },
     CUENTA_CREADA,
   ],
-  // p10 solo dibuja el resumen del usuario: técnico y supervisor muestran solo la fecha de creación de la cuenta.
+  // técnico y supervisor solo ven la fecha de creación
   tecnico: [CUENTA_CREADA],
   supervisor: [CUENTA_CREADA],
 }
 
-/** «Usuario · estudiante»: el rol y, si lo tiene, el vínculo con la universidad. */
 function describirPerfil({ rol, vinculo }) {
   return vinculo ? `${formatRol(rol)} · ${vinculo.toLowerCase()}` : formatRol(rol)
 }
@@ -92,10 +91,7 @@ function EncuestaPendiente({ encuesta }) {
   )
 }
 
-/**
- * Columna lateral de Mi cuenta (p10): tarjeta de perfil con el resumen de la cuenta según el rol y, para el usuario,
- * su encuesta pendiente (o un estado vacío si no tiene).
- */
+// Perfil con su resumen; al usuario también le muestra su encuesta pendiente.
 export default function AccountSummary({ usuario }) {
   const cargarResumen = useCallback(() => obtenerResumenCuenta(usuario.id), [usuario.id])
   const resumen = useAsyncData(cargarResumen)

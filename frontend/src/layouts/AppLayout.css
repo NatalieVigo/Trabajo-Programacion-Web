@@ -16,7 +16,6 @@
   min-width: 0;
 }
 
-/* Contenido centrado a 1200 px (p02) dentro del espacio que deja el menú lateral. */
 .app-layout__main {
   flex: 1;
   width: 100%;

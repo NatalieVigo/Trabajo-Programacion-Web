@@ -86,7 +86,7 @@
   align-items: center;
 }
 
-/* Con la sesión iniciada: la cuenta, como en la cabecera del panel, antes de sus dos acciones. */
+/* Con sesión iniciada */
 .public-header__cuenta {
   display: flex;
   align-items: center;
@@ -119,7 +119,7 @@
   display: none;
 }
 
-/* La cabecera completa necesita unos 1010 px: entre 1024 y 1199 px se reducen los espacios para que quepa con holgura. */
+/* se achican los espacios para que la cabecera entre completa */
 @media (max-width: 1199px) {
   .public-header__inner {
     gap: var(--space-6);

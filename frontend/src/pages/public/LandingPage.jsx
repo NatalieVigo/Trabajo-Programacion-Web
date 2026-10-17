@@ -7,14 +7,11 @@ import HeroIllustration from './HeroIllustration.jsx'
 import { DESTACADOS } from './landingContent.js'
 import './LandingPage.css'
 
-/**
- * 1.1 Landing pública (p03): presentación y los cuatro recuadros. «Cómo reportar» lleva a los recuadros y
- * «Categorías de servicio» y «Tiempos de atención», al recuadro que los resume.
- */
+// Landing pública. Los enlaces de la cabecera saltan a los recuadros de abajo.
 export default function LandingPage() {
   useDocumentTitle('Inicio')
   const { usuario } = useAuth()
-  // Con una cuenta de usuario abierta va directo al formulario; si no, pasa por el acceso (que lleva a cada rol a su vista).
+  // solo el usuario va directo al formulario, los demás pasan por el login
   const registrarTicket = usuario?.rol === 'usuario' ? ROUTES.usuarioNuevoTicket : ROUTES.iniciarSesion
 
   return (

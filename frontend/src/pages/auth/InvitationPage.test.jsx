@@ -25,7 +25,6 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-/** Espera a que carguen la invitación y las categorías que se pueden elegir como especialidad. */
 async function esperarFormulario() {
   const grupo = await screen.findByRole('group', { name: ESPECIALIDADES })
   await within(grupo).findByRole('button', { name: 'Audiovisuales' })
@@ -44,12 +43,10 @@ async function completarFormulario(user) {
   await user.click(chip('Redes y conectividad'))
 }
 
-/** Espera a que se muestre la landing tras volver al inicio. */
 async function esperarLanding() {
   expect(await screen.findByRole('heading', { level: 1, name: TITULO_LANDING })).toBeInTheDocument()
 }
 
-/** Con la cuenta activa se llega a «Iniciar sesión» con el correo de la invitación precargado. */
 async function esperarInicioDeSesion(correo) {
   expect(await screen.findByRole('heading', { level: 1, name: 'Iniciar sesión' })).toBeInTheDocument()
   expect(campo('Correo institucional')).toHaveValue(correo)

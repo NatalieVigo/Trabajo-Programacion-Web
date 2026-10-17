@@ -6,7 +6,6 @@ import { MAX_ESPECIALIDADES } from '../../utils/validators.js'
 
 const cargarCategoriasActivas = () => listarCategorias({ soloActivas: true })
 
-/** Texto de apoyo mientras no hay categorías que elegir. */
 function avisoCategorias({ status, data }) {
   if (status === 'loading') return 'Cargando categorías…'
   if (status === 'success' && data.length === 0) {
@@ -15,7 +14,7 @@ function avisoCategorias({ status, data }) {
   return undefined
 }
 
-/** Especialidad de un técnico o supervisor (p07): de una a tres categorías activas del catálogo (HU-2). */
+// de una a tres categorías activas, que salen del catálogo de HU-2
 export default function EspecialidadesField({ value, onChange, onBlur, error, className }) {
   const categorias = useAsyncData(cargarCategoriasActivas)
   const options = categorias.data?.map((categoria) => ({ value: categoria.id, label: categoria.nombre })) ?? []

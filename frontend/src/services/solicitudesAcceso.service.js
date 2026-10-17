@@ -6,12 +6,7 @@ import { ServiceError, validationError } from './ServiceError.js'
 
 const RECURSO_MAX_LENGTH = 120
 
-/**
- * Registra el pedido de acceso a una sección que el rol de la cuenta no puede ver (vista 403, HU-1 · 1.4), para que
- * lo revise Infraestructura y Servicios. `recurso` nombra la sección: «la cola de atención». Falla con
- * 401 UNAUTHENTICATED (la cuenta no existe o está bloqueada), 400 VALIDATION_ERROR (sin recurso) o
- * 409 ACCESS_REQUEST_EXISTS (la cuenta ya pidió acceso a ese mismo recurso).
- */
+// Pedido de acceso desde la vista 403 (HU-1). Lo revisa Infraestructura y Servicios.
 export function solicitar(usuarioId, recurso) {
   return simulateRequest(() => {
     const usuario = usuariosRepository.findById(usuarioId)

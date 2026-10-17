@@ -14,7 +14,7 @@ function resolveStorage() {
     window.localStorage.removeItem(probe)
     return window.localStorage
   } catch {
-    // Sin Web Storage (navegación privada estricta, cookies bloqueadas): los datos viven en memoria.
+    // sin localStorage (modo privado, cookies bloqueadas) se guarda en memoria
     const memory = new Map()
     return {
       getItem: (key) => memory.get(key) ?? null,
@@ -44,7 +44,7 @@ function saveDb(db) {
   return db
 }
 
-/** Lee la base guardada; si no existe, está corrupta o es de otra versión, la vuelve a sembrar. */
+// si no hay base, está dañada o es de otra versión, se vuelve a sembrar
 function loadDb() {
   const stored = parseStoredDb()
   return isCurrentDb(stored) ? stored : saveDb(createSeedDb())
@@ -56,7 +56,6 @@ function assertTable(name) {
   }
 }
 
-/** Devuelve una copia de las filas de la tabla: modificarlas no altera la base. */
 export function readTable(name) {
   assertTable(name)
   return loadDb()[name]
@@ -69,7 +68,7 @@ export function writeTable(name, rows) {
   saveDb(db)
 }
 
-/** Guarda varias tablas juntas: una operación en lote no deja cambios parciales. */
+// guarda todas las tablas juntas para no dejar cambios a medias
 export function updateTables(names, operation) {
   names.forEach(assertTable)
   const db = loadDb()

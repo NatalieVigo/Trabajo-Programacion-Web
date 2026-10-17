@@ -2,12 +2,7 @@ import { Link } from 'react-router-dom'
 import { cx } from '../../../utils/classNames.js'
 import './Button.css'
 
-/**
- * Botón del sistema de diseño: primary, secondary, tertiary, destructive y tertiary-destructive (acción destructiva
- * dentro de una fila, p33). Con `to` se renderiza como Link de React Router y con `href` como enlace
- * nativo (anclas de la misma página, mailto:). Mientras `loading` está activo queda deshabilitado y
- * muestra `loadingText`.
- */
+// Con to sale como Link y con href como enlace normal (mailto, anclas).
 export default function Button({
   variant = 'primary',
   size = 'md',

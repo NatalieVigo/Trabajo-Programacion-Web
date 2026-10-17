@@ -6,10 +6,7 @@ import { FormField, SelectInput, TextInput, useToast } from '../../shared/compon
 import { validatePabellon } from '../../utils/catalogoValidators.js'
 import FormularioModal from './FormularioModal.jsx'
 
-/**
- * Nuevo o editar pabellón (HU-2 · 2.2): su sede y su nombre. Al crearlo desde una sede, `sedeId` llega elegida.
- * `onGuardado` recibe el pabellón guardado.
- */
+// Si se crea desde una sede, sedeId ya viene elegida.
 export default function PabellonModal({ pabellon, sedeId, sedes, onClose, onGuardado }) {
   const { usuario } = useAuth()
   const toast = useToast()

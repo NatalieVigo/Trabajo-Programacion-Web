@@ -44,7 +44,7 @@ function normalizarAmbiente(valor) {
     .toLocaleLowerCase('es')
 }
 
-/** Ambiente del catálogo (HU-2) por su id o, para lo que se escribió a mano, por su código o nombre. */
+// busca por id o, si se escribió a mano, por código o nombre
 function buscarAmbienteCatalogo(valor) {
   if (!valor) return null
   const buscado = normalizarAmbiente(valor)
@@ -58,7 +58,7 @@ function buscarAmbienteCatalogo(valor) {
   )
 }
 
-/** Si el ticket es de ese ambiente: por su id o, en tickets antiguos sin id, por el código que se escribió. */
+// los tickets antiguos no tienen ambienteId, solo el código escrito
 function esDelAmbiente(ticket, ambiente) {
   if (ticket.ambienteId) return ticket.ambienteId === ambiente.id
   return normalizarAmbiente(ticket.ambienteCodigo) === normalizarAmbiente(ambiente.codigo)
@@ -75,7 +75,7 @@ function exigirUsuarioActivo(usuarioId) {
   return usuario
 }
 
-/** Ticket en curso del mismo ambiente y la misma categoría (enunciado HU-3), o null. */
+// mismo ambiente y misma categoría, todavía en curso
 function encontrarDuplicado({ ambienteId, ambienteCodigo, categoriaId }) {
   const ambiente = buscarAmbienteCatalogo(ambienteId || ambienteCodigo)
   if (!ambiente || !categoriaId) return null
@@ -121,7 +121,6 @@ function actualizarEstadoConHistorial(ticket, usuario, estado, motivo) {
   })
 }
 
-/** Indica si un ticket cerrado todavía está dentro del plazo de reapertura acordado (7 días). */
 export function estaDentroDelPlazoDeReapertura(ticket, ahora = Date.now()) {
   const cerradoEn = Date.parse(ticket?.cerradoEn ?? '')
   return (
@@ -132,19 +131,12 @@ export function estaDentroDelPlazoDeReapertura(ticket, ahora = Date.now()) {
   )
 }
 
-/**
- * Indica si ya hay un ticket en curso en el mismo ambiente y la misma categoría. No revela datos del ticket de otra
- * persona.
- */
+// solo dice si existe, sin revelar datos del ticket de otra persona
 export function existeTicketEnCurso({ ambienteId, ambienteCodigo, categoriaId }) {
   return simulateRequest(() => Boolean(encontrarDuplicado({ ambienteId, ambienteCodigo, categoriaId })))
 }
 
-/**
- * Crea un ticket con los ids y valores que consumen las historias de catálogo, cola y atención, y registra en el
- * historial su estado inicial «abierto» (HU-5). El ambiente debe ser uno del catálogo. La posible coincidencia se
- * informa al usuario, pero no impide enviar el reporte.
- */
+// Registra el ticket (HU-3). Un posible duplicado se avisa, pero no impide enviarlo.
 export function crearTicket(datos, usuarioId) {
   return simulateRequest(() => {
     const valores = {
@@ -192,7 +184,7 @@ export function crearTicket(datos, usuarioId) {
         asignadoA: null,
       }
       db.tickets.push(ticket)
-      // El historial de HU-5 empieza con el registro del ticket, como en el seed.
+      // el historial empieza con el registro, igual que en el seed
       db.historial.push({
         id: nextId('his', db.historial),
         ticketId: id,
@@ -212,7 +204,7 @@ export function crearTicket(datos, usuarioId) {
   })
 }
 
-/** Cancela un ticket propio que todavía no fue asignado. El llamador debe confirmar antes de invocar esta operación. */
+// la pantalla pide confirmación antes de llamar a esto
 export function cancelarTicket(ticketId, usuarioId) {
   return simulateRequest(() => {
     const { ticket, usuario } = exigirTicketPropio(ticketId, usuarioId)
@@ -235,7 +227,6 @@ export function cancelarTicket(ticketId, usuarioId) {
   })
 }
 
-/** Reabre un ticket propio hasta 7 días después del cierre, dejando el motivo en el historial compartido. */
 export function reabrirTicket(ticketId, motivo, usuarioId) {
   return simulateRequest(() => {
     const { ticket, usuario } = exigirTicketPropio(ticketId, usuarioId)

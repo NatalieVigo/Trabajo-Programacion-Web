@@ -17,12 +17,12 @@ import { useConsultaRefrescable } from './useConsultaRefrescable.js'
 import { useEliminacion } from './useEliminacion.js'
 import './Paginacion.css'
 
-/** Cada página muestra hasta 10 categorías, siempre con todas sus subcategorías. */
+// se pagina por categoría; cada una va con todas sus subcategorías
 const CATEGORIAS_POR_PAGINA = 10
 
 const contarSubcategorias = (categorias) => categorias.reduce((total, { subcategorias }) => total + subcategorias.length, 0)
 
-/** Resumen de la cabecera (p12): «7 categorías activas · 19 subcategorías · …». */
+// texto del resumen de arriba
 function resumirCatalogo(categorias) {
   const activas = categorias.filter((categoria) => categoria.activa).length
   return [
@@ -32,7 +32,6 @@ function resumirCatalogo(categorias) {
   ].join(' · ')
 }
 
-/** Resultado de activar o desactivar, con lo que significa para los tickets nuevos. */
 function mensajeDeEstado(elemento, categoria, activa) {
   const sujeto = `${nombreDeTipo(elemento.tipo, { mayuscula: true })} “${elemento.nombre}”`
   if (!activa) return `${sujeto} desactivada: ya no admite tickets nuevos.`
@@ -42,7 +41,6 @@ function mensajeDeEstado(elemento, categoria, activa) {
   return `${sujeto} activada: vuelve a admitir tickets nuevos.`
 }
 
-/** Carga, error o catálogo vacío (p15); con categorías muestra `children`. */
 function CatalogoContent({ status, total, onRetry, children }) {
   if (status === 'loading') {
     return (
@@ -81,10 +79,7 @@ function CatalogoContent({ status, total, onRetry, children }) {
   return children
 }
 
-/**
- * Categorías y subcategorías (HU-2 · 2.1, mockup p12): el catálogo en un árbol de dos niveles con su prioridad, tiempo
- * esperado, tickets en curso y estado. Desde aquí se crea, edita y elimina lo que no se usa.
- */
+// Catálogo de categorías y subcategorías (HU-2).
 export default function CategoriasPage() {
   const consulta = useConsultaRefrescable(listar)
   const { usuario } = useAuth()
@@ -110,17 +105,15 @@ export default function CategoriasPage() {
     setPagina(1)
   }
 
-  /** Descarga en CSV lo que muestran los filtros, de todas las páginas. */
+  // exporta todo lo filtrado, no solo la página actual
   function exportar() {
     descargarCsv(nombreDelArchivo(), catalogoACsv(filtradas))
     toast.success(`Catálogo exportado: ${pluralize(contarFilas(filtradas), 'fila', 'filas')}.`)
   }
 
-  /** Activa o desactiva la fila y devuelve el foco a su botón, que cambia de texto. */
   async function cambiarEstadoElemento(elemento, categoria) {
     const activa = !elemento.activa
     try {
-      // Desactivar algo con tickets en curso pide antes una confirmación explícita (2.6).
       const { cancelado } = await desactivarConfirmando({
         elemento,
         desactiva: !activa,
@@ -130,14 +123,14 @@ export default function CategoriasPage() {
           return cambiarEstado(elemento.id, activa, usuario.id, { confirmado })
         },
       })
-      // Aunque se cancele se vuelve a leer: la confirmación pudo pedirse porque los tickets en curso cambiaron.
+      // se recarga aunque se cancele, porque los tickets en curso pudieron cambiar
       await consulta.refrescar()
       if (!cancelado) toast.success(mensajeDeEstado(elemento, categoria, activa))
     } catch (error) {
       toast.error(error.message)
       if (error.status === 404) await consulta.refrescar()
     }
-    // El botón se habilita al terminar: se pinta antes de devolverle el foco, que el navegador soltó al deshabilitarlo.
+    // primero se repinta el botón para poder devolverle el foco
     flushSync(() => setCambiandoId(null))
     tablaRef.current?.querySelector(`[data-estado="${elemento.id}"]`)?.focus()
   }
@@ -152,7 +145,7 @@ export default function CategoriasPage() {
       eliminarEnServicio: () => eliminar(elemento.id, usuario.id),
       exito: `${nombreDeTipo(elemento.tipo, { mayuscula: true })} “${elemento.nombre}” eliminada correctamente.`,
     })
-    // Su botón ya no existe: el foco pasa a la tabla en vez de perderse.
+    // su botón desapareció, así que el foco pasa a la tabla
     tablaRef.current?.focus()
   }
 
@@ -196,7 +189,7 @@ export default function CategoriasPage() {
           </Card>
         )}
         <div className="catalogo-pie">
-          {/* Fuera de la tabla, para anunciar también cuando ningún resultado coincide. */}
+          {/* va fuera de la tabla para anunciarse también sin resultados */}
           <p className="catalogo-pie__conteo" role="status">
             Mostrando {contarFilas(visibles)} de {pluralize(contarFilas(filtradas), 'fila', 'filas')} ·{' '}
             {pluralize(filtradas.length, 'categoría', 'categorías')} y{' '}

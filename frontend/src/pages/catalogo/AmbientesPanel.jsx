@@ -13,7 +13,7 @@ import './Paginacion.css'
 
 const POR_PAGINA = 10
 
-/** Búsqueda y filtros por sede, pabellón y tipo (p14). El pabellón se elige entre los de la sede filtrada. */
+// el select de pabellón solo muestra los de la sede elegida
 function FiltrosAmbientes({ filtros, sedes, onChange, onLimpiar }) {
   const id = useId()
   const sedesVisibles = filtros.sedeId ? sedes.filter((sede) => sede.id === filtros.sedeId) : sedes
@@ -86,10 +86,7 @@ function FiltrosAmbientes({ filtros, sedes, onChange, onLimpiar }) {
   )
 }
 
-/**
- * Pestaña «Ambientes» de Sedes y ambientes (HU-2 · 2.2, p14): filtros, tabla paginada de 10 en 10 y eliminación de
- * los ambientes que no se usan. Crear y editar abren la ventana de la página (`onNuevo`, `onEditar`).
- */
+// Pestaña de ambientes (HU-2). Crear y editar abren el modal de la página.
 export default function AmbientesPanel({ ambientes, sedes, refrescar, onNuevo, onEditar, onIrASedes }) {
   const { usuario } = useAuth()
   const tablaRef = useRef(null)
@@ -115,7 +112,7 @@ export default function AmbientesPanel({ ambientes, sedes, refrescar, onNuevo, o
       eliminarEnServicio: () => eliminarAmbiente(ambiente.id, usuario.id),
       exito: `Ambiente “${ambiente.codigo}” eliminado correctamente.`,
     })
-    // Su botón ya no existe: el foco pasa a la tabla en vez de perderse.
+    // el botón ya no existe, así que el foco va a la tabla
     tablaRef.current?.focus()
   }
 
@@ -172,7 +169,7 @@ export default function AmbientesPanel({ ambientes, sedes, refrescar, onNuevo, o
         </Card>
       )}
       <div className="catalogo-pie">
-        {/* Fuera de la tabla, para anunciar también cuando ningún resultado coincide. */}
+        {/* fuera de la tabla para que se anuncie aunque no haya resultados */}
         <p className="catalogo-pie__conteo" role="status">
           {filtrados.length > 0
             ? `Mostrando ${desde}–${hasta} de ${pluralize(filtrados.length, 'ambiente', 'ambientes')}`

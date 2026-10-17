@@ -22,7 +22,6 @@ const PESTANAS = [
 
 const TECLAS_DE_PESTANA = { ArrowRight: 1, ArrowLeft: -1 }
 
-/** «11 ambientes registrados en 1 sede y 9 pabellones.» */
 function resumirUbicaciones({ ambientes, sedes }) {
   const pabellones = sedes.reduce((total, sede) => total + sede.pabellones.length, 0)
   return (
@@ -31,10 +30,7 @@ function resumirUbicaciones({ ambientes, sedes }) {
   )
 }
 
-/**
- * Sedes y ambientes (HU-2 · 2.2, mockups p14 y p15) en dos pestañas: los ambientes del campus y el registro de sedes y
- * pabellones. La pestaña elegida queda en la dirección (?vista=sedes). Las altas y ediciones se hacen en ventanas.
- */
+// Sedes y ambientes (HU-2). La pestaña elegida se guarda en la URL (?vista=sedes).
 export default function UbicacionesPage() {
   const consulta = useConsultaRefrescable(cargarUbicaciones)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -51,7 +47,7 @@ export default function UbicacionesPage() {
     setSearchParams(pestana === 'ambientes' ? {} : { vista: pestana }, { replace: true })
   }
 
-  /** Las flechas mueven entre pestañas, como en un grupo de pestañas nativo. */
+  // con las flechas se cambia de pestaña, como en un tablist normal
   function moverConFlechas(event) {
     const paso = TECLAS_DE_PESTANA[event.key]
     if (!paso) return

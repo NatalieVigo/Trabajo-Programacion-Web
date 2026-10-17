@@ -6,10 +6,6 @@ import { formatCountdown } from '../../utils/format.js'
 
 const ESPERA_REENVIO_SEGUNDOS = 45
 
-/**
- * Paso 2 de la recuperación (p09): confirma el envío del enlace. «Reenviar enlace» se habilita a los 45 segundos y
- * vuelve a contar tras cada reenvío; `onReenviado` recibe la nueva respuesta del servicio.
- */
 export default function RecoveryLinkSent({ correo, onReenviado }) {
   const toast = useToast()
   const espera = useCountdown(ESPERA_REENVIO_SEGUNDOS)
@@ -31,7 +27,7 @@ export default function RecoveryLinkSent({ correo, onReenviado }) {
     } finally {
       setReenviando(false)
     }
-    // El botón se deshabilitó al reenviar: el foco pasa al título en vez de perderse.
+    // el botón queda deshabilitado, así que el foco va al título
     tituloRef.current?.focus()
   }
 

@@ -19,7 +19,7 @@ describe('MisEncuestasPage (Vista 6.2)', () => {
   })
 
   it('permite navegar al formulario de edición al hacer clic en Editar encuesta', async () => {
-    // Registrar una encuesta reciente (con fecha actual) para que esté dentro del plazo de 7 días
+    // con fecha de hoy, así sigue dentro de los 7 días para editar
     await registrarEncuesta({
       codigoTicket: 'TCK-2026-00131',
       usuarioId: DEMO.usuario,

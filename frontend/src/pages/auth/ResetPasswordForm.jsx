@@ -8,11 +8,7 @@ import RecoveryStepper from './RecoveryStepper.jsx'
 
 const VALORES_INICIALES = { password: '', confirmacion: '' }
 
-/**
- * Paso 3 de la recuperación (p09): la contraseña nueva con su indicador de seguridad y la confirmación. Al guardarla
- * lleva a iniciar sesión con el correo precargado. Si el enlace deja de servir mientras se completa,
- * `onEnlaceInvalido` vuelve a comprobarlo para mostrar el aviso.
- */
+// Si el enlace deja de servir a medio camino, onEnlaceInvalido lo vuelve a revisar.
 export default function ResetPasswordForm({ token, correo, onEnlaceInvalido }) {
   const navigate = useNavigate()
   const toast = useToast()
@@ -36,7 +32,7 @@ export default function ResetPasswordForm({ token, correo, onEnlaceInvalido }) {
       <PageHeader title="Recuperar mi contraseña" />
       <form className="recovery-form" onSubmit={form.handleSubmit(guardar)} noValidate>
         <fieldset className="recovery-form__fields" disabled={form.isSubmitting}>
-          {/* Para que el gestor de contraseñas guarde la nueva con la cuenta correcta. */}
+          {/* para que el gestor de contraseñas la guarde con la cuenta correcta */}
           <input type="email" name="username" value={correo} autoComplete="username" readOnly hidden />
           <FormField label="Nueva contraseña" required error={form.errors.password}>
             <PasswordInput {...form.getFieldProps('password')} autoComplete="new-password" />

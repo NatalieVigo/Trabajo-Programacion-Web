@@ -1,12 +1,7 @@
 import { useState } from 'react'
 import { useConfirm, useToast } from '../../shared/components'
 
-/**
- * Eliminación con confirmación, común al catálogo: pregunta, llama al servicio, vuelve a leer los datos con
- * `refrescar` y notifica el resultado. Si el servicio responde que el elemento ya no existe (404) o que se usa (409),
- * muestra su mensaje y también vuelve a leer, porque los datos cambiaron en otro lado. `eliminandoId` indica qué fila
- * espera la respuesta. `eliminar` devuelve true si se eliminó.
- */
+// Confirma, elimina y recarga. Si ya no existe o está en uso, también recarga.
 export function useEliminacion(refrescar) {
   const confirm = useConfirm()
   const toast = useToast()

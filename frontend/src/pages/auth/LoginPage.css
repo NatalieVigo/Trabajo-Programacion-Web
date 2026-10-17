@@ -69,7 +69,7 @@
   text-align: center;
 }
 
-/* El aviso recibe el foco por programa para guiar al teclado; no es un control y no necesita el anillo de foco. */
+/* el foco se le pone por código, no hace falta el anillo */
 .login-alert:focus {
   outline: none;
 }

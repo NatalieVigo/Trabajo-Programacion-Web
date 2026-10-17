@@ -8,7 +8,7 @@ import { DEMO, renderApp } from '../../test/test-utils.jsx'
 const AHORA = '2026-10-01T15:00:00.000Z'
 const PILDORA = { usuario: 'Mis tickets abiertos', tecnico: 'Asignados a mí', supervisor: 'Cola sin asignar' }
 
-/** Lo reportó Camila y lo atiende Julio. */
+// lo reportó Camila y lo atiende Julio
 const EN_ATENCION = 'TCK-2026-00144'
 const EN_ESPERA = 'TCK-2026-00143'
 const RESUELTO = 'TCK-2026-00141'
@@ -26,7 +26,6 @@ const boton = (nombre) => screen.queryByRole('button', { name: nombre })
 const dialogo = (nombre) => screen.queryByRole('dialog', { name: nombre })
 const opcion = (nombre) => screen.getByRole('radio', { name: nombre })
 
-/** Abre el ticket en el panel del rol y espera su cabecera y el contador de la cabecera de la aplicación. */
 async function renderTicket(codigo, rol = 'tecnico') {
   const view = renderApp(`/${rol}/tickets/${codigo}`, { usuario: DEMO[rol] })
   await screen.findByRole('heading', { level: 1, name: codigo })
@@ -34,7 +33,6 @@ async function renderTicket(codigo, rol = 'tecnico') {
   return view
 }
 
-/** Cambia un ticket directamente en la base, como si lo hubiera hecho otra persona mientras la página está abierta. */
 function modificarTicket(ticketId, cambios) {
   writeTable(
     'tickets',
@@ -65,7 +63,6 @@ describe('TicketAtencionPage · bitácora', () => {
     expect(entradas()[1]).toHaveTextContent('Lucía Mendoza Ríos Supervisor · 29/09/2026 15:52')
     expect(entradas()[2]).toHaveTextContent('Julio Paredes Soto Técnico · 29/09/2026 16:30')
     expect(entradas()[2]).toHaveTextContent('Nota interna · no visible para el usuario')
-    // p25 no tiene ruta de navegación: el plazo va junto al estado. Atención esperada de 2 h, ya superada.
     expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
     expect(etiquetas()).toHaveTextContent('En atención. Vencido hace 1 d 16 h 20 min')
     expect(document.title).toBe('TCK-2026-00144 · Mesa de Ayuda')
@@ -201,7 +198,7 @@ describe('TicketAtencionPage · bitácora', () => {
     modificarTicket('tck-00144', { estado: 'cerrado', cerradoEn: AHORA })
     await user.click(screen.getByRole('button', { name: 'Publicar comentario' }))
 
-    // El mismo mensaje llega como notificación y, ya recargado el ticket, como motivo de la bitácora de solo lectura.
+    // sale en el toast y otra vez como motivo de solo lectura
     await waitFor(() =>
       expect(screen.getAllByText('El ticket está cerrado: su bitácora ya no admite entradas.')).toHaveLength(2),
     )

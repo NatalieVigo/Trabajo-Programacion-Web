@@ -6,10 +6,7 @@ import { NAVIGATION } from './navigation.js'
 import TicketSearch from './TicketSearch.jsx'
 import './AppHeader.css'
 
-/**
- * Cabecera de la sesión iniciada (p10): marca, buscador por código, píldora con el contador del rol y la persona
- * que ingresó. Por debajo de 1024 px muestra el botón «Menú» que abre el menú lateral.
- */
+// En pantallas chicas aparece el botón Menú que abre el menú lateral.
 export default function AppHeader({ usuario, contadores, menuId, menuOpen, onMenuToggle, menuButtonRef }) {
   const home = getRoleHome(usuario.rol)
   const { pill } = NAVIGATION[usuario.rol]

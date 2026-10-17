@@ -156,7 +156,7 @@
   color: var(--color-primary);
 }
 
-/* Destinos de los enlaces «Cómo reportar», «Categorías de servicio» y «Tiempos de atención» */
+/* secciones a las que saltan los enlaces de la cabecera */
 .highlights,
 .highlight {
   scroll-margin-top: calc(var(--public-header-height) + var(--space-4));

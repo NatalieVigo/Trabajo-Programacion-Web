@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import { LANDING_SECTIONS, ROUTES, landingSectionPath } from '../routes/routePaths.js'
 import './PublicFooter.css'
 
-/** Con una cuenta de usuario abierta, «Registrar» y «Seguir» llevan directo a su vista; si no, pasan por el acceso. */
+// sin sesión de usuario, estos enlaces pasan primero por el login
 const enlacesDeReporte = (conCuentaDeUsuario) => ({
   id: 'pie-reportar',
   title: 'Reportar',
@@ -24,7 +24,6 @@ const SECCION_AYUDA = {
   ],
 }
 
-/** Pie institucional (p03). */
 export default function PublicFooter() {
   const { usuario } = useAuth()
   const secciones = [enlacesDeReporte(usuario?.rol === 'usuario'), SECCION_AYUDA]

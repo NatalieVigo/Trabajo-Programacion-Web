@@ -4,7 +4,7 @@ import { Button, Card, PageHeader, SelectInput } from '../../shared/components'
 import { formatDate } from '../../utils/format.js'
 import './SatisfaccionSupervisorPage.css'
 
-/** Color del puntaje en los comentarios (p30): rojo hasta 2, ámbar en 3 y verde desde 4. */
+// rojo hasta 2, ámbar en 3 y verde desde 4
 function tonoDelPuntaje(puntaje) {
   if (puntaje <= 2) return 'bajo'
   if (puntaje === 3) return 'medio'

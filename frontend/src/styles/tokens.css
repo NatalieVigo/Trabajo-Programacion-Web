@@ -1,5 +1,5 @@
 :root {
-  /* Colores base (mockups p01–p02) */
+  /* Colores */
   --color-primary: #1f4e79;
   --color-primary-dark: #163a5a;
   --color-primary-soft: #e7eff6;
@@ -14,14 +14,13 @@
   --color-danger: #b4322b;
   --color-info: #3b6fa8;
 
-  /* Fondos suaves de mensajes (p05, p35) */
   --color-success-soft: #e8f3ec;
   --color-warning-soft: #fbf3e4;
   --color-danger-soft: #fbeaea;
   --color-info-soft: #e7eff6;
   --color-accent-soft: #fcf0e8;
 
-  /* Variantes para texto pequeño sobre fondos suaves (contraste AA ≥ 4.5:1) */
+  /* texto chico sobre fondos suaves, con contraste AA */
   --color-success-text: #1a7045;
   --color-warning-text: #8f5e14;
   --color-info-text: #33639a;
@@ -35,7 +34,6 @@
   --color-on-dark-muted: #c5d3e0;
   --color-on-dark-subtle: #a9bccf;
 
-  /* Prioridad y estados del ticket */
   --color-priority-critica: #b4322b;
   --color-priority-alta: #d2601a;
   --color-priority-media: #b7791f;
@@ -67,7 +65,7 @@
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
 
-  /* Espaciado (múltiplos de 4 px) */
+  /* Espaciado */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -79,13 +77,12 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* Forma y elevación: radio de 4 px en todo, sombras solo en modales y desplegables */
   --radius: 4px;
   --shadow-overlay: 0 12px 32px rgb(20 28 36 / 0.16);
   --focus-ring: 2px solid var(--color-primary);
   --focus-offset: 2px;
 
-  /* Medidas de layout */
+  /* Layout */
   --content-max-width: 1200px;
   --page-gutter: var(--space-6);
   --public-header-height: 64px;

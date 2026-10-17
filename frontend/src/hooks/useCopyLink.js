@@ -3,10 +3,7 @@ import { useToast } from '../shared/components'
 
 const AVISO_MANUAL_MS = 15000
 
-/**
- * Devuelve `copiar(enlace)`: lo copia al portapapeles y lo notifica. Si el navegador no lo permite (sin HTTPS o sin
- * permiso), la notificación muestra el enlace, durante más tiempo que de costumbre, para copiarlo a mano.
- */
+// Si el navegador no deja copiar, se muestra el enlace un rato más para copiarlo a mano.
 export function useCopyLink() {
   const toast = useToast()
 

@@ -18,21 +18,15 @@ import HistorialReciente from './HistorialReciente.jsx'
 import TicketCabecera from './TicketCabecera.jsx'
 import './TicketAtencionPage.css'
 
-/**
- * El ticket ya cargado, en una sola vista (p25): su cabecera con el plazo y las acciones de quien lo atiende; a la
- * izquierda, la espera en curso o el desenlace y la bitácora; a la derecha, los datos del reporte, el ambiente y el
- * historial reciente.
- */
 function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
   const { usuario } = useAuth()
   const { ticket, espera, tiempos, desenlace, eventos, permisos } = atencion
   const rutaDelHistorial = ticketHistorialPath(usuario.rol, ticket.codigo)
-  // Diálogo abierto: 'estado' (cambiar estado), 'cierre' (cerrar ticket) o null.
+  // 'estado', 'cierre' o null
   const [dialogo, setDialogo] = useState(null)
   const cerrarDialogo = () => setDialogo(null)
   useDocumentTitle(ticket.codigo)
 
-  /** Cierra el diálogo y aplica `siguiente` a la página: la atención actualizada o la orden de volver a cargarla. */
   function alTerminar(siguiente) {
     return (...args) => {
       cerrarDialogo()
@@ -93,10 +87,7 @@ function AtencionDeTicket({ atencion, onActualizada, onDesactualizada }) {
   )
 }
 
-/**
- * /tecnico/tickets/:codigo y /supervisor/tickets/:codigo (HU-5, mockup p25): la vista consolidada de un ticket, con
- * los datos del reporte, la bitácora y el desenlace. Si el código no corresponde a ningún ticket, lo indica con un 404.
- */
+// Vista del ticket para técnico y supervisor (HU-5). Si no existe, muestra el 404.
 export default function TicketAtencionPage() {
   const { codigo } = useParams()
   const { usuario } = useAuth()
@@ -108,7 +99,7 @@ export default function TicketAtencionPage() {
   }
   return (
     <AtencionDeTicket
-      // La clave reinicia la bitácora (su filtro y lo que se estaba escribiendo) al pasar de un ticket a otro.
+      // con la key se reinicia la bitácora al cambiar de ticket
       key={data.ticket.id}
       atencion={data}
       onActualizada={(actualizada) => updateData(() => actualizada)}

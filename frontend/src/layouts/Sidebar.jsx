@@ -7,11 +7,7 @@ import LogoutButton from './LogoutButton.jsx'
 import { NAVIGATION } from './navigation.js'
 import './Sidebar.css'
 
-/**
- * Menú lateral del rol (p10, p22, p24) con sus contadores y el bloque «Mi cuenta» / «Cerrar sesión». Desde 1024 px
- * está siempre visible; por debajo es un panel que abre el botón «Menú» de la cabecera y que se cierra con Esc, al
- * tocar el fondo, al navegar (AppLayout) o cuando el foco sale de él.
- */
+// En móvil es un panel que se cierra con Esc, tocando el fondo o si sale el foco.
 export default function Sidebar({ id, rol, contadores, open, onClose, menuButtonRef }) {
   const { title, items } = NAVIGATION[rol]
   const panelRef = useRef(null)

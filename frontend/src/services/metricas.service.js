@@ -36,7 +36,7 @@ function exigirSupervisor(usuarioId) {
   }
 }
 
-/** Técnico asignado al resolver, sin atribuir el resultado a una reasignación posterior. */
+// el técnico que lo tenía al resolverlo, aunque luego lo reasignen
 function tecnicoEn(ticket, eventos, instante) {
   const asignaciones = eventos.filter((e) => e.tipo === 'asignacion' && e.creadoEn <= instante)
   return asignaciones.length ? asignaciones.at(-1).asignadoA : ticket.asignadoA
@@ -70,7 +70,7 @@ function actividad(ahora) {
 
 function resumenPeriodo(tickets, rango) {
   const registrados = tickets.filter((t) => enRango(t.creadoEn, rango))
-  // Una reapertura posterior no borra los resultados históricos. Cada ticket cuenta una sola vez por periodo.
+  // reabrir no borra lo ya resuelto; cada ticket cuenta una vez por periodo
   const resueltos = tickets.flatMap((t) => {
     const resolucion = t.resoluciones.filter((r) => enRango(r.creadoEn, rango)).at(-1)
     return resolucion ? [{ ...t, resueltoEn: resolucion.creadoEn, tecnicoResolutorId: resolucion.tecnicoId, atencionMs: resolucion.atencionMs }] : []
@@ -80,7 +80,7 @@ function resumenPeriodo(tickets, rango) {
     fueraDePlazo: registrados.filter((t) => t.fueraDePlazo).length }
 }
 
-/** Registro por fecha de creación; tiempos por resolución. Abiertos y sin asignar son cifras actuales. */
+// abiertos y sin asignar son cifras de ahora, no del periodo
 export function obtenerTablero(usuarioId, rango) {
   return simulateRequest(() => {
     exigirSupervisor(usuarioId)
@@ -111,7 +111,7 @@ export function obtenerTablero(usuarioId, rango) {
   })
 }
 
-/** Carga actual frente a resultados y encuestas del periodo seleccionado (HU-7.2). */
+// carga actual de cada técnico junto a sus resultados del periodo
 export function obtenerCargaTecnicos(usuarioId, rango) {
   return simulateRequest(() => {
     exigirSupervisor(usuarioId)

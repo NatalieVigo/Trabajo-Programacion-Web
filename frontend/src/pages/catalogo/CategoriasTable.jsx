@@ -4,7 +4,7 @@ import { cx } from '../../utils/classNames.js'
 import { formatHoras } from './catalogoFormat.js'
 import './CatalogoTable.css'
 
-/** Activa o inactiva; una subcategoría activa de una categoría inactiva no admite tickets nuevos y se indica. */
+// si la categoría padre está inactiva, la subcategoría no recibe tickets y se avisa
 function Estado({ elemento }) {
   if (!elemento.activa) return <Badge tone="neutral">Inactiva</Badge>
   if (elemento.tipo === 'subcategoria' && !elemento.disponible) {
@@ -74,11 +74,7 @@ function FilaCatalogo({ elemento, categoria, ocupadoId, accion, onCambiarEstado,
   )
 }
 
-/**
- * Catálogo en un árbol de dos niveles (p12): cada categoría encabeza su grupo de filas y debajo, con sangría, sus
- * subcategorías. Cada fila se edita, se activa o desactiva y, si no se usa, se elimina. `ocupado` ({ id, accion })
- * indica la fila que espera una respuesta. `ref` llega a la tabla, para devolverle el foco.
- */
+// un tbody por categoría; ocupado marca la fila que espera respuesta
 export default function CategoriasTable({ ref, categorias, ocupado, onCambiarEstado, onEliminar }) {
   const filaProps = { ocupadoId: ocupado?.id, accion: ocupado?.accion, onCambiarEstado, onEliminar }
 

@@ -15,7 +15,7 @@
   gap: var(--space-2);
 }
 
-/* Cada prioridad es un radio con forma de botón (p13): el radio sigue siendo el control para el teclado y el lector. */
+/* Radios con forma de botón */
 .prioridad-field__option {
   position: relative;
   display: inline-flex;

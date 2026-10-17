@@ -24,7 +24,7 @@ const BLOQUEO_MS = BLOQUEO_MINUTOS * 60 * 1000
 const VIGENCIA_ENLACE_MS = 30 * 60 * 1000
 const CORREO_SOPORTE = 'soporte.campus@ulima.edu.pe'
 
-// Con un correo sin cuenta también se calcula un hash (con una sal de relleno): el tiempo de respuesta no lo delata.
+// sal de relleno para hashear igual con correos sin cuenta y que el tiempo no los delate
 const SAL_SIN_CUENTA = '0'.repeat(32)
 
 function credencialesIncorrectas(intentosRestantes) {
@@ -59,7 +59,7 @@ function cuentaBloqueada(motivo) {
 
 const bloqueoVigente = ({ bloqueadoHasta }, ahora) => Boolean(bloqueadoHasta) && Date.parse(bloqueadoHasta) > ahora
 
-/** Suma un intento fallido; el quinto bloquea 15 minutos. Tras un bloqueo ya vencido se vuelve a contar desde cero. */
+// el quinto fallo bloquea; después de un bloqueo vencido se cuenta desde cero
 function siguienteIntento({ intentosFallidos = 0, bloqueadoHasta = null }, ahora) {
   const intentos = (bloqueadoHasta ? 0 : intentosFallidos) + 1
   return {
@@ -80,10 +80,7 @@ function registrarFallo(usuario, ahora) {
   return errorDelIntento(intento)
 }
 
-/**
- * Los intentos con un correo sin cuenta se guardan, cuentan y bloquean igual que los de una cuenta real (también
- * tras recargar la aplicación) para que la respuesta no revele qué correos están registrados.
- */
+// los correos sin cuenta se bloquean igual, así no se revela cuáles están registrados
 function registrarFalloSinCuenta(correo, ahora) {
   const registro = intentosAccesoRepository.findByCorreo(correo)
   if (registro && bloqueoVigente(registro, ahora)) return cuentaBloqueadaTemporalmente(registro.bloqueadoHasta)
@@ -96,13 +93,7 @@ function registrarFalloSinCuenta(correo, ahora) {
   return errorDelIntento(intento)
 }
 
-/**
- * Inicio de sesión (HU-1 · 1.3). Devuelve { usuario } sin credenciales y guarda la sesión: en este equipo si
- * `recordar`, si no solo en la pestaña. Cinco intentos fallidos seguidos bloquean la cuenta 15 minutos y un ingreso
- * correcto reinicia el contador. Falla con 400 VALIDATION_ERROR, 401 INVALID_CREDENTIALS (details.intentosRestantes;
- * también si el correo no tiene cuenta, sin revelarlo), 423 ACCOUNT_LOCKED (details.bloqueadoHasta) o
- * 403 ACCOUNT_BLOCKED (details.motivo), este último solo con la contraseña correcta.
- */
+// Login (HU-1). El bloqueo del supervisor solo se avisa con la contraseña correcta.
 export function iniciarSesion(credenciales) {
   return simulateRequest(async () => {
     const { correo, password, recordar = false } = credenciales ?? {}
@@ -115,7 +106,7 @@ export function iniciarSesion(credenciales) {
       cuenta?.passwordSalt ?? SAL_SIN_CUENTA,
       cuenta?.passwordHash ?? '',
     )
-    // Tras el hash ya no media ningún await: el contador se actualiza sobre una lectura fresca de la cuenta.
+    // se relee la cuenta después del await para no pisar otro intento
     const ahora = Date.now()
     const usuario = cuenta && usuariosRepository.findById(cuenta.id)
     if (!usuario) throw registrarFalloSinCuenta(normalizeCorreo(correo), ahora)
@@ -138,10 +129,6 @@ export function cerrarSesion() {
   })
 }
 
-/**
- * Restaura la sesión guardada en este navegador: { usuario } o null si no hay sesión válida. Una sesión cuya cuenta
- * ya no existe o fue bloqueada por el supervisor se descarta.
- */
 export function obtenerSesion() {
   return simulateRequest(() => {
     const sesion = sessionRepository.read()
@@ -155,15 +142,12 @@ export function obtenerSesion() {
   })
 }
 
-/** Comprobación local, sin petición: si este navegador guardó una sesión que valga la pena restaurar con obtenerSesion(). */
+// chequeo local, sin simular petición
 export function haySesionGuardada() {
   return sessionRepository.read() !== null
 }
 
-/**
- * Crea un enlace de recuperación con un token aleatorio de 128 bits. Solo vale el último de cada cuenta: los anteriores
- * que no se usaron se eliminan.
- */
+// solo vale el último enlace; los anteriores sin usar se borran
 function crearEnlaceDeRecuperacion(usuarioId) {
   const creadoEn = Date.now()
   const enlace = tokensRecuperacionRepository.insert({
@@ -180,12 +164,7 @@ function crearEnlaceDeRecuperacion(usuarioId) {
   return enlace
 }
 
-/**
- * Pide un enlace para restablecer la contraseña (HU-1 · 1.6, p08). Responde siempre { enviado: true, correo }, exista o
- * no una cuenta con ese correo, para no revelar cuáles están registrados. El enlace vence a los 30 minutos. Como la
- * entrega 1 no envía correos, si la cuenta existe la respuesta trae además `tokenDemo`, que solo usa la bandeja
- * simulada; en la entrega 2 el token viajará únicamente por correo. Falla con 400 VALIDATION_ERROR.
- */
+// Responde igual exista o no la cuenta. tokenDemo es solo para la bandeja simulada.
 export function solicitarRecuperacion(correo) {
   return simulateRequest(() => {
     const fieldErrors = validateRecuperacion({ correo })
@@ -197,10 +176,6 @@ export function solicitarRecuperacion(correo) {
   })
 }
 
-/**
- * Enlace de recuperación que todavía sirve, con su cuenta. Falla con 404 RESET_TOKEN_NOT_FOUND (no existe o se pidió
- * otro después), 410 RESET_TOKEN_USED o 410 RESET_TOKEN_EXPIRED.
- */
 function buscarEnlaceVigente(token) {
   const enlace = tokensRecuperacionRepository.findByToken(token)
   const usuario = enlace && usuariosRepository.findById(enlace.usuarioId)
@@ -216,16 +191,11 @@ function buscarEnlaceVigente(token) {
   return { enlace, usuario }
 }
 
-/** Comprueba el enlace de /restablecer-contrasena/:token (p09): devuelve { correo } o falla con 404 o 410. */
 export function validarTokenRecuperacion(token) {
   return simulateRequest(() => ({ correo: buscarEnlaceVigente(token).usuario.correo }))
 }
 
-/**
- * Define la contraseña nueva con un enlace de recuperación vigente (p09) y lo marca como usado: sirve una sola vez.
- * También quita el bloqueo temporal por intentos fallidos, pero no el que aplicó un supervisor (estado bloqueado).
- * Falla con 404, 410 o 400 VALIDATION_ERROR. Devuelve { correo }.
- */
+// También quita el bloqueo por intentos, pero no el que puso un supervisor.
 export function restablecerPassword(token, password, confirmacion) {
   return simulateRequest(async () => {
     buscarEnlaceVigente(token)
@@ -233,7 +203,7 @@ export function restablecerPassword(token, password, confirmacion) {
     if (hasErrors(fieldErrors)) throw validationError(fieldErrors)
 
     const credenciales = await createPasswordCredentials(password)
-    // Tras el hash se vuelve a leer el enlace: entre la consulta y las escrituras no media ningún await.
+    // se vuelve a leer el enlace después del hash
     const { enlace, usuario } = buscarEnlaceVigente(token)
     const ahora = new Date().toISOString()
     usuariosRepository.update(usuario.id, {
@@ -255,11 +225,7 @@ function cuentaActiva(usuarioId) {
   return usuario
 }
 
-/**
- * Cambio de contraseña desde «Mi cuenta» (p10): exige la contraseña actual y una nueva válida, distinta de la actual y
- * confirmada. Falla con 401 UNAUTHENTICATED (la cuenta no existe o está bloqueada) o 400 VALIDATION_ERROR, también si
- * la contraseña actual no es la correcta (fieldErrors.actual). Devuelve el usuario sin credenciales.
- */
+// si la contraseña actual no coincide, sale como error del campo "actual"
 export function cambiarPassword(usuarioId, datos) {
   return simulateRequest(async () => {
     const cuenta = cuentaActiva(usuarioId)
@@ -271,7 +237,7 @@ export function cambiarPassword(usuarioId, datos) {
       throw validationError({ actual: VALIDATION_MESSAGES.passwordActualIncorrect })
     }
     const credenciales = await createPasswordCredentials(nueva)
-    // Tras los hash se vuelve a leer la cuenta: entre la consulta y la escritura no media ningún await.
+    // igual que arriba, se relee la cuenta después de los hash
     const actualizado = usuariosRepository.update(cuentaActiva(usuarioId).id, {
       ...credenciales,
       actualizadoEn: new Date().toISOString(),

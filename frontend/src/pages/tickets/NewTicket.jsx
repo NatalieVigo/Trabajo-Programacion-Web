@@ -35,7 +35,7 @@ export const NewTicket = () => {
     useEffect(() => {
         let activo = true;
 
-        // Categorías y ambientes vienen del catálogo (HU-2): solo lo activo admite tickets nuevos.
+        // del catálogo (HU-2) solo lo activo acepta tickets nuevos
         Promise.all([listarDisponibles(), listarAmbientes()])
             .then(([categoriasDisponibles, ambientesDelCatalogo]) => {
                 if (!activo) return;
@@ -82,7 +82,7 @@ export const NewTicket = () => {
 
     const ambienteActual = ambientes.find((ambiente) => ambiente.id === datosTicket.ambienteId);
 
-    // Aviso de duplicado (HU-3): ya hay un ticket en curso en el mismo ambiente y la misma categoría.
+    // avisa si ya hay un ticket en curso con el mismo ambiente y categoría
     const { ambienteId, categoriaId } = datosTicket;
     useEffect(() => {
         if (!ambienteId || !categoriaId) return undefined;

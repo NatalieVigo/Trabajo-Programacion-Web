@@ -15,10 +15,7 @@ const FOCUSABLE_SELECTOR = [
 
 const getFocusable = (container) => [...container.querySelectorAll(FOCUSABLE_SELECTOR)]
 
-/**
- * Diálogo modal accesible: se monta en un portal, enfoca el primer control (o `initialFocusRef`),
- * mantiene el foco dentro, se cierra con Esc o con clic en el fondo y devuelve el foco al cerrar.
- */
+// Atrapa el foco mientras está abierto y lo devuelve al cerrarse.
 export default function Modal({ open, ...props }) {
   if (!open) return null
   return createPortal(<ModalDialog {...props} />, document.body)

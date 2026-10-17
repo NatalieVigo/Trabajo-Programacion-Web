@@ -27,7 +27,7 @@ const terminos = () => screen.getByRole('checkbox', { name: TERMINOS })
 
 async function renderRegistro() {
   const view = renderApp('/registro')
-  // Las listas de unidades y vínculos llegan del catálogo: hasta entonces los select están deshabilitados.
+  // los select se habilitan cuando llega el catálogo
   await waitFor(() => expect(campo('Unidad o carrera')).toBeEnabled())
   return view
 }
@@ -44,12 +44,10 @@ async function completarFormulario(user) {
   await user.click(terminos())
 }
 
-/** Espera a que se muestre la landing tras volver al inicio. */
 async function esperarLanding() {
   expect(await screen.findByRole('heading', { level: 1, name: TITULO_LANDING })).toBeInTheDocument()
 }
 
-/** Con la cuenta creada se llega a «Iniciar sesión» con el correo precargado y el foco en la contraseña. */
 async function esperarInicioDeSesion() {
   expect(await screen.findByRole('heading', { level: 1, name: 'Iniciar sesión' })).toBeInTheDocument()
   expect(campo('Correo institucional')).toHaveValue(DATOS.correo)
@@ -207,7 +205,7 @@ describe('RegisterPage', () => {
     expect(screen.getByRole('button', { name: 'Crear cuenta' })).toBeEnabled()
     expect(readTable('usuarios')).toHaveLength(11)
 
-    // Si edita el correo y vuelve a escribir el mismo, no reaparece la verificación anterior («disponible»).
+    // al reescribir el mismo correo no debe volver el "disponible" de antes
     await user.type(correo, 'x{Backspace}')
     await user.tab()
     expect(correo).toHaveValue(DATOS.correo)

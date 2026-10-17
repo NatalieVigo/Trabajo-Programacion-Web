@@ -23,12 +23,7 @@ function CuentaBloqueadaAlert({ message, correo, ...rest }) {
   )
 }
 
-/**
- * Mensaje del formulario de acceso según el error del servicio (p05): credenciales incorrectas con los intentos que
- * quedan, cuenta bloqueada por intentos (con «Restablecer contraseña» y «Escribir a soporte») o bloqueada por el
- * supervisor. Con `enfocar` recibe el foco al aparecer: el teclado sigue desde el aviso y no desde el inicio de la
- * página.
- */
+// con enfocar, el aviso toma el foco para que el teclado siga desde ahí
 export default function LoginAlert({ error, correo, enfocar = false }) {
   const alertRef = useRef(null)
 

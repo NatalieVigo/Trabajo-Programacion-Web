@@ -5,7 +5,7 @@ import { ROUTES } from '../../routes/routePaths.js'
 import { Button, MessageCard } from '../../shared/components'
 import './NotFoundPage.css'
 
-/** 404 con cabecera pública (p09). «Buscar un ticket» lleva a la lista de tickets del rol o, sin sesión, a ingresar. */
+// sin sesión, "Buscar un ticket" manda a iniciar sesión
 export default function NotFoundPage() {
   const { usuario } = useAuth()
   useDocumentTitle('Página no encontrada')

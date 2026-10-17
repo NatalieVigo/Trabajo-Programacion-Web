@@ -2,7 +2,6 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { DEMO, renderApp, ubicacionActual } from '../test/test-utils.jsx'
 
-// Una ruta pública sin datos asíncronos: el layout es el mismo que el de la landing.
 const RUTA_PUBLICA = '/pagina-de-prueba'
 
 describe('PublicLayout', () => {

@@ -1,7 +1,4 @@
-/**
- * Ilustración del hero en lugar de la foto de p03 («técnico atendiendo un aula»): ecran, proyector, escalera y caja de
- * herramientas.
- */
+// dibujo en SVG en vez de una foto: ecran, proyector, escalera y caja de herramientas
 export default function HeroIllustration({ className }) {
   return (
     <svg className={className} viewBox="0 0 480 300" aria-hidden="true" focusable="false">

@@ -1,14 +1,10 @@
-/**
- * Reglas de validación compartidas (SPEC §7). La interfaz las aplica campo a campo y los servicios las vuelven
- * a aplicar antes de escribir, como lo haría el servidor. Cada función devuelve el mensaje de error o null.
- */
+// Validaciones compartidas. Los servicios las repiten antes de guardar, como haría un servidor.
 
 const NAME_MIN_LENGTH = 2
 const NAME_MAX_LENGTH = 60
 const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 64
 export const MAX_ESPECIALIDADES = 3
-/** Roles que solo se obtienen por invitación. */
 export const ROLES_INVITABLES = Object.freeze(['tecnico', 'supervisor'])
 
 export const VALIDATION_MESSAGES = Object.freeze({
@@ -43,7 +39,7 @@ export const VALIDATION_MESSAGES = Object.freeze({
   invitadoCorreoInstitucional: 'Usa un correo institucional (@ulima.edu.pe o @aloe.ulima.edu.pe).',
 })
 
-// Grupos de letras (con tildes y ñ) separados por espacios, apóstrofos o guiones: «María José», «O'Connor», «Ruiz-Tagle».
+// acepta tildes, ñ, apóstrofos y guiones, como O'Connor o Ruiz-Tagle
 const NAME_PATTERN = /^[\p{L}\p{M}]+(?:[\s'’-]+[\p{L}\p{M}]+)*$/u
 const CORREO_PATTERN = /^[a-z0-9._%+-]+@(aloe\.)?ulima\.edu\.pe$/i
 const TELEFONO_PATTERN = /^9\d{8}$/
@@ -52,17 +48,14 @@ const DIGIT_PATTERN = /\d/
 
 const asText = (value) => (typeof value === 'string' ? value : '')
 
-/** «  María   José » → «María José». */
 export function normalizeNombre(value) {
   return asText(value).trim().replace(/\s+/g, ' ')
 }
 
-/** « Camila.Quispe@ALOE.ulima.edu.pe » → «camila.quispe@aloe.ulima.edu.pe». */
 export function normalizeCorreo(value) {
   return asText(value).trim().toLowerCase()
 }
 
-/** «987 654 321» → «987654321». */
 export function normalizeTelefono(value) {
   return asText(value).replace(/\s+/g, '')
 }
@@ -102,7 +95,6 @@ export function validateTelefono(value) {
   return TELEFONO_PATTERN.test(telefono) ? null : VALIDATION_MESSAGES.telefonoFormat
 }
 
-/** Regla mínima: 8 caracteres o más, con al menos una mayúscula y un número. */
 function meetsPasswordRule(password) {
   return password.length >= PASSWORD_MIN_LENGTH && UPPERCASE_PATTERN.test(password) && DIGIT_PATTERN.test(password)
 }
@@ -119,7 +111,6 @@ export function validateConfirmacion(confirmacion, password) {
   return confirmacion === password ? null : VALIDATION_MESSAGES.confirmacionMismatch
 }
 
-/** Opción obligatoria de una lista. Si se pasan las `options` válidas, el valor debe ser una de ellas. */
 function validateOption(value, options, message) {
   const isMissing = asText(value).trim() === ''
   const isUnknown = Array.isArray(options) && !options.includes(value)
@@ -134,7 +125,7 @@ export function validateVinculo(value, vinculos) {
   return validateOption(value, vinculos, VALIDATION_MESSAGES.vinculoRequired)
 }
 
-/** Opcional: vacío es «sin ambiente habitual». Si se pasan los `ambientes` válidos (ids), debe ser uno de ellos. */
+// vacío quiere decir sin ambiente habitual
 export function validateAmbienteHabitual(value, ambientes) {
   if (value === null || value === undefined || value === '') return null
   const isUnknown = Array.isArray(ambientes) && !ambientes.includes(value)
@@ -145,10 +136,7 @@ export function validateAceptaTerminos(value) {
   return value === true ? null : VALIDATION_MESSAGES.terminosRequired
 }
 
-/**
- * De una a tres categorías distintas. Si se pasan las `categorias` válidas (ids), cada una debe estar entre ellas:
- * una categoría que se desactivó después de cargar el formulario tiene su propio mensaje.
- */
+// si una categoría se desactivó después de cargar el formulario, tiene su propio mensaje
 export function validateEspecialidades(categoriaIds, categorias) {
   const elegidas = Array.isArray(categoriaIds) ? [...new Set(categoriaIds)] : []
   if (elegidas.length < 1 || elegidas.length > MAX_ESPECIALIDADES) return VALIDATION_MESSAGES.especialidadesRange
@@ -160,15 +148,11 @@ export function validateRolInvitacion(value) {
   return ROLES_INVITABLES.includes(value) ? null : VALIDATION_MESSAGES.rolInvitacionRequired
 }
 
-/** Deja solo los campos con error: { campo: mensaje }. */
 function collectErrors(results) {
   return Object.fromEntries(Object.entries(results).filter(([, message]) => message))
 }
 
-/**
- * Valida el formulario de registro y devuelve { campo: mensaje } solo con los campos inválidos ({} si todo es válido).
- * `catalogos` ({ unidades, vinculos }) es opcional: el servicio lo pasa para exigir valores del catálogo.
- */
+// los catálogos son opcionales, el servicio los pasa para exigir valores que existan
 export function validateRegistro(values, { unidades, vinculos } = {}) {
   return collectErrors({
     nombres: validateNombres(values.nombres),
@@ -183,10 +167,6 @@ export function validateRegistro(values, { unidades, vinculos } = {}) {
   })
 }
 
-/**
- * Valida los datos personales que se editan en «Mi cuenta» (p10). `catalogos` ({ unidades, ambientes }, estos como ids)
- * es opcional: el servicio lo pasa para exigir valores del catálogo.
- */
 export function validatePerfil(values, { unidades, ambientes } = {}) {
   return collectErrors({
     nombres: validateNombres(values.nombres),
@@ -197,10 +177,6 @@ export function validatePerfil(values, { unidades, ambientes } = {}) {
   })
 }
 
-/**
- * Valida la activación de una cuenta por invitación (p07): lo que completa el invitado. `categorias` (ids de las
- * categorías activas) es opcional: el servicio la pasa para exigir especialidades del catálogo.
- */
 export function validateActivacion(values, { categorias } = {}) {
   return collectErrors({
     telefono: validateTelefono(values.telefono),
@@ -210,10 +186,7 @@ export function validateActivacion(values, { categorias } = {}) {
   })
 }
 
-/**
- * Valida los datos con los que un supervisor invita a un técnico o a otro supervisor. Los mensajes hablan de la persona
- * invitada, porque quien llena el formulario es el supervisor.
- */
+// los mensajes hablan del invitado porque el formulario lo llena el supervisor
 export function validateInvitacion(values) {
   return collectErrors({
     nombres: validateName(values.nombres, VALIDATION_MESSAGES.invitadoNombresRequired),
@@ -227,7 +200,7 @@ export function validateInvitacion(values) {
   })
 }
 
-/** Valida el inicio de sesión: correo institucional y contraseña presente (no se exponen las reglas de la contraseña). */
+// en el login no se muestran las reglas de la contraseña
 export function validateLogin(values) {
   return collectErrors({
     correo: validateCorreo(values.correo),
@@ -235,12 +208,10 @@ export function validateLogin(values) {
   })
 }
 
-/** Valida el pedido de un enlace de recuperación de contraseña (p08): el correo institucional. */
 export function validateRecuperacion(values) {
   return collectErrors({ correo: validateCorreo(values.correo) })
 }
 
-/** Valida la contraseña nueva que se define con un enlace de recuperación (p09) y su confirmación. */
 export function validateRestablecimiento(values) {
   return collectErrors({
     password: validatePassword(values.password),
@@ -248,10 +219,7 @@ export function validateRestablecimiento(values) {
   })
 }
 
-/**
- * Valida el cambio de contraseña de «Mi cuenta» (p10): la actual presente y una nueva válida, distinta de la actual
- * y confirmada. Que la actual sea la correcta solo lo puede comprobar el servicio.
- */
+// que la contraseña actual sea la correcta solo lo puede comprobar el servicio
 export function validateCambioPassword(values) {
   const nuevaRepetida = values.nueva === values.actual ? VALIDATION_MESSAGES.passwordSameAsActual : null
   return collectErrors({

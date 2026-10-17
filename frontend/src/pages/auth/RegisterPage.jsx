@@ -3,7 +3,7 @@ import { Card, PageHeader } from '../../shared/components'
 import RegisterForm from './RegisterForm.jsx'
 import './RegisterPage.css'
 
-/** Registro de usuario (HU-1 · 1.1, mockup p06): formulario y aviso «Antes de registrarte». */
+// Registro de usuarios de la comunidad (HU-1)
 export default function RegisterPage() {
   useDocumentTitle('Crear mi cuenta')
 

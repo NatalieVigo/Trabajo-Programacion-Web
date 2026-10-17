@@ -7,10 +7,6 @@ import './ChangePasswordSection.css'
 
 const CAMPOS_VACIOS = { actual: '', nueva: '', confirmacion: '' }
 
-/**
- * Sección «Cambiar contraseña» de Mi cuenta (p10): la contraseña actual, la nueva y la confirmación. Al actualizarla
- * lo notifica y deja los campos vacíos.
- */
 export default function ChangePasswordSection({ usuario }) {
   const toast = useToast()
   const tituloId = useId()
@@ -20,7 +16,7 @@ export default function ChangePasswordSection({ usuario }) {
     try {
       await cambiarPassword(usuario.id, values)
     } catch (error) {
-      // 400 trae el mensaje de cada campo, también cuando la contraseña actual no es la correcta.
+      // la contraseña actual incorrecta también llega como error de campo
       if (error.fieldErrors) return error.fieldErrors
       toast.error(error.message)
       return
@@ -36,7 +32,7 @@ export default function ChangePasswordSection({ usuario }) {
       </h2>
       <form onSubmit={form.handleSubmit(actualizar)} aria-labelledby={tituloId} noValidate>
         <fieldset disabled={form.isSubmitting}>
-          {/* Para que el gestor de contraseñas guarde la nueva con la cuenta correcta. */}
+          {/* para que el gestor de contraseñas sepa de qué cuenta es */}
           <input type="email" name="username" value={usuario.correo} autoComplete="username" readOnly hidden />
           <div className="password-section__fields">
             <FormField label="Actual" required error={form.errors.actual}>

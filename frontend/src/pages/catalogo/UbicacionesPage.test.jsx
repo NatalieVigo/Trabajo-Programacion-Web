@@ -13,7 +13,6 @@ const celdas = (codigo) =>
     .map((celda) => celda.textContent)
 const sede = (nombre) => screen.getByRole('region', { name: nombre })
 
-/** Abre Sedes y ambientes con la sesión de Lucía y espera las pestañas y el contador de la cabecera. */
 async function renderUbicaciones(ruta = '/supervisor/ambientes') {
   const view = renderApp(ruta, { usuario: DEMO.supervisor })
   await screen.findByRole('tablist', { name: 'Secciones de sedes y ambientes' })

@@ -1,4 +1,4 @@
-/* Nuevo ticket (HU-3 · 3.1, p17): formulario a la izquierda y recomendaciones a la derecha. */
+/* Nuevo ticket */
 .nuevo-ticket__avisos {
   display: flex;
   flex-direction: column;
@@ -22,7 +22,7 @@
   gap: var(--space-6);
 }
 
-/* Prioridad sugerida: se lee como un campo de solo lectura. */
+/* prioridad sugerida, como campo de solo lectura */
 .nuevo-ticket__prioridad {
   display: flex;
   align-items: center;
@@ -74,7 +74,6 @@
   line-height: var(--line-height-aux);
 }
 
-/* «Tiempo esperado para esta categoría»: nota con el borde izquierdo del color principal. */
 .nuevo-ticket__tiempo {
   display: flex;
   flex-direction: column;

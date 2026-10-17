@@ -39,7 +39,7 @@ export default function EncuestaPage() {
   useEffect(() => {
     async function CargarDatos() {
       try {
-        // «Encuesta pendiente» (sin código): la que vence primero, igual que el contador del menú.
+        // sin código se abre la que vence primero, como en el contador del menú
         let codigo = codigoTicket
         if (!codigo) {
           const resumen = await obtenerResumenCuenta(usuarioId)

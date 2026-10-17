@@ -1,4 +1,4 @@
-/* Confirmación con código (HU-3 · 3.2, p18): tarjeta centrada con el código del ticket y su resumen. */
+/* Confirmación del ticket */
 .confirmacion {
   display: flex;
   justify-content: center;

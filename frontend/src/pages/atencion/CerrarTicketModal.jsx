@@ -11,11 +11,7 @@ import { esTicketDesactualizado } from './erroresDeAtencion.js'
 import PlazoDeAtencion from './PlazoDeAtencion.jsx'
 import './AtencionModales.css'
 
-/**
- * Cerrar ticket (HU-5 · 5.4, modal de p26): pide la solución aplicada y muestra el tiempo total de atención, si quedó
- * dentro del tiempo esperado y lo que el cierre significa para quien reportó el ticket. `tiempos` es el de la atención
- * cargada y `onCerrado` recibe la atención ya cerrada. Se monta al abrirse.
- */
+// Modal para cerrar el ticket con la solución aplicada. Se monta al abrirse.
 export default function CerrarTicketModal({ ticket, tiempos, onClose, onCerrado, onDesactualizada }) {
   const { usuario } = useAuth()
   const toast = useToast()

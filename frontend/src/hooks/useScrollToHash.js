@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
-/** Id de la sección a partir del hash; un hash mal codificado (/#%) se usa tal cual en lugar de romper la página. */
+// si el hash viene mal codificado (/#%) se usa tal cual
 function sectionIdFromHash(hash) {
   const raw = hash.slice(1)
   try {
@@ -11,7 +11,7 @@ function sectionIdFromHash(hash) {
   }
 }
 
-/** Al navegar lleva la vista a la sección del hash (/#categorias) o, si no hay hash, al inicio. */
+// Sin hash, sube al inicio de la página.
 export function useScrollToHash() {
   const { hash, key } = useLocation()
 

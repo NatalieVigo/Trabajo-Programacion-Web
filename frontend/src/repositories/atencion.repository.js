@@ -1,10 +1,10 @@
 import { createRepository } from './createRepository.js'
 
-// Entidades de HU-5 (atención y cierre). Las demás historias solo las leen.
+// Tablas de HU-5, las otras historias solo las leen.
 export const bitacoraRepository = createRepository('bitacora')
 export const historialRepository = createRepository('historial')
 
-// Del ticket (HU-3), HU-5 solo cambia el estado y la fecha de cierre, que queda en null mientras no esté cerrado.
+// del ticket solo se cambia el estado y cerradoEn (null hasta que se cierre)
 const tickets = createRepository('tickets')
 
 export const estadoDeTicketRepository = {

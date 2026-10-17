@@ -7,21 +7,17 @@ import { listar, obtener } from '../../services/categorias.service.js'
 import { Alert, Button, Card, MessageCard } from '../../shared/components'
 import CategoriaForm from './CategoriaForm.jsx'
 
-/** Las categorías (posibles padres) y, al editar, el elemento: { categorias, elemento }. */
 function cargarFormulario(id) {
   return Promise.all([listar(), id ? obtener(id) : null]).then(([categorias, elemento]) => ({ categorias, elemento }))
 }
 
-/** Contenido mientras no hay formulario que mostrar, con el título de pestaña que le corresponde. */
+// solo sirve para poner el título de la pestaña en cada estado
 function EstadoDelFormulario({ titulo, children }) {
   useDocumentTitle(titulo)
   return children
 }
 
-/**
- * /supervisor/categorias/nueva y /supervisor/categorias/:id/editar (HU-2 · 2.1, mockup p13). Carga lo que necesita
- * el formulario; si la categoría ya no existe, lo indica con un 404.
- */
+// Página para crear o editar una categoría (HU-2). Si ya no existe, muestra un 404.
 export default function CategoriaFormPage() {
   const { id } = useParams()
   const cargar = useCallback(() => cargarFormulario(id), [id])
@@ -67,6 +63,6 @@ export default function CategoriaFormPage() {
       </EstadoDelFormulario>
     )
   }
-  // La clave reinicia el formulario al pasar de editar un elemento a otro.
+  // con la key el formulario se reinicia al pasar de un elemento a otro
   return <CategoriaForm key={data.elemento?.id ?? 'nueva'} categorias={data.categorias} elemento={data.elemento} />
 }

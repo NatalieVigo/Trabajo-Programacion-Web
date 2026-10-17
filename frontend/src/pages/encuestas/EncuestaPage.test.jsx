@@ -50,7 +50,7 @@ describe('EncuestaPage · encuesta pendiente', () => {
   })
 
   it('abre la encuesta pendiente del propio usuario', async () => {
-    // TCK-2026-00131 se cerró el 28/09/2026 sin encuesta: está pendiente hasta el 05/10/2026.
+    // TCK-2026-00131 tiene la encuesta pendiente hasta el 05/10
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime('2026-10-01T15:00:00.000Z')
     renderApp('/usuario/encuestas/pendiente', { usuario: DEMO.usuario })

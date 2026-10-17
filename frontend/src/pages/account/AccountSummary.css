@@ -54,7 +54,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Encuesta pendiente (p10): aviso en tono de advertencia con su acción. */
+/* Encuesta pendiente */
 .pending-survey {
   display: flex;
   flex-direction: column;

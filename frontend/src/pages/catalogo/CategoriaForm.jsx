@@ -33,7 +33,7 @@ const VALORES_NUEVOS = {
   activa: true,
 }
 
-/** Valores del formulario según lo guardado: sin padre como '' y las horas como texto. */
+// sin padre queda como '' y las horas van como texto
 const valoresDe = (elemento) =>
   elemento
     ? {
@@ -46,7 +46,6 @@ const valoresDe = (elemento) =>
       }
     : VALORES_NUEVOS
 
-/** Tiempos de referencia por prioridad (p13). */
 const REFERENCIA_HORAS = 'Crítica 2 h · Alta 8 h · Media 24 h · Baja 72 h hábiles'
 
 function ayudaDelPadre(elemento) {
@@ -56,10 +55,7 @@ function ayudaDelPadre(elemento) {
     : 'Puedes moverla a otra categoría.'
 }
 
-/**
- * Nueva o editar categoría (HU-2 · 2.1, mockup p13). Con una categoría padre elegida, lo nuevo es una subcategoría.
- * Si el envío falla, un aviso resume cuántos campos hay que revisar y cada error aparece junto a su campo.
- */
+// Formulario de categoría (HU-2). Con un padre elegido se crea una subcategoría.
 export default function CategoriaForm({ categorias, elemento }) {
   const navigate = useNavigate()
   const toast = useToast()
@@ -79,7 +75,7 @@ export default function CategoriaForm({ categorias, elemento }) {
 
   async function guardar(values) {
     try {
-      // Desactivarla desde el formulario con tickets en curso también pide la confirmación explícita (2.6).
+      // desactivar desde aquí con tickets en curso también pide confirmación
       const { cancelado, resultado: guardado } = await desactivarConfirmando({
         elemento,
         desactiva: Boolean(elemento?.activa && !values.activa),
@@ -92,7 +88,7 @@ export default function CategoriaForm({ categorias, elemento }) {
       toast.success(`${nombreDeTipo(guardado.tipo, { mayuscula: true })} “${guardado.nombre}” ${accion} correctamente.`)
       navigate(ROUTES.supervisorCategorias)
     } catch (error) {
-      // 400 y 409 (nombre repetido) traen el mensaje de cada campo: el formulario los muestra junto a ellos.
+      // si el error es de un campo (ej. nombre repetido) se muestra junto a él
       if (error.fieldErrors) return error.fieldErrors
       toast.error(error.message)
     }

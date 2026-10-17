@@ -3,7 +3,6 @@ import { Card } from '../../shared/components'
 import { TIPOS_AMBIENTE } from '../../utils/catalogoValidators.js'
 import { formatDate, pluralize } from '../../utils/format.js'
 
-/** «Laboratorio · Pabellón H · piso 2 · capacidad 28 · Campus Monterrico», con lo que el catálogo tenga registrado. */
 function ubicacionDe(ambiente) {
   return [
     TIPOS_AMBIENTE[ambiente.tipo] ?? ambiente.tipo,
@@ -16,10 +15,7 @@ function ubicacionDe(ambiente) {
     .join(' · ')
 }
 
-/**
- * Ambiente del ticket (HU-5 · 5.6, p25): su código, dónde queda y qué más pasa allí: los tickets abiertos en el mismo
- * ambiente y la fecha del último cierre.
- */
+// Ambiente del ticket, con los tickets abiertos ahí y el último cierre.
 export default function AmbienteDelTicket({ ambiente }) {
   const tituloId = useId()
 

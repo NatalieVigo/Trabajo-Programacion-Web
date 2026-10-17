@@ -37,7 +37,7 @@ import { TicketDetail } from '../pages/tickets/TicketDetail.jsx'
 import { NewTicket } from '../pages/tickets/NewTicket.jsx'
 import { TicketConfirmation } from '../pages/tickets/TicketConfirmation.jsx'
 
-/** Página de cada ruta privada. Quién puede verla lo define la tabla de routeAccess.js. */
+// los roles de cada ruta están en routeAccess.js
 const PRIVATE_PAGES = {
   [ROUTES.usuarioInicio]: <Navigate to={ROUTES.usuarioTickets} replace />,
 
@@ -74,10 +74,6 @@ const PRIVATE_PAGES = {
   [ROUTES.accesoDenegado]: <ForbiddenPage />,
 }
 
-/**
- * Tabla única de rutas. Las de visitantes pasan por GuestOnly (con sesión llevan a la vista del rol) y las privadas por
- * RequireAuth y RequireRole, con los roles de routeAccess.js.
- */
 export default function AppRoutes() {
   return (
     <Routes>

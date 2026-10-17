@@ -2,10 +2,7 @@ import { useState } from 'react'
 import { Button } from '../../shared/components'
 import NewInvitationModal from './NewInvitationModal.jsx'
 
-/**
- * «Invitar técnico» (HU-1 · 1.2, botón de mockup p16): abre el formulario de la invitación y, al crearla, muestra el
- * enlace con el que la persona invitada activa su cuenta (p07). La entrega 1 no envía correos (enunciado §4).
- */
+// Abre la invitación y muestra el enlace de activación (todavía no se mandan correos).
 export default function InvitarTecnicoButton() {
   const [abierto, setAbierto] = useState(false)
 

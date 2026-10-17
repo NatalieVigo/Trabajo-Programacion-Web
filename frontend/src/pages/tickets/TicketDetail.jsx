@@ -208,7 +208,7 @@ export const TicketDetail = () => {
                             Agregar información
                         </Button>
                     )}
-                    {/* La encuesta (HU-6) está disponible una vez cerrado el ticket, no al resolverlo. */}
+                    {/* la encuesta se habilita al cerrar, no al resolver */}
                     {estado === 'cerrado' && (
                         <Button onClick={() => navigate(encuestaEvaluarPath(ticket.codigo))}>
                             Responder encuesta

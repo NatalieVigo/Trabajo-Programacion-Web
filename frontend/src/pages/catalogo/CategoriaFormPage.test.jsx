@@ -6,7 +6,6 @@ import { DEMO, renderApp, ubicacionActual } from '../../test/test-utils.jsx'
 
 const campo = (label) => screen.getByLabelText(label)
 
-/** Abre el formulario con la sesión de Lucía y espera a que cargue. */
 async function renderFormulario(ruta, titulo) {
   const view = renderApp(ruta, { usuario: DEMO.supervisor })
   await screen.findByRole('heading', { level: 1, name: titulo })
@@ -39,7 +38,7 @@ describe('CategoriaFormPage · nueva', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar categoría' }))
 
     expect(await screen.findByText('Categoría “Señalética” creada correctamente.')).toBeInTheDocument()
-    // El router navega en una transición: la dirección cambia cuando la lista ya se muestra.
+    // la URL cambia recién cuando la lista ya se ve
     expect(await screen.findByRole('rowheader', { name: 'Señalética' })).toBeInTheDocument()
     expect(ubicacionActual()).toBe('/supervisor/categorias')
     expect(categoriasRepository.findOne({ nombre: 'Señalética' })).toMatchObject({

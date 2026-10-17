@@ -6,7 +6,7 @@ import './SelectInput.css'
 
 const toOption = (option) => (typeof option === 'string' ? { value: option, label: option } : option)
 
-/** Select nativo con el estilo de los campos. `options` acepta strings u objetos { value, label }. */
+// options puede traer strings u objetos { value, label }
 export default function SelectInput({ options = [], placeholder, status: statusProp, className, children, ...props }) {
   const { controlProps, status } = useFieldControl(props, statusProp)
 

@@ -16,7 +16,7 @@
   gap: var(--space-3);
 }
 
-/* Mismo corte que .form-grid (layout.css): con el formulario en una columna, las acciones también se apilan. */
+/* mismo corte que .form-grid */
 @media (max-width: 767px) {
   .invitation-form__actions {
     flex-direction: column;

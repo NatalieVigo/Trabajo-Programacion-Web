@@ -1,4 +1,4 @@
-/* Satisfacción por técnico y categoría (HU-6 · 6.3, p30): tabla de promedios y, a la derecha, los comentarios. */
+/* Satisfacción por técnico y categoría */
 .satisfaccion__layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 360px);

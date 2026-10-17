@@ -34,12 +34,9 @@ const buscarSede = (id) => buscar(sedesRepository, id, 'SEDE_NOT_FOUND', 'No enc
 const buscarPabellon = (id) => buscar(pabellonesRepository, id, 'PABELLON_NOT_FOUND', 'No encontramos este pabellón.')
 const buscarAmbiente = (id) => buscar(ambientesRepository, id, 'AMBIENTE_NOT_FOUND', 'No encontramos este ambiente.')
 
-// ── Sedes y pabellones ───────────────────────────────────────────────────────────────────────────────────────────
+// Sedes y pabellones
 
-/**
- * Sedes por nombre, cada una con sus pabellones y la cantidad de ambientes de cada pabellón. Una sede se puede eliminar
- * si no tiene pabellones, y un pabellón, si no tiene ambientes (`eliminable`).
- */
+// una sede se puede borrar si no tiene pabellones, y un pabellón si no tiene ambientes
 export function listarSedes() {
   return simulateRequest(() => {
     const ambientesPorPabellon = contarPor(ambientesRepository.findAll(), 'pabellonId')
@@ -68,7 +65,6 @@ function validarSede(valores, idActual) {
   return { nombre }
 }
 
-/** Registra una sede (HU-2 · 2.2). Falla con 403, 400 VALIDATION_ERROR o 409 NAME_TAKEN. */
 export function crearSede(datos, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -77,7 +73,6 @@ export function crearSede(datos, supervisorId) {
   })
 }
 
-/** Cambia el nombre de una sede. Falla con 403, 404 SEDE_NOT_FOUND, 400 o 409 NAME_TAKEN. */
 export function actualizarSede(id, datos, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -87,7 +82,6 @@ export function actualizarSede(id, datos, supervisorId) {
   })
 }
 
-/** Elimina una sede sin pabellones. Falla con 403, 404 o 409 IN_USE (details.usos.pabellones). */
 export function eliminarSede(id, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -112,7 +106,7 @@ function validarPabellon(valores, idActual) {
   return campos
 }
 
-/** Registra un pabellón en una sede (HU-2 · 2.2). Falla con 403, 400 o 409 NAME_TAKEN (nombre repetido en su sede). */
+// el nombre no se puede repetir dentro de la misma sede
 export function crearPabellon(datos, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -121,7 +115,6 @@ export function crearPabellon(datos, supervisorId) {
   })
 }
 
-/** Cambia el nombre o la sede de un pabellón. Falla con 403, 404 PABELLON_NOT_FOUND, 400 o 409 NAME_TAKEN. */
 export function actualizarPabellon(id, datos, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -131,7 +124,6 @@ export function actualizarPabellon(id, datos, supervisorId) {
   })
 }
 
-/** Elimina un pabellón sin ambientes. Falla con 403, 404 o 409 IN_USE (details.usos.ambientes). */
 export function eliminarPabellon(id, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -146,12 +138,9 @@ export function eliminarPabellon(id, supervisorId) {
   })
 }
 
-// ── Ambientes ────────────────────────────────────────────────────────────────────────────────────────────────────
+// Ambientes
 
-/**
- * Lo que se necesita para presentar ambientes: su ubicación, sus tickets (HU-3) y los usuarios que lo tienen como
- * ambiente habitual (HU-1). Solo se leen.
- */
+// tickets y usuarios son de otras historias, aquí solo se leen
 function contextoDeAmbientes() {
   return {
     tickets: contarTicketsPor('ambienteId'),
@@ -177,10 +166,6 @@ function presentarAmbiente(ambiente, contexto = contextoDeAmbientes()) {
   }
 }
 
-/**
- * Ambientes por código (p14), con su pabellón y sede (`pabellonNombre`, `sedeId`, `sedeNombre`), sus tickets en curso,
- * `usos` ({ tickets, usuarios }) y `eliminable`.
- */
 export function listarAmbientes() {
   return simulateRequest(() => {
     const contexto = contextoDeAmbientes()
@@ -191,10 +176,7 @@ export function listarAmbientes() {
   })
 }
 
-/**
- * Valida y normaliza un ambiente: el código en mayúsculas y, sin nombre, «Tipo Código» («Laboratorio H-212»). El código
- * no se repite: si no, 409 CODE_TAKEN.
- */
+// si no tiene nombre se arma con tipo y código, por ejemplo "Laboratorio H-212"
 function validarAmbiente(valores, idActual) {
   const pabellones = pabellonesRepository.findAll().map((pabellon) => pabellon.id)
   const fieldErrors = validateAmbiente(valores, { pabellones })
@@ -214,7 +196,6 @@ function validarAmbiente(valores, idActual) {
   }
 }
 
-/** Registra un ambiente (HU-2 · 2.2, p15). Falla con 403, 400 VALIDATION_ERROR o 409 CODE_TAKEN. */
 export function crearAmbiente(datos, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -224,10 +205,7 @@ export function crearAmbiente(datos, supervisorId) {
   })
 }
 
-/**
- * Edita un ambiente; los campos que no se envían conservan su valor. Falla con 403, 404 AMBIENTE_NOT_FOUND, 400 o
- * 409 CODE_TAKEN.
- */
+// los campos que no se envían se quedan como estaban
 export function actualizarAmbiente(id, datos, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -237,10 +215,7 @@ export function actualizarAmbiente(id, datos, supervisorId) {
   })
 }
 
-/**
- * Elimina un ambiente que no se usa: sin tickets y sin usuarios que lo tengan como ambiente habitual. Falla con 403,
- * 404 o 409 IN_USE (details.usos). Devuelve el ambiente eliminado.
- */
+// no se borra si tiene tickets o alguien lo tiene como ambiente habitual
 export function eliminarAmbiente(id, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)

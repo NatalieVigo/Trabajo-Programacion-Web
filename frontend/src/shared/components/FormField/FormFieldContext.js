@@ -2,10 +2,7 @@ import { createContext, useContext } from 'react'
 
 export const FormFieldContext = createContext(null)
 
-/**
- * Props de accesibilidad que un control hereda del FormField que lo envuelve
- * (id, aria-describedby, aria-invalid, aria-required) y su estado visual. Las props explícitas tienen prioridad.
- */
+// lo que el control hereda de su FormField; las props propias ganan
 export function useFieldControl(props, statusOverride) {
   const field = useContext(FormFieldContext)
   const status = statusOverride ?? field?.status

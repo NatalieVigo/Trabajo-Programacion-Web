@@ -6,7 +6,6 @@ import { FormField, TextInput, useToast } from '../../shared/components'
 import { validateSede } from '../../utils/catalogoValidators.js'
 import FormularioModal from './FormularioModal.jsx'
 
-/** Nueva o editar sede (HU-2 · 2.2): solo su nombre. `onGuardado` recibe la sede guardada. */
 export default function SedeModal({ sede, onClose, onGuardado }) {
   const { usuario } = useAuth()
   const toast = useToast()

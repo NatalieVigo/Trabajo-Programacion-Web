@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-/**
- * Ejecuta `loader` (una función estable que devuelve una promesa, normalmente un servicio) y expone
- * su estado explícito: status 'loading' | 'success' | 'error', data, error, reload() y updateData(updater).
- * Si cambia `loader` (otro token, otro id…) vuelve a 'loading' en vez de mostrar los datos anteriores.
- * `updateData` aplica a los datos ya cargados lo que devolvió una escritura, sin volver a pedirlos.
- */
+// Carga datos con loader. Si el loader cambia, vuelve a 'loading' en vez de mostrar lo anterior.
 export function useAsyncData(loader) {
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState(null)
@@ -31,7 +26,7 @@ export function useAsyncData(loader) {
     setResult((current) => (current?.status === 'success' ? { ...current, data: updater(current.data) } : current))
   }, [])
 
-  // El resultado guardado solo vale para la carga en curso (mismo loader y mismo intento).
+  // solo vale si es del mismo loader y del mismo intento
   const isCurrent = result?.loader === loader && result.attempt === attempt
   return {
     status: isCurrent ? result.status : 'loading',

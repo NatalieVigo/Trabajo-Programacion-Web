@@ -3,7 +3,7 @@ import { useFieldControl } from '../FormField/FormFieldContext.js'
 import { CheckIcon } from '../icons.jsx'
 import './TextInput.css'
 
-/** Campo de texto de 40 px. En estado de éxito muestra un check; `endAdornment` reserva espacio a la derecha. */
+// si hay endAdornment no se muestra el check de éxito
 export default function TextInput({ status: statusProp, mono = false, endAdornment, className, ...props }) {
   const { controlProps, status } = useFieldControl(props, statusProp)
   const showCheck = !endAdornment && status === 'success'

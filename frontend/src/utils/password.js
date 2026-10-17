@@ -8,12 +8,11 @@ const LOWERCASE_PATTERN = /\p{Ll}/u
 const SYMBOL_PATTERN = /[^\p{L}\p{N}]/u
 const LONG_PASSWORD_LENGTH = 12
 
-/** Sal aleatoria de 32 caracteres hexadecimales (16 bytes). */
 export function generateSalt() {
   return randomHex(16)
 }
 
-/** SHA-256 en hexadecimal (minúsculas) de `salt + password`: la misma fórmula del seed. */
+// misma fórmula que usa el seed
 export async function hashPassword(password, salt) {
   if (!globalThis.crypto?.subtle) {
     throw new Error('Web Crypto no está disponible: abre la aplicación desde localhost o HTTPS.')
@@ -26,7 +25,6 @@ export async function verifyPassword(password, salt, expectedHash) {
   return (await hashPassword(password, salt)) === expectedHash
 }
 
-/** Lo que se guarda de una contraseña nueva: { passwordHash, passwordSalt }, con una sal recién generada. */
 export async function createPasswordCredentials(password) {
   const passwordSalt = generateSalt()
   return { passwordHash: await hashPassword(password, passwordSalt), passwordSalt }
@@ -34,18 +32,14 @@ export async function createPasswordCredentials(password) {
 
 function strengthScore(password) {
   if (!password) return 0
-  // Lo que el validador rechaza (regla mínima o más de 64 caracteres) nunca pasa de «Débil».
+  // si el validador la rechaza se queda en Débil
   if (validatePassword(password)) return 1
   const isRobust =
     LOWERCASE_PATTERN.test(password) && (password.length >= LONG_PASSWORD_LENGTH || SYMBOL_PATTERN.test(password))
   return isRobust ? 3 : 2
 }
 
-/**
- * Seguridad orientativa de una contraseña: score 0 (vacía), 1 «Débil» (no es válida: no cumple la regla mínima
- * o pasa de 64 caracteres), 2 «Media» (es válida) o 3 «Segura» (además combina minúsculas y tiene 12 caracteres
- * o más, o un símbolo).
- */
+// score de 0 (vacía) a 3 (segura), es solo orientativo
 export function passwordStrength(password) {
   const score = strengthScore(typeof password === 'string' ? password : '')
   return { score, label: STRENGTH_LABELS[score] }

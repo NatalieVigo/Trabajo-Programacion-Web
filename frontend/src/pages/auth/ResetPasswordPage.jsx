@@ -39,7 +39,7 @@ function ContenidoDelEnlace({ token, status, data, error, reload }) {
   return <ResetPasswordForm token={token} correo={data.correo} onEnlaceInvalido={reload} />
 }
 
-/** Nueva contraseña desde el enlace de recuperación (HU-1 · 1.6, mockup p09): /restablecer-contrasena/:token. */
+// Nueva contraseña desde el enlace de recuperación (HU-1).
 export default function ResetPasswordPage() {
   const { token } = useParams()
   const validarEnlace = useCallback(() => validarTokenRecuperacion(token), [token])

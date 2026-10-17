@@ -17,7 +17,7 @@
   margin-bottom: var(--space-4);
 }
 
-/* Formulario y, a la derecha, la tarjeta «Efecto del tiempo esperado» (p13); en pantallas angostas, uno bajo otro. */
+/* Formulario y tarjeta lateral */
 .categoria-form-page__layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;

@@ -14,7 +14,7 @@ describe('HU-3 · registro y seguimiento de tickets', () => {
     const { user } = renderApp('/usuario/tickets/nuevo', { usuario: DEMO.usuario })
 
     await screen.findByRole('heading', { name: 'Nuevo ticket' })
-    // El aula llega precargada con el ambiente habitual de la cuenta (A-201) y se puede cambiar.
+    // viene precargada el aula habitual de la cuenta (A-201)
     expect(screen.getByLabelText('AULA O AMBIENTE')).toHaveValue('amb-01')
     await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-01')
     await user.selectOptions(screen.getByLabelText('SUBCATEGORÍA'), 'sub-01')
@@ -42,7 +42,7 @@ describe('HU-3 · registro y seguimiento de tickets', () => {
     const { user } = renderApp('/usuario/tickets/nuevo', { usuario: DEMO.usuario })
 
     await screen.findByRole('heading', { name: 'Nuevo ticket' })
-    // En A-201 hay un ticket en curso de Audiovisuales (TCK-2026-00147).
+    // en A-201 ya hay un ticket de Audiovisuales en curso
     await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-01')
 
     expect(await screen.findByRole('alert')).toHaveTextContent(

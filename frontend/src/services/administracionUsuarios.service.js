@@ -45,7 +45,7 @@ function anunciarCambio() {
 
 export function bloquearCuenta(cuentaId, { motivo, notificar = false }, supervisorId) {
   return simulateRequest(() => {
-    // Primero el permiso (403) y después los datos (400), como lo haría el servidor.
+    // primero el permiso y luego los datos, como haría el servidor
     supervisorActivo(readTable('usuarios'), supervisorId)
     if (typeof motivo !== 'string' || !motivo.trim() || motivo.trim().length > 240) throw validationError({ motivo: 'Escribe el motivo del bloqueo, con un máximo de 240 caracteres.' })
     const resultado = updateTables(['usuarios'], (db) => {

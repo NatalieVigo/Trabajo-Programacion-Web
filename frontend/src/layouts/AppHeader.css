@@ -23,7 +23,7 @@
   display: none;
 }
 
-/* La marca ocupa el ancho del menú lateral para que el buscador empiece donde empieza el contenido (p10). */
+/* mismo ancho que el menú lateral, así el buscador se alinea con el contenido */
 .app-brand {
   display: inline-flex;
   flex: none;
@@ -131,7 +131,7 @@
   }
 }
 
-/* En pantallas angostas el nombre queda solo para lectores de pantalla; se ve el avatar con las iniciales. */
+/* en móvil el nombre queda solo para lectores de pantalla */
 @media (max-width: 767px) {
   .app-header__user {
     position: absolute;

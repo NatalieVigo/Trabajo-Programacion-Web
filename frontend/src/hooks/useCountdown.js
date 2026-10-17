@@ -2,13 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 
 const UN_SEGUNDO_MS = 1000
 
-/**
- * Cuenta regresiva de `seconds` segundos que arranca al montar: { secondsLeft, isRunning, restart }. `restart()` vuelve
- * a contar desde `seconds`. El temporizador se detiene al llegar a cero y se limpia al desmontar.
- */
 export function useCountdown(seconds) {
   const [secondsLeft, setSecondsLeft] = useState(seconds)
-  // Cada reinicio crea un temporizador nuevo, para que el primer segundo de la nueva cuenta dure un segundo completo.
+  // con cada reinicio se crea otro intervalo, así el primer segundo dura completo
   const [round, setRound] = useState(0)
   const isRunning = secondsLeft > 0
 

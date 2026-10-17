@@ -13,7 +13,6 @@ const bitacoraDe = (ticketId) => bitacoraRepository.findAll({ ticketId }).sort(p
 const historialDe = (ticketId) => historialRepository.findAll({ ticketId }).sort(porAntiguedad)
 const estadosDe = (ticketId) => historialDe(ticketId).filter((evento) => evento.tipo === 'estado')
 
-// Valida que las tablas de la atención (HU-5) del seed cumplan sus reglas y se refieran a datos que existen.
 describe('datos semilla · atención y cierre', () => {
   it('cada entrada de la bitácora es válida y es de un ticket y de una cuenta que existen', () => {
     const entradas = bitacoraRepository.findAll()
@@ -80,7 +79,7 @@ describe('datos semilla · atención y cierre', () => {
         expect(ESTADOS).toContain(evento.estado)
         expect(evento.asignadoA).toBeNull()
       } else {
-        // La asignación (HU-4) la hace el supervisor a un técnico y no cambia el estado del ticket.
+        // asignar no cambia el estado del ticket
         expect(evento.tipo).toBe('asignacion')
         expect(evento.estado).toBeNull()
         expect(usuariosRepository.findById(evento.autorId).rol).toBe('supervisor')

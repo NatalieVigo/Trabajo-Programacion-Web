@@ -2,10 +2,9 @@ import { PriorityBadge, StatusBadge } from '../../shared/components'
 import { cx } from '../../utils/classNames.js'
 import { HORA_MS, formatDuracion } from '../../utils/duracion.js'
 
-/** Estados en los que corre el plazo de atención: en espera se detiene y resuelto o cerrado ya terminó. */
+// en espera el plazo se pausa, y resuelto o cerrado ya no cuentan
 const ESTADOS_CON_PLAZO = new Set(['abierto', 'reabierto', 'en_atencion'])
 
-/** «Vence en 1 h 42 min» (p25) o, si ya pasó el tiempo esperado, «Vencido hace 1 h 50 min» (p24). */
 function plazoDe(ticket, tiempos) {
   if (!ESTADOS_CON_PLAZO.has(ticket.estado)) return null
   const restanteMs = tiempos.esperadoHoras * HORA_MS - tiempos.atencionMs
@@ -14,10 +13,6 @@ function plazoDe(ticket, tiempos) {
     : { texto: `Vencido hace ${formatDuracion(-restanteMs)}`, vencido: true }
 }
 
-/**
- * Cabecera de un ticket (p25): código, prioridad, estado, plazo de atención, asunto y categoría, con las `acciones` a
- * la derecha.
- */
 export default function TicketCabecera({ ticket, tiempos, acciones }) {
   const plazo = plazoDe(ticket, tiempos)
 

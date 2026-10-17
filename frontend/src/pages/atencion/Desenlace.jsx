@@ -4,10 +4,7 @@ import { formatDuracion } from '../../utils/duracion.js'
 import { formatDateTime, getDisplayName } from '../../utils/format.js'
 import PlazoDeAtencion from './PlazoDeAtencion.jsx'
 
-/**
- * Desenlace de un ticket cerrado (HU-5 · 5.4): la solución aplicada, quién lo cerró y cuándo, y el tiempo total de
- * atención frente al tiempo esperado.
- */
+// Cómo terminó un ticket cerrado: solución, quién lo cerró y tiempo total.
 export default function Desenlace({ desenlace, tiempos }) {
   const tituloId = useId()
 

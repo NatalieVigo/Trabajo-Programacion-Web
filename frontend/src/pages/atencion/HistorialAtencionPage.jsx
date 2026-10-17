@@ -10,16 +10,14 @@ import { formatDate, getDisplayName } from '../../utils/format.js'
 import './HistorialAtencionPage.css'
 
 const TITULO = 'Historial'
-/** Estados con los que la atención ya terminó: los demás siguen en «Mi bandeja». */
+// los demás estados siguen en "Mi bandeja"
 const TERMINADOS = new Set(['resuelto', 'cerrado'])
 
-/** Columna «Plazo» con los textos de p24: «Cerrado el 04/09/2026» o «Atendido a tiempo». */
 function plazoDe(ticket) {
   if (ticket.estado === 'cerrado') return `Cerrado el ${formatDate(ticket.cerradoEn)}`
   return ticket.dentroDelPlazo ? 'Atendido a tiempo' : 'Atendido fuera de plazo'
 }
 
-/** Los tickets en filas compactas, con las mismas columnas de la bandeja (p24) y la barra de su prioridad. */
 function TablaDeTickets({ tickets }) {
   return (
     <div className="tickets-table">
@@ -86,7 +84,6 @@ function TablaDeTickets({ tickets }) {
   )
 }
 
-/** Carga, error o historial vacío; con tickets muestra la tabla. */
 function Contenido({ status, tickets, onRetry }) {
   if (status === 'loading') {
     return (
@@ -124,11 +121,7 @@ function Contenido({ status, tickets, onRetry }) {
   return <TablaDeTickets tickets={tickets} />
 }
 
-/**
- * «Historial» del técnico (/tecnico/historial, ítem del menú de p24, p25 y p27): los tickets que resolvió o cerró, del
- * de actividad más reciente al más antiguo, con las columnas de la bandeja (p24). Cada fila lleva a la vista
- * consolidada del ticket (p25).
- */
+// Historial del técnico: los tickets que ya resolvió o cerró, lo más reciente primero.
 export default function HistorialAtencionPage() {
   const { usuario } = useAuth()
   const cargar = useCallback(() => listarAtendidos(usuario.id), [usuario.id])

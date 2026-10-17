@@ -4,7 +4,6 @@ import { useAuth } from '../hooks/useAuth.js'
 import { ROUTES } from '../routes/routePaths.js'
 import { useToast } from '../shared/components'
 
-/** «Cerrar sesión» del menú lateral: termina la sesión, lo notifica y vuelve a la landing. */
 export default function LogoutButton({ className }) {
   const { cerrarSesion } = useAuth()
   const toast = useToast()

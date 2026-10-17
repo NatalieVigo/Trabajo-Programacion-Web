@@ -60,7 +60,7 @@ button {
   cursor: pointer;
 }
 
-/* Sin marco ni márgenes: agrupa los controles de un formulario para deshabilitarlos mientras se envía. */
+/* solo agrupa controles para deshabilitarlos al enviar */
 fieldset {
   min-width: 0;
   margin: 0;
@@ -128,7 +128,7 @@ samp {
   font-family: var(--font-mono);
 }
 
-/* Utilidades de accesibilidad */
+/* Accesibilidad */
 .visually-hidden {
   position: absolute !important;
   width: 1px;

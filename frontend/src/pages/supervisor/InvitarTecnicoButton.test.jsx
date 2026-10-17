@@ -16,7 +16,6 @@ const NUEVA = {
 const enlace = (token) => `${window.location.origin}/invitacion/${token}`
 const botonInvitar = () => screen.getByRole('button', { name: 'Invitar técnico' })
 
-/** «Invitar técnico» está en Técnicos por categoría (p16): abre la página con la sesión de Lucía. */
 async function renderTecnicos() {
   const view = renderApp('/supervisor/tecnicos', { usuario: DEMO.supervisor })
   await screen.findByRole('table', { name: 'Categorías habilitadas por técnico' })

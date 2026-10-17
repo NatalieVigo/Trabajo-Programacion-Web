@@ -1,5 +1,4 @@
-/* Detalle del ticket, vista del usuario (HU-3 · 3.4, p20–p21). La cabecera, la ruta de navegación, las columnas y las
-   tarjetas de datos son las de la atención del técnico (TicketAtencionPage.css), para que ambas vistas se vean igual. */
+/* Detalle del usuario; cabecera y columnas vienen de TicketAtencionPage.css */
 .detalle-ticket__avisos {
   display: flex;
   flex-direction: column;
@@ -20,7 +19,7 @@
   gap: var(--space-3);
 }
 
-/* Agregar información: separado de las entradas, como la nueva entrada del técnico. */
+/* Agregar información */
 .detalle-ticket__comentario {
   margin-top: var(--space-4);
   padding-top: var(--space-4);
@@ -45,7 +44,7 @@
   line-height: var(--line-height-aux);
 }
 
-/* Línea de tiempo (p20): un punto por paso, unidos por una línea; verde hecho, ámbar en curso y gris pendiente. */
+/* Línea de tiempo */
 .detalle-ticket__linea {
   display: flex;
   flex-direction: column;

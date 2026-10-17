@@ -1,4 +1,4 @@
-/* Mis tickets (HU-3 · 3.3, p19): filtros, tabla de tickets propios y paginación con el sistema de diseño. */
+/* Mis tickets */
 .mis-tickets__aviso {
   margin-bottom: var(--space-4);
 }
@@ -33,7 +33,7 @@
   color: var(--color-text-muted);
 }
 
-/* Tabla: cabecera de 36 px con etiquetas y filas de 44 px, como el resto de listas (p02). */
+/* Tabla */
 .mis-tickets__tabla {
   overflow-x: auto;
   border: 1px solid var(--color-border);

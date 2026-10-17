@@ -16,7 +16,7 @@ import {
 import { ServiceError } from './ServiceError.js'
 
 const AHORA = '2026-10-01T15:27:00.000Z' // 10:27 en Lima
-const BLOQUEADO_HASTA = '2026-10-01T15:42:00.000Z' // 10:42 en Lima, 15 minutos después
+const BLOQUEADO_HASTA = '2026-10-01T15:42:00.000Z' // 10:42 en Lima
 const ENLACE_VENCE = '2026-10-01T15:57:00.000Z' // 30 minutos después
 const CAMILA = { correo: 'camila.quispe@aloe.ulima.edu.pe', password: 'Camila2026' }
 const DIEGO = { correo: 'diego.salas@aloe.ulima.edu.pe', password: 'Usuario2026' }
@@ -28,13 +28,12 @@ const camila = () => usuariosRepository.findById('usr-001')
 const sesionGuardada = (storage) => JSON.parse(storage.getItem(SESSION_STORAGE_KEY))
 const tieneLaContrasena = (usuario, password) => verifyPassword(password, usuario.passwordSalt, usuario.passwordHash)
 
-/** Pide un enlace de recuperación para el correo y devuelve su token, el que muestra la bandeja simulada. */
 async function pedirEnlace(correo = CAMILA.correo) {
   const { tokenDemo } = await solicitarRecuperacion(correo)
   return tokenDemo
 }
 
-/** Intenta ingresar `veces` veces con esas credenciales y devuelve el último error. */
+// devuelve el último error
 async function fallar(veces, credenciales = INCORRECTA) {
   let error
   for (let intento = 0; intento < veces; intento += 1) {

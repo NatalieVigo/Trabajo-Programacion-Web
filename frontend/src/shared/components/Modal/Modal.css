@@ -1,4 +1,4 @@
-/* La página no se desplaza mientras haya un modal abierto, aunque se abra otro encima (una confirmación). */
+/* sin scroll de fondo mientras quede algún modal abierto */
 body:has(.modal-overlay) {
   overflow: hidden;
 }

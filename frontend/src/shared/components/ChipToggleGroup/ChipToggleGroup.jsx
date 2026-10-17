@@ -3,12 +3,7 @@ import { cx } from '../../../utils/classNames.js'
 import '../FormField/FormField.css'
 import './ChipToggleGroup.css'
 
-/**
- * Selección múltiple con chips (p07). Cada opción ({ value, label }) es un botón con aria-pressed que muestra «✓»
- * cuando está elegida. Con `max`, al llegar al límite las demás opciones quedan inactivas y se muestra `maxMessage`.
- * `onChange` recibe la nueva lista de valores; `onBlur`, el evento con el que el foco sale del grupo. `name` se asigna
- * a cada chip para que el formulario pueda enfocar el grupo cuando tiene un error.
- */
+// Cada chip lleva name para que el formulario pueda enfocar el grupo si hay error.
 export default function ChipToggleGroup({
   label,
   options = [],
@@ -71,7 +66,7 @@ export default function ChipToggleGroup({
           )
         })}
       </div>
-      {/* Siempre presente: así el lector de pantalla anuncia cuando se llega al máximo. */}
+      {/* siempre está, así el lector anuncia cuando se llega al máximo */}
       <p id={messageId} className={cx('chip-group__message', error && 'chip-group__message--error')} aria-live="polite">
         {message}
       </p>

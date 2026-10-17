@@ -10,13 +10,12 @@ import './AppLayout.css'
 
 const MENU_ID = 'menu-lateral'
 
-/** Layout de la sesión iniciada (p10, p11): cabecera, menú lateral del rol, contenido y pie. */
 export default function AppLayout() {
   const { usuario } = useAuth()
   const location = useLocation()
   const contadores = useContadores(usuario)
   const menuButtonRef = useRef(null)
-  // El menú lateral queda abierto solo en la ubicación en que se abrió: al navegar se cierra solo.
+  // se guarda dónde se abrió el menú, así al navegar se cierra solo
   const [menuAbiertoEn, setMenuAbiertoEn] = useState(null)
   const menuOpen = menuAbiertoEn === location.key
   useScrollToHash()

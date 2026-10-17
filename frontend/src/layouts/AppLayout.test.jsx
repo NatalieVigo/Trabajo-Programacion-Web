@@ -13,7 +13,6 @@ const enlacesDe = (menu) =>
     .getAllByRole('link')
     .map((link) => [link.textContent, link.getAttribute('href')])
 
-/** Abre la aplicación con la sesión iniciada y espera a que la cabecera muestre el contador del rol. */
 async function renderPanel(route, rol = 'usuario') {
   const view = renderApp(route, { usuario: DEMO[rol] })
   await screen.findByText(PILDORA[rol])

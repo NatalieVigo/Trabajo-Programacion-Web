@@ -3,11 +3,7 @@ import { cx } from '../../../utils/classNames.js'
 import Card from '../Card/Card.jsx'
 import './MessageCard.css'
 
-/**
- * Tarjeta de mensaje (p09): código grande o etiqueta opcional, título, descripción y acciones. Con `focusTitle` el
- * título recibe el foco al aparecer, para que el lector de pantalla lo anuncie cuando reemplaza otro contenido.
- * `centered` centra el contenido, como la vista 403 (p11).
- */
+// focusTitle enfoca el título para que el lector lo anuncie al cambiar el contenido
 export default function MessageCard({
   code,
   badge,

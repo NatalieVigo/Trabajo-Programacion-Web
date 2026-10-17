@@ -15,18 +15,16 @@ import TiempoPorEtapa from './TiempoPorEtapa.jsx'
 import './TicketAtencionPage.css'
 import './HistorialCambiosPage.css'
 
-/** Resumen bajo el título (p27): asunto, ambiente, cómo está el ticket y el tiempo total de atención. */
 function resumir({ ticket, tiempos }) {
   const situacion = ticket.cerradoEn ? `cerrado el ${formatDate(ticket.cerradoEn)}` : formatEstado(ticket.estado).toLowerCase()
   return [ticket.asunto, ticket.ambiente.codigo, situacion, `tiempo total ${formatDuracion(tiempos.totalMs)}`].join(' · ')
 }
 
-/** Prioridad con la que se registró el ticket: la anterior al primer cambio de prioridad o, si no lo hubo, la actual. */
+// la de antes del primer cambio de prioridad; si no hubo cambios, la actual
 function prioridadInicialDe({ ticket, eventos }) {
   return eventos.find((evento) => evento.tipo === 'prioridad')?.prioridadAnterior ?? ticket.prioridad
 }
 
-/** El historial ya cargado: la ruta de navegación, la línea de tiempo y el tiempo por etapa. */
 function HistorialDeTicket({ historial }) {
   const { usuario } = useAuth()
   const { ticket, eventos, etapas, tiempos } = historial
@@ -60,10 +58,7 @@ function HistorialDeTicket({ historial }) {
   )
 }
 
-/**
- * /tecnico/tickets/:codigo/historial y /supervisor/tickets/:codigo/historial (HU-5 · 5.5, mockup p27): todos los
- * cambios de estado de un ticket, con su autor y su momento, y cuánto tiempo pasó en cada etapa.
- */
+// Historial de cambios de un ticket (HU-5), para técnico y supervisor.
 export default function HistorialCambiosPage() {
   const { codigo } = useParams()
   const { usuario } = useAuth()

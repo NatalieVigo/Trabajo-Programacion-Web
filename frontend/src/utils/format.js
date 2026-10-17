@@ -44,13 +44,11 @@ function toDate(value) {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-/** Fecha en hora de Lima con formato dd/mm/aaaa. */
 export function formatDate(value) {
   const date = toDate(value)
   return date ? dateFormatter.format(date) : ''
 }
 
-/** Hora en hora de Lima con formato HH:MM (24 h). */
 export function formatTime(value) {
   const date = toDate(value)
   return date ? timeFormatter.format(date) : ''
@@ -61,12 +59,11 @@ export function formatDateTime(value) {
   return date ? `${formatDate(date)} ${formatTime(date)}` : ''
 }
 
-/** Segundos de una cuenta regresiva como minutos y segundos: 45 → «0:45», 90 → «1:30». */
 export function formatCountdown(seconds) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 }
 
-/** "987654321" → "987 654 321"; cualquier otro valor se devuelve sin cambios. */
+// si no son 9 dígitos se devuelve tal cual
 export function formatTelefono(telefono) {
   const digits = String(telefono ?? '').replace(/\s+/g, '')
   return /^\d{9}$/.test(digits) ? digits.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3') : String(telefono ?? '')
@@ -76,22 +73,19 @@ export function getFirstName(nombres = '') {
   return nombres.trim().split(/\s+/)[0] ?? ''
 }
 
-/** Iniciales del primer nombre y del primer apellido: "CQ". */
 export function getInitials(nombres = '', apellidos = '') {
   return `${getFirstName(nombres).charAt(0)}${getFirstName(apellidos).charAt(0)}`.toUpperCase()
 }
 
-/** Nombre completo: "Camila Alejandra Quispe Ramos". */
 export function getFullName({ nombres = '', apellidos = '' } = {}) {
   return `${nombres} ${apellidos}`.trim()
 }
 
-/** Primer nombre y apellidos, como en la cabecera: "Camila Quispe Ramos". */
+// solo el primer nombre, como en la cabecera
 export function getDisplayName({ nombres = '', apellidos = '' } = {}) {
   return `${getFirstName(nombres)} ${apellidos}`.trim()
 }
 
-/** Cantidad con el sustantivo en singular o plural: «1 ticket abierto», «3 tickets abiertos». */
 export function pluralize(count, singular, plural) {
   return `${count} ${count === 1 ? singular : plural}`
 }

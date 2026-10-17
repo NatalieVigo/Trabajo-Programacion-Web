@@ -1,12 +1,8 @@
-/**
- * Reglas de validación del catálogo de servicios (HU-2). Igual que validators.js, la interfaz las aplica campo a campo
- * y los servicios las vuelven a aplicar antes de escribir. Cada función devuelve el mensaje de error o null.
- */
+// Validaciones del catálogo (HU-2). Se usan en el formulario y otra vez en los servicios.
 import { normalizeNombre } from './validators.js'
 
 export const PRIORIDADES = Object.freeze(['critica', 'alta', 'media', 'baja'])
 
-/** Tipos de ambiente con su nombre visible. */
 export const TIPOS_AMBIENTE = Object.freeze({
   aula: 'Aula',
   laboratorio: 'Laboratorio',
@@ -57,29 +53,26 @@ export const CATALOGO_MESSAGES = Object.freeze({
   capacidadRango: `Usa un número entero entre 1 y ${CAPACIDAD_MAX}.`,
 })
 
-// Grupos de letras o números separados por guiones: «A-201», «BIB-P2», «AUD-CEN».
+// letras o números separados por guiones, como A-201 o BIB-P2
 const CODIGO_PATTERN = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/
 
 const asText = (value) => (typeof value === 'string' ? value : '')
 
-/** Clave para comparar nombres sin importar mayúsculas, tildes ni espacios repetidos: «Climatización» = «climatizacion». */
+// para comparar nombres sin importar mayúsculas, tildes ni espacios de más
 export function claveDeNombre(value) {
   return normalizeNombre(value).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 }
 
-/** Número entero tal como se guarda: el tiempo esperado, el piso o la capacidad. «8» → 8. */
 export function parseEntero(value) {
   return Number(String(value ?? '').trim())
 }
 
 export const parseHoras = parseEntero
 
-/** Código de un ambiente tal como se guarda: « h-212 » → «H-212». */
 export function normalizeCodigo(value) {
   return asText(value).trim().toUpperCase()
 }
 
-/** Deja solo los campos con error: { campo: mensaje }. */
 function soloErrores(results) {
   return Object.fromEntries(Object.entries(results).filter(([, message]) => message))
 }
@@ -95,7 +88,6 @@ export function validatePrioridad(value) {
   return PRIORIDADES.includes(value) ? null : CATALOGO_MESSAGES.prioridadRequired
 }
 
-/** Horas hábiles: un entero de 1 a 720. Admite el texto del campo («8») o un número. */
 export function validateHoras(value) {
   if (String(value ?? '').trim() === '') return CATALOGO_MESSAGES.horasRequired
   const horas = parseHoras(value)
@@ -104,27 +96,21 @@ export function validateHoras(value) {
   return horas > HORAS_MAX ? CATALOGO_MESSAGES.horasMax : null
 }
 
-/** Opcional, de hasta 240 caracteres. */
 export function validateDescripcion(value) {
   return asText(value).trim().length > DESCRIPCION_MAX_LENGTH ? CATALOGO_MESSAGES.descripcionMax : null
 }
 
-/**
- * Categoría padre: vacía para una categoría principal. Si se pasan las `categorias` válidas (ids), debe ser una de
- * ellas.
- */
+// vacío quiere decir que es una categoría principal
 export function validatePadre(value, categorias) {
   if (value === null || value === undefined || value === '') return null
   return Array.isArray(categorias) && !categorias.includes(value) ? CATALOGO_MESSAGES.padreUnknown : null
 }
 
-/** Elección obligatoria de una lista (sede, pabellón): si se pasan los `ids` válidos, debe ser uno de ellos. */
 function validateEleccion(value, ids, { required, unknown }) {
   if (asText(value) === '') return required
   return Array.isArray(ids) && !ids.includes(value) ? unknown : null
 }
 
-/** Entero obligatorio dentro de un rango, desde el texto del campo o un número. */
 function validateEnteroEnRango(value, min, max, { required, rango }) {
   if (String(value ?? '').trim() === '') return required
   const numero = parseEntero(value)
@@ -142,7 +128,7 @@ export function validateTipoAmbiente(value) {
   return Object.hasOwn(TIPOS_AMBIENTE, asText(value)) ? null : CATALOGO_MESSAGES.tipoRequired
 }
 
-/** Nombre de un ambiente: opcional (se arma con el tipo y el código) y, si se escribe, de 2 a 60 caracteres. */
+// es opcional, si no se escribe se arma con el tipo y el código
 export function validateNombreAmbiente(value) {
   return normalizeNombre(value) ? validateNombreCatalogo(value) : null
 }
@@ -161,19 +147,17 @@ export function validateCapacidad(value) {
   })
 }
 
-/** Valida una sede: solo su nombre. */
 export function validateSede(values) {
   return soloErrores({ nombre: validateNombreCatalogo(values.nombre) })
 }
 
-/** Nombre de un pabellón: suele ser una letra («A», «H») o una palabra («Biblioteca»), de hasta 30 caracteres. */
 export function validateNombrePabellon(value) {
   const nombre = normalizeNombre(value)
   if (!nombre) return CATALOGO_MESSAGES.nombreRequired
   return nombre.length > PABELLON_MAX_LENGTH ? CATALOGO_MESSAGES.pabellonLength : null
 }
 
-/** Valida un pabellón: su sede y su nombre. `catalogos.sedes` (ids) es opcional: el servicio lo pasa. */
+// las listas de ids son opcionales, el servicio las pasa para exigir que existan
 export function validatePabellon(values, { sedes } = {}) {
   return soloErrores({
     sedeId: validateEleccion(values.sedeId, sedes, {
@@ -184,10 +168,6 @@ export function validatePabellon(values, { sedes } = {}) {
   })
 }
 
-/**
- * Valida un ambiente (p15): código, tipo, nombre opcional, pabellón, piso y capacidad. `catalogos.pabellones` (ids)
- * es opcional: el servicio lo pasa para exigir un pabellón que exista.
- */
 export function validateAmbiente(values, { pabellones } = {}) {
   return soloErrores({
     codigo: validateCodigoAmbiente(values.codigo),
@@ -202,10 +182,6 @@ export function validateAmbiente(values, { pabellones } = {}) {
   })
 }
 
-/**
- * Valida el formulario de categoría o subcategoría (p13): `categoriaId` es la categoría padre ('' para una principal).
- * `catalogos.categorias` (ids) es opcional: el servicio lo pasa para exigir un padre que exista.
- */
 export function validateCategoria(values, { categorias } = {}) {
   return soloErrores({
     nombre: validateNombreCatalogo(values.nombre),

@@ -9,7 +9,6 @@ import FormularioModal from './FormularioModal.jsx'
 
 const VALORES_NUEVOS = { codigo: '', tipo: '', nombre: '', pabellonId: '', piso: '', capacidad: '' }
 
-/** Valores del formulario según el ambiente guardado: piso y capacidad como texto. */
 const valoresDe = (ambiente) =>
   ambiente
     ? {
@@ -22,14 +21,10 @@ const valoresDe = (ambiente) =>
       }
     : VALORES_NUEVOS
 
-/** Cada pabellón con su sede: «A · Campus Monterrico». */
 const opcionesDePabellon = (sedes) =>
   sedes.flatMap((sede) => sede.pabellones.map((pabellon) => ({ value: pabellon.id, label: `${pabellon.nombre} · ${sede.nombre}` })))
 
-/**
- * Nuevo o editar ambiente (HU-2 · 2.2, modal de p15): código, tipo, nombre opcional, pabellón, piso y capacidad.
- * `onGuardado` recibe el ambiente guardado. Se monta al abrirse, así cada vez empieza con sus valores.
- */
+// Modal de ambiente. Se monta al abrir, así siempre parte de sus valores.
 export default function AmbienteModal({ ambiente, sedes, onClose, onGuardado }) {
   const { usuario } = useAuth()
   const toast = useToast()
@@ -44,7 +39,7 @@ export default function AmbienteModal({ ambiente, sedes, onClose, onGuardado }) 
       toast.success(`Ambiente “${guardado.codigo}” ${ambiente ? 'actualizado' : 'creado'} correctamente.`)
       onGuardado(guardado)
     } catch (error) {
-      // 400 y 409 (código repetido) traen el mensaje de cada campo.
+      // errores por campo, por ejemplo un código repetido
       if (error.fieldErrors) return error.fieldErrors
       toast.error(error.message)
     }

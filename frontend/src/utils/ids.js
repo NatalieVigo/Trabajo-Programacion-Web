@@ -6,7 +6,7 @@ export function randomHex(byteLength = 16) {
   return bytesToHex(crypto.getRandomValues(new Uint8Array(byteLength)))
 }
 
-/** Siguiente id correlativo de una tabla: nextId('usr', usuarios) → "usr-011". */
+// por ejemplo nextId('usr', usuarios) da 'usr-011'
 export function nextId(prefix, rows, digits = 3) {
   const start = `${prefix}-`
   const max = rows.reduce((current, row) => {

@@ -15,15 +15,12 @@ import { ServiceError, validationError } from './ServiceError.js'
 import { exigirSupervisorActivo } from './supervisorActivo.js'
 import { SIN_TICKETS, contarTicketsPor } from './ticketsEnCurso.js'
 
-/** Lo que se puede enviar al crear o editar. `categoriaId` es la categoría padre: vacío para una principal. */
+// categoriaId es el padre; vacío para una categoría principal
 const CAMPOS = ['nombre', 'categoriaId', 'descripcion', 'activa', 'prioridadPorDefecto', 'tiempoEsperadoHoras']
 
 const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es')
 
-/**
- * Lo que el catálogo lee de otras historias para sus contadores y para saber si algo se puede eliminar: los tickets
- * (HU-3) y las especialidades declaradas por los técnicos (HU-1). No modifica ninguno de los dos.
- */
+// lee tickets y especialidades de otras historias, sin modificarlos
 function leerUsos() {
   const tickets = ticketsRepository.findAll()
   const especialidades = new Map()
@@ -34,7 +31,7 @@ function leerUsos() {
   }
   return {
     porCategoria: contarTicketsPor('categoriaId', tickets),
-    // Los tickets todavía no guardan subcategoría (HU-3): mientras no lo hagan, cada subcategoría cuenta 0.
+    // los tickets del seed no traen subcategoría, así que ahí cuentan 0
     porSubcategoria: contarTicketsPor('subcategoriaId', tickets),
     especialidades,
   }
@@ -56,10 +53,7 @@ function presentarCategoria(categoria, totalSubcategorias, usos) {
   }
 }
 
-/**
- * Una subcategoría admite tickets nuevos (`disponible`) solo si ella y su categoría están activas: al desactivar una
- * categoría, sus subcategorías dejan de estar disponibles sin cambiar su propio estado.
- */
+// con la categoría inactiva, la subcategoría no está disponible aunque siga activa
 function presentarSubcategoria(subcategoria, categoriaActiva, usos) {
   const tickets = usos.porSubcategoria.get(subcategoria.id) ?? SIN_TICKETS
   return {
@@ -72,7 +66,6 @@ function presentarSubcategoria(subcategoria, categoriaActiva, usos) {
   }
 }
 
-/** La categoría o subcategoría con ese id: { tipo, registro }. Falla con 404 CATEGORY_NOT_FOUND. */
 function buscar(id) {
   const categoria = categoriasRepository.findById(id)
   if (categoria) return { tipo: 'categoria', registro: categoria }
@@ -89,7 +82,6 @@ function presentar({ tipo, registro }, usos = leerUsos()) {
   return presentarCategoria(registro, subcategoriasRepository.findAll({ categoriaId: registro.id }).length, usos)
 }
 
-/** Errores de validación de los datos completos, con las categorías que existen como padres posibles. */
 function erroresDe(valores) {
   const categorias = categoriasRepository.findAll().map((categoria) => categoria.id)
   const fieldErrors = validateCategoria(valores, { categorias })
@@ -97,7 +89,6 @@ function erroresDe(valores) {
   return fieldErrors
 }
 
-/** Campos que se guardan, normalizados: nombre sin espacios repetidos, descripción recortada y horas como número. */
 function camposGuardados(valores) {
   return {
     nombre: normalizeNombre(valores.nombre),
@@ -108,10 +99,7 @@ function camposGuardados(valores) {
   }
 }
 
-/**
- * Las categorías no repiten nombre entre sí y las subcategorías no lo repiten dentro de su categoría, sin distinguir
- * mayúsculas ni tildes. Falla con 409 NAME_TAKEN.
- */
+// una subcategoría puede repetir nombre si está en otra categoría
 function assertNombreDisponible(nombre, categoriaId, idActual) {
   if (categoriaId) {
     const hermanas = subcategoriasRepository.findAll({ categoriaId })
@@ -135,10 +123,7 @@ function mensajeEnUso({ nombre, usos }) {
   return `No se puede eliminar «${nombre}»: tiene ${enumerar(partes)}. Puedes desactivarla en su lugar.`
 }
 
-/**
- * Catálogo completo (p12): las categorías por nombre, cada una con sus subcategorías. Cada elemento trae `tipo`
- * ('categoria' | 'subcategoria'), `ticketsEnCurso`, `usos` (lo que impide eliminarlo) y `eliminable`.
- */
+// Catálogo completo (HU-2), con contadores y si cada elemento se puede eliminar.
 export function listar() {
   return simulateRequest(() => {
     const usos = leerUsos()
@@ -156,15 +141,11 @@ export function listar() {
   })
 }
 
-/** Categoría o subcategoría para editarla (p13). Falla con 404 CATEGORY_NOT_FOUND. */
 export function obtener(id) {
   return simulateRequest(() => presentar(buscar(id)))
 }
 
-/**
- * Crea una categoría o, si `datos.categoriaId` nombra una categoría, una subcategoría de ella (HU-2 · 2.1). `activa`
- * vale true si no se envía. Falla con 403 FORBIDDEN, 400 VALIDATION_ERROR o 409 NAME_TAKEN.
- */
+// Crea una categoría, o una subcategoría si viene categoriaId.
 export function crear(datos, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -188,10 +169,7 @@ export function crear(datos, supervisorId) {
   })
 }
 
-/**
- * Desactivar algo que tiene tickets en curso exige una confirmación explícita (HU-2 · 2.6): sin `confirmado`, falla con
- * 409 OPEN_TICKETS (details.ticketsEnCurso) para que la interfaz la pida. Los tickets en curso siguen su atención.
- */
+// Si tiene tickets en curso, pide confirmación antes de desactivar.
 function assertDesactivacionConfirmada(elemento, activa, confirmado) {
   const desactiva = elemento.activa && activa === false
   if (!desactiva || elemento.ticketsEnCurso === 0 || confirmado === true) return
@@ -205,12 +183,7 @@ function assertDesactivacionConfirmada(elemento, activa, confirmado) {
   )
 }
 
-/**
- * Edita una categoría o subcategoría. Los campos que no se envían conservan su valor. Una categoría principal no
- * puede pasar a ser subcategoría; una subcategoría puede cambiar de categoría, pero no quedarse sin ella. Si la
- * desactiva y tiene tickets en curso, `datos.confirmado` debe ser true. Falla con 403, 404 CATEGORY_NOT_FOUND,
- * 400 VALIDATION_ERROR, 409 NAME_TAKEN o 409 OPEN_TICKETS.
- */
+// una categoría no pasa a subcategoría; una subcategoría sí puede cambiar de padre
 export function actualizar(id, datos, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -232,11 +205,7 @@ export function actualizar(id, datos, supervisorId) {
   })
 }
 
-/**
- * Elimina una categoría o subcategoría que no se usa: sin tickets, sin subcategorías y sin técnicos que la declaren
- * como especialidad. Las habilitaciones de una categoría eliminada se eliminan con ella. Falla con 403, 404 o
- * 409 IN_USE (details.usos). Devuelve { id, tipo, nombre }.
- */
+// Solo elimina lo que no se usa; las habilitaciones de la categoría se van con ella.
 export function eliminar(id, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -256,11 +225,7 @@ export function eliminar(id, supervisorId) {
   })
 }
 
-/**
- * Activa o desactiva una categoría o subcategoría (HU-2 · 2.4). Una inactiva no admite tickets nuevos; los que ya
- * tiene siguen su curso. Desactivar algo con tickets en curso exige `{ confirmado: true }` (2.6). Falla con 403,
- * 404 CATEGORY_NOT_FOUND, 400 VALIDATION_ERROR si `activa` no es booleano o 409 OPEN_TICKETS (details.ticketsEnCurso).
- */
+// Lo inactivo no recibe tickets nuevos, pero los que ya tiene siguen su curso.
 export function cambiarEstado(id, activa, supervisorId, { confirmado = false } = {}) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)
@@ -272,12 +237,7 @@ export function cambiarEstado(id, activa, supervisorId, { confirmado = false } =
   })
 }
 
-/**
- * Lo que admite tickets nuevos: las categorías activas, por nombre, cada una con sus subcategorías activas
- * ({ id, nombre, descripcion, prioridadPorDefecto, tiempoEsperadoHoras, subcategorias }). Como el registro de tickets
- * (HU-3) exige una subcategoría, una categoría activa sin ninguna subcategoría activa no se ofrece. Es la lectura que
- * el catálogo ofrece a las demás historias; no incluye contadores ni datos de administración.
- */
+// Lo que se ofrece al registrar tickets; sin subcategorías activas no aparece.
 export function listarDisponibles() {
   return simulateRequest(() => {
     const campos = ({ id, nombre, descripcion, prioridadPorDefecto, tiempoEsperadoHoras }) => ({

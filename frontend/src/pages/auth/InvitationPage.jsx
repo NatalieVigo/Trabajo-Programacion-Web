@@ -40,7 +40,7 @@ function InvitationContent({ status, data: invitacion, error, reload }) {
   return <InvitationNotice invitacion={invitacion} />
 }
 
-/** Alta de técnicos y supervisores por invitación (HU-1 · 1.2, mockup p07): /invitacion/:token. */
+// Alta de técnicos y supervisores por invitación (HU-1).
 export default function InvitationPage() {
   const { token } = useParams()
   const cargarInvitacion = useCallback(() => obtenerPorToken(token), [token])

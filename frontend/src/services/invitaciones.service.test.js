@@ -11,7 +11,7 @@ const TECNICO = 'INV-TEC-2026-DEMO'
 const SUPERVISOR = 'INV-SUP-2026-DEMO'
 const VENCIDA = 'INV-TEC-2026-VENCIDA'
 const USADA = 'INV-TEC-2026-USADA'
-// La invitación de técnico del seed vence el 31/12/2026 a las 23:59:59, hora de Lima.
+// 31/12/2026 23:59:59 en Lima
 const VENCE_TECNICO = '2027-01-01T04:59:59.000Z'
 
 const activacion = {

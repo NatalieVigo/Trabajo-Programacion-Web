@@ -2,11 +2,7 @@ import { ROUTES } from './routePaths.js'
 
 export const ROLES = Object.freeze(['usuario', 'tecnico', 'supervisor'])
 
-/**
- * Vista principal de cada rol (SPEC §9): a dónde se llega al iniciar sesión, con su nombre en el menú, y la lista de
- * tickets del rol, a la que lleva el buscador de la cabecera. La del usuario es «Mis tickets» (p19), adonde también
- * lleva el 403 (p11): los mockups no dibujan otra pantalla de inicio para él.
- */
+// El usuario no tiene pantalla de inicio propia, así que entra directo a sus tickets.
 const ROLE_HOMES = Object.freeze({
   usuario: Object.freeze({ path: ROUTES.usuarioTickets, label: 'Mis tickets', ticketsPath: ROUTES.usuarioTickets }),
   tecnico: Object.freeze({ path: ROUTES.tecnicoBandeja, label: 'Mi bandeja', ticketsPath: ROUTES.tecnicoBandeja }),

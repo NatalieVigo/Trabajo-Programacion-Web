@@ -1,4 +1,4 @@
-/* Mis encuestas (HU-6 · 6.2, p29): tabla de encuestas respondidas con el plazo de edición. */
+/* Mis encuestas */
 .mis-encuestas__tabla {
   overflow-x: auto;
   border: 1px solid var(--color-border);

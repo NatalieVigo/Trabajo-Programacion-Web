@@ -16,11 +16,7 @@ const NAV_LINKS = [
   { label: 'Tiempos de atención', to: landingSectionPath(LANDING_SECTIONS.tiempos) },
 ]
 
-/**
- * Cabecera pública (p03). Por debajo de 1024 px la navegación se pliega en el botón «Menú», que se cierra
- * al elegir un enlace, con Esc o al tocar fuera de la cabecera. Con la sesión iniciada, en lugar de «Iniciar sesión» y
- * «Registrarme» muestra la cuenta, el acceso a la vista de su rol y «Cerrar sesión».
- */
+// En móvil el menú se cierra al elegir un enlace, con Esc o al tocar fuera.
 export default function PublicHeader() {
   const { usuario } = useAuth()
   const vistaDelRol = usuario ? getRoleHome(usuario.rol) : null

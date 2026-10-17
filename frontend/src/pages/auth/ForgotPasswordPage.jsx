@@ -8,10 +8,7 @@ import RecoveryStepper from './RecoveryStepper.jsx'
 import SimulatedInbox from './SimulatedInbox.jsx'
 import './PasswordRecovery.css'
 
-/**
- * Recuperar contraseña (HU-1 · 1.6, mockups p08 y p09): el paso 1 pide el correo, que puede llegar precargado desde
- * el inicio de sesión (?correo=), y el paso 2 confirma el envío junto a la bandeja simulada de la entrega 1.
- */
+// Recuperar contraseña (HU-1). El correo puede venir del login en ?correo=.
 export default function ForgotPasswordPage() {
   const [searchParams] = useSearchParams()
   const [envio, setEnvio] = useState(null)

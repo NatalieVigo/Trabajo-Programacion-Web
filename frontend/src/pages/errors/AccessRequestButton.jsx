@@ -3,10 +3,7 @@ import { useAuth } from '../../hooks/useAuth.js'
 import { solicitar } from '../../services/solicitudesAcceso.service.js'
 import { Button, useToast } from '../../shared/components'
 
-/**
- * «Solicitar acceso» de la vista 403 (p11): envía a Infraestructura y Servicios la solicitud del `recurso` y notifica
- * el resultado. El botón conserva el texto de p11; si la cuenta ya la había enviado (409), lo avisa.
- */
+// si ya había pedido acceso antes solo se le avisa
 export default function AccessRequestButton({ recurso }) {
   const { usuario } = useAuth()
   const toast = useToast()

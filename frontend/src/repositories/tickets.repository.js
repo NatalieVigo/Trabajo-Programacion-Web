@@ -1,5 +1,5 @@
 import { createReadOnlyRepository, createRepository } from './createRepository.js'
 
-// HU-3 es responsable de crear tickets; las demás historias consumen este mismo repositorio.
+// HU-3 crea los tickets; las otras historias usan este mismo repositorio.
 export const ticketsRepository = createRepository('tickets')
 export const encuestasRepository = createReadOnlyRepository('encuestas')

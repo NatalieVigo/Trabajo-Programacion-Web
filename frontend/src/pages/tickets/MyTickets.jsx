@@ -24,7 +24,6 @@ export const MyTickets = () => {
         ...categoriasRepository.findAll().map(({ id, nombre }) => ({ value: id, label: nombre })),
     ];
 
-    // Inputs para controlar la busqueda y los combos
     const [busqueda, setBusqueda] = useState('');
     const codigoBuscado = searchParams.get('codigo')?.trim() || '';
     const busquedaActual = codigoBuscado || busqueda;
@@ -77,14 +76,12 @@ export const MyTickets = () => {
             const asunto = ticket.asunto || ticket.descripcion || '';
             const ambiente = obtenerAmbienteTexto(ticket);
             const estado = String(ticket.estado || 'abierto').toLowerCase().replaceAll(' ', '_');
-            
-            // Texto libre
+
             const coincideBusqueda =
                 codigo.toLowerCase().includes(busquedaActual.toLowerCase()) ||
                 asunto.toLowerCase().includes(busquedaActual.toLowerCase()) ||
                 ambiente.toLowerCase().includes(busquedaActual.toLowerCase());
 
-            // Estado del ticket
             let coincideEstado = true;
             if (filtroEstado === 'en_curso') {
                 coincideEstado = esTicketEnCurso(ticket);
@@ -92,7 +89,7 @@ export const MyTickets = () => {
                 coincideEstado = estado === filtroEstado;
             }
 
-            // Categoria principal o ID
+            // sirve el id o el nombre de la categoria
             let coincideCategoria = true;
             if (filtroCategoria !== '') {
                 const catFiltroLower = filtroCategoria.toLowerCase().trim();
@@ -100,7 +97,6 @@ export const MyTickets = () => {
                 coincideCategoria = ticket.categoriaId === filtroCategoria || catNombreVal.includes(catFiltroLower);
             }
 
-            // Rango de fechas
             let coincideFecha = true;
             const tiempoTicket = parseFecha(ticket);
             
@@ -184,7 +180,7 @@ export const MyTickets = () => {
                 </Alert>
             )}
 
-            {/* Filtros superiores */}
+            {/* Filtros */}
             <div className="mis-tickets__filtros">
                 <div className="mis-tickets__busqueda">
                     <TextInput
@@ -195,7 +191,6 @@ export const MyTickets = () => {
                     />
                 </div>
 
-                {/* Combo estado */}
                 <div className="mis-tickets__filtro">
                     <SelectInput
                         aria-label="Estado"
@@ -215,7 +210,6 @@ export const MyTickets = () => {
                     />
                 </div>
 
-                {/* Rango de fechas */}
                 <div className="mis-tickets__fechas" role="group" aria-label="Registrado entre">
                     <TextInput
                         type="date"
@@ -232,7 +226,6 @@ export const MyTickets = () => {
                     />
                 </div>
 
-                {/* Combo categorias */}
                 <div className="mis-tickets__filtro">
                     <SelectInput
                         aria-label="Categoría"
@@ -247,7 +240,7 @@ export const MyTickets = () => {
                 </Button>
             </div>
 
-            {/* Tabla de tickets */}
+            {/* Tabla */}
             <div className="mis-tickets__tabla">
                 <table>
                     <thead>
@@ -303,7 +296,6 @@ export const MyTickets = () => {
                 </table>
             </div>
 
-            {/* Conteo y paginación */}
             <div className="mis-tickets__pie">
                 <p className="mis-tickets__conteo">
                     Mostrando {primeroVisible}–{ultimoVisible} de {ticketsFiltrados.length} tickets

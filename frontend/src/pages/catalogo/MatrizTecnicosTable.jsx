@@ -4,10 +4,6 @@ import { getDisplayName, pluralize } from '../../utils/format.js'
 import { nombreCorto } from './matrizTecnicos.js'
 import './MatrizTecnicosTable.css'
 
-/**
- * Matriz técnico × categoría (p16): una casilla por categoría para habilitar al técnico en ella, más la especialidad
- * que declaró y su carga actual. Las casillas marcadas resaltan su celda. `onAlternar(tecnicoId, categoriaId)`.
- */
 export default function MatrizTecnicosTable({ categorias, tecnicos, habilitadas, deshabilitada, onAlternar }) {
   const idBase = useId()
   const nombres = new Map(categorias.map(({ id, nombre }) => [id, nombre]))

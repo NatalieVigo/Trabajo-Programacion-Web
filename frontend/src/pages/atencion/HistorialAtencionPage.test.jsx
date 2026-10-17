@@ -16,7 +16,6 @@ const celdas = (codigo) =>
     .getAllByRole('cell')
     .map((celda) => celda.textContent)
 
-/** Abre el historial de Julio y espera la tabla y el contador de la cabecera. */
 async function renderHistorial() {
   const view = renderApp('/tecnico/historial', { usuario: DEMO.tecnico })
   await screen.findByRole('table', { name: 'Tickets resueltos y cerrados' })
@@ -38,7 +37,7 @@ describe('HistorialAtencionPage', () => {
     await renderHistorial()
 
     expect(screen.getByRole('heading', { level: 1, name: 'Historial' })).toBeInTheDocument()
-    // Los que siguen en atención o en espera están en «Mi bandeja», no aquí.
+    // los que siguen en curso no salen aquí
     expect(codigos()).toEqual([
       'TCK-2026-00141',
       'TCK-2026-00131',

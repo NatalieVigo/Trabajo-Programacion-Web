@@ -1,9 +1,4 @@
-/**
- * Error de servicio con semántica HTTP (400, 401, 403, 404, 409, 410, 423, 500).
- * Ejemplos: `new ServiceError(400, 'VALIDATION_ERROR', 'Revisa los campos marcados.', { correo: '…' })`,
- * `new ServiceError(423, 'ACCOUNT_LOCKED', mensaje, null, { details: { bloqueadoHasta } })`.
- * En la entrega 2 se construirá a partir de la respuesta de la API REST.
- */
+// Error con status HTTP. En la entrega 2 se armará con la respuesta de la API.
 export class ServiceError extends Error {
   constructor(status, code, message, fieldErrors = null, { details = null, cause } = {}) {
     super(message, cause === undefined ? undefined : { cause })
@@ -15,7 +10,7 @@ export class ServiceError extends Error {
   }
 }
 
-/** 400 con el mensaje de cada campo inválido: { campo: mensaje }. */
+// fieldErrors va como { campo: mensaje }
 export function validationError(fieldErrors) {
   return new ServiceError(400, 'VALIDATION_ERROR', 'Revisa los campos marcados.', fieldErrors)
 }

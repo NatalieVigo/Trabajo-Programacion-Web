@@ -1,11 +1,7 @@
 import { useId } from 'react'
 import { Button, Modal, useConfirm } from '../../shared/components'
 
-/**
- * Ventana con un formulario del catálogo (p15): los campos en `children`, «Cancelar» y el botón de guardar. Cerrarla
- * con datos sin guardar pide confirmación. `form` es el de useForm y `onGuardar(values)`, lo que se hace al enviarlo
- * (devuelve los errores por campo del servicio, si los hay). `initialFocusRef` apunta al primer campo.
- */
+// Modal con formulario. Si hay cambios sin guardar, pide confirmar al cerrar.
 export default function FormularioModal({ titulo, descripcion, form, onGuardar, onClose, textoGuardar, initialFocusRef, children }) {
   const confirm = useConfirm()
   const formId = useId()

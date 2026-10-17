@@ -7,7 +7,7 @@ import { obtenerContadores } from '../../services/resumen.service.js'
 import { soltarFoco } from '../../test/focus.js'
 import { renderApp } from '../../test/test-utils.jsx'
 
-// Los contadores son los reales; una prueba los demora para comprobar que el ingreso no los espera.
+// una prueba demora los contadores para ver que el ingreso no los espera
 vi.mock('../../services/resumen.service.js', async (importOriginal) => {
   const original = await importOriginal()
   return { ...original, obtenerContadores: vi.fn(original.obtenerContadores) }
@@ -27,7 +27,6 @@ async function ingresarCon(user, { correo, password }) {
   await user.click(botonIngresar())
 }
 
-/** El panel del rol cargó los contadores de su cabecera: no quedan consultas pendientes. */
 async function esperarPanel(pildora) {
   expect(await screen.findByText(pildora)).toBeInTheDocument()
   await waitFor(() => expect(screen.queryByText('Cargando tu resumen…')).not.toBeInTheDocument())
@@ -166,7 +165,6 @@ describe('LoginPage', () => {
     expect(alerta).toHaveTextContent(
       'Cuenta bloqueada por 15 minutos tras cinco intentos fallidos. Podrás ingresar a las 10:42 o restablecer tu contraseña ahora.',
     )
-    // Sin un campo que corregir, el foco pasa al aviso: con Tab se llega a sus acciones.
     expect(alerta).toHaveFocus()
     await user.tab()
     expect(within(alerta).getByRole('link', { name: 'Restablecer contraseña' })).toHaveFocus()

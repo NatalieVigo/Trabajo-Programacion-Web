@@ -3,7 +3,6 @@ import { cx } from '../../../utils/classNames.js'
 import '../FormField/FormField.css'
 import './Checkbox.css'
 
-/** Casilla con etiqueta y error. `required` la anuncia como obligatoria (aria-required), como FormField. */
 export default function Checkbox({ label, error, required = false, id, className, ...props }) {
   const generatedId = useId()
   const inputId = id ?? generatedId

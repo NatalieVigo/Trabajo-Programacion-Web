@@ -3,7 +3,6 @@ import './Alert.css'
 
 const ASSERTIVE_VARIANTS = new Set(['error', 'warning'])
 
-/** Mensaje en línea (p05). Los errores y advertencias se anuncian con role="alert". */
 export default function Alert({ variant = 'info', title, actions, className, children, ...rest }) {
   return (
     <div

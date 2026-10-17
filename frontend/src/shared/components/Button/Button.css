@@ -59,7 +59,7 @@
   text-decoration: underline;
 }
 
-/* Acción destructiva de una fila de tabla, como «Bloquear» en p33: terciario en rojo. */
+/* terciario en rojo, para acciones como Bloquear en una tabla */
 .btn--tertiary-destructive {
   padding-inline: var(--space-2);
   color: var(--color-danger-text);

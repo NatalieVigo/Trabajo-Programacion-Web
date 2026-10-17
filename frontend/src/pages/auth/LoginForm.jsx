@@ -12,13 +12,10 @@ import LoginAlert from './LoginAlert.jsx'
 import { buildWelcomeMessage } from './welcomeMessage.js'
 
 const VERIFICA_TUS_DATOS = 'Verifica tus datos e inténtalo otra vez.'
-// Errores que se explican con un aviso sobre el formulario (p05); los inesperados se notifican con un toast.
+// estos van en un aviso sobre el formulario, el resto en un toast
 const ERRORES_CON_AVISO = new Set(['INVALID_CREDENTIALS', 'ACCOUNT_LOCKED', 'ACCOUNT_BLOCKED'])
 
-/**
- * Tras ingresar: la página privada que se pidió sin sesión (RequireAuth la deja en state.from) si el rol puede verla;
- * si no, la vista del rol en lugar de un 403.
- */
+// vuelve a la página pedida (state.from) si el rol puede verla, si no a su inicio
 function destinoTrasIngresar(from, rol) {
   return typeof from?.pathname === 'string' && canAccess(rol, from.pathname) ? from : getRoleHome(rol).path
 }
@@ -31,11 +28,7 @@ async function mensajeDeBienvenida(usuario) {
   }
 }
 
-/**
- * Formulario de acceso (p04, p05). Mientras se valida la sesión muestra «Ingresando…» con los campos y enlaces
- * deshabilitados. El correo llega precargado desde el registro, la invitación o la recuperación de contraseña
- * (state.correo) y «¿Olvidaste tu contraseña?» lo lleva a la recuperación.
- */
+// El correo puede venir precargado en state.correo desde otras pantallas.
 export default function LoginForm() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -57,7 +50,7 @@ export default function LoginForm() {
     setAviso(null)
     try {
       const usuario = await iniciarSesion(values, irTrasIngresar)
-      // La vista del rol se abre sin esperar los contadores: la bienvenida llega cuando estén listos.
+      // no se esperan los contadores, la bienvenida sale cuando lleguen
       mensajeDeBienvenida(usuario).then(toast.success)
     } catch (error) {
       if (error.fieldErrors) return error.fieldErrors
@@ -66,7 +59,6 @@ export default function LoginForm() {
         return null
       }
       const fieldErrors = error.code === 'INVALID_CREDENTIALS' ? { password: VERIFICA_TUS_DATOS } : null
-      // Sin un campo que corregir (cuenta bloqueada), el foco pasa al aviso y desde ahí a sus acciones.
       setAviso({ error, correo: normalizeCorreo(values.correo), enfocar: !fieldErrors })
       return fieldErrors
     }

@@ -1,15 +1,11 @@
 import { db } from '../repositories/db.js'
 import { ServiceError, validationError } from './ServiceError.js'
 
-/** Rango máximo de días para editar una encuesta respondida */
 export const DIAS_PLAZO_EDICION = 7
 
 const esPuntajeValido = (valor) => Number.isInteger(valor) && valor >= 1 && valor <= 5
 
-/**
- * Lo que el servidor exige antes de guardar: el ticket es de quien responde, ya está cerrado y cada puntaje es un
- * entero de 1 a 5. Falla con 404 TICKET_NOT_FOUND, 409 TICKET_NOT_CLOSED o 400 VALIDATION_ERROR.
- */
+// lo mismo que validaría el servidor antes de guardar
 function validarEncuesta(ticket, usuarioId, puntajes) {
   if (!ticket || ticket.usuarioId !== usuarioId) {
     throw new ServiceError(404, 'TICKET_NOT_FOUND', 'No encontramos un ticket tuyo con ese código.')
@@ -22,9 +18,6 @@ function validarEncuesta(ticket, usuarioId, puntajes) {
   }
 }
 
-/**
- * Obtiene la encuesta asociada a un ticket por su código o id.
- */
 export async function obtenerEncuestaPorTicket(codigoTicket) {
   const encuestas = await db.get('encuestas')
   const tickets = await db.get('tickets')
@@ -45,9 +38,7 @@ export async function obtenerEncuestaPorTicket(codigoTicket) {
   }
 }
 
-/**
- * Guarda o actualiza la encuesta de satisfacción de un ticket.
- */
+// crea la encuesta o, si ya existe, la edita
 export async function registrarEncuesta({
   codigoTicket,
   usuarioId,
@@ -67,7 +58,6 @@ export async function registrarEncuesta({
   const fechaActual = new Date().toISOString()
 
   if (index >= 0) {
-    // Validar si aún está dentro del plazo de edición (7 días)
     const fechaRespuesta = new Date(encuestas[index].fechaRespuesta || encuestas[index].respondidaEn)
     const diasDiferencia = (new Date() - fechaRespuesta) / (1000 * 60 * 60 * 24)
     if (diasDiferencia > DIAS_PLAZO_EDICION) {
@@ -109,9 +99,6 @@ export async function registrarEncuesta({
   )
 }
 
-/**
- * Obtiene las encuestas respondidas por un usuario y calcula su promedio otorgado.
- */
 export async function obtenerEncuestasUsuario(usuarioId) {
   const encuestas = await db.get('encuestas')
   const tickets = await db.get('tickets')
@@ -152,9 +139,7 @@ export async function obtenerEncuestasUsuario(usuarioId) {
   }
 }
 
-/**
- * Obtiene el reporte de satisfacción consolidado para la vista del supervisor.
- */
+// Reporte de satisfacción para el supervisor (HU-6).
 export async function obtenerReporteSatisfaccionSupervisor({
   fechaInicio,
   fechaFin,
@@ -165,7 +150,6 @@ export async function obtenerReporteSatisfaccionSupervisor({
   const usuarios = await db.get('usuarios')
   const categorias = (await db.get('categorias')) || []
 
-  // Filtrar encuestas por período
   const encuestasFiltradas = encuestas.filter((e) => {
     if (!fechaInicio && !fechaFin) return true
     const fechaStr = e.fechaRespuesta || e.respondidaEn
@@ -176,7 +160,7 @@ export async function obtenerReporteSatisfaccionSupervisor({
     return true
   })
 
-  // Agrupar métricas por técnico
+  // métricas por técnico
   const tecnicosMap = {}
 
   encuestasFiltradas.forEach((enc) => {
@@ -224,7 +208,7 @@ export async function obtenerReporteSatisfaccionSupervisor({
     encuestasCount: t.cantEncuestas,
   }))
 
-  // Filtrar comentarios para el panel lateral
+  // comentarios del panel lateral
   let comentarios = encuestasFiltradas
     .filter((e) => e.comentario && e.comentario.trim().length > 0)
     .map((e) => {
@@ -258,6 +242,6 @@ export async function obtenerReporteSatisfaccionSupervisor({
     comentarios,
     totalRespondidas,
     promedioGeneral,
-    tasaRespuesta: 62, // Porcentaje estimado para interfaz
+    tasaRespuesta: 62, // fijo por ahora
   }
 }

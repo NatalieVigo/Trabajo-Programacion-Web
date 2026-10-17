@@ -11,7 +11,6 @@ export const TicketConfirmation = ({ ticket }) => {
 
     if (!ticket) return <Navigate to={ROUTES.usuarioTickets} replace />;
 
-    // Copiar el código del ticket al portapapeles
     const handleCopiarCodigo = () => {
         if (ticket?.codigo) {
             navigator.clipboard.writeText(ticket.codigo);
@@ -20,7 +19,6 @@ export const TicketConfirmation = ({ ticket }) => {
         }
     };
 
-    // Ir a la vista principal con la lista de mis tickets
     const handleIrAMisTickets = () => {
         if (ROUTES?.usuarioTickets) {
             navigate(ROUTES.usuarioTickets);
@@ -29,7 +27,6 @@ export const TicketConfirmation = ({ ticket }) => {
         }
     };
 
-    // Ver a detalle el ticket recién creado
     const handleVerDetalle = () => {
         if (ROUTES?.usuarioTicketDetalle && ticket?.id) {
             navigate(usuarioTicketDetallePath(ticket.id));
@@ -57,7 +54,6 @@ export const TicketConfirmation = ({ ticket }) => {
                     Guarda el código: con él puedes buscar el ticket desde la cabecera en cualquier momento.
                 </p>
 
-                {/* Bloque con el codigo generado */}
                 <div className="confirmacion__codigo">
                     <span className="confirmacion__codigo-texto">{ticket?.codigo}</span>
                     <Button variant="secondary" size="sm" onClick={handleCopiarCodigo}>
@@ -65,7 +61,7 @@ export const TicketConfirmation = ({ ticket }) => {
                     </Button>
                 </div>
 
-                {/* Resumen rapido de prioridad, tiempo y lugar */}
+                {/* Resumen */}
                 <dl className="confirmacion__datos">
                     <div className="confirmacion__dato">
                         <dt className="text-label text-muted">Prioridad asignada</dt>
@@ -89,7 +85,6 @@ export const TicketConfirmation = ({ ticket }) => {
                     </div>
                 </dl>
 
-                {/* Botones para redirigir */}
                 <div className="confirmacion__acciones">
                     <Button variant="primary" onClick={handleVerDetalle}>
                         Ver el detalle del ticket

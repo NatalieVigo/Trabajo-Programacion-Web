@@ -1,4 +1,4 @@
-/* Historial de cambios (p27): la línea de tiempo y, a la derecha, el tiempo por etapa. */
+/* Historial de cambios */
 .historial-cambios__layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
@@ -6,7 +6,7 @@
   gap: var(--space-4);
 }
 
-/* Línea de tiempo: un punto del color del estado por evento, unidos por una línea vertical. */
+/* Línea de tiempo */
 .linea-tiempo {
   margin: 0;
   padding: 0;
@@ -85,7 +85,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Tiempo por etapa: nombre a la izquierda, duración a la derecha y la barra debajo, del color del estado. */
+/* Tiempo por etapa */
 .tiempo-etapas__titulo {
   margin-bottom: var(--space-4);
   font-size: var(--font-size-subtitle);

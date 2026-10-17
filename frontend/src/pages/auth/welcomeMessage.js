@@ -9,10 +9,7 @@ const RESUMEN_POR_ROL = {
     `Hay ${pluralize(colaSinAsignar, 'ticket sin asignar', 'tickets sin asignar')} en la cola.`,
 }
 
-/**
- * Bienvenida tras iniciar sesión, con el texto de p05 y el resumen propio de cada rol:
- * «Bienvenida, Camila. Tienes 3 tickets abiertos y 1 encuesta pendiente.». Sin contadores, solo saluda.
- */
+// sin contadores solo saluda
 export function buildWelcomeMessage(usuario, contadores) {
   const saludo = `Bienvenida, ${getFirstName(usuario.nombres)}.`
   const resumen = contadores && RESUMEN_POR_ROL[usuario.rol]?.(contadores)

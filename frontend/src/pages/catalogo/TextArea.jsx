@@ -3,7 +3,7 @@ import { cx } from '../../utils/classNames.js'
 import '../../shared/components/TextInput/TextInput.css'
 import './TextArea.css'
 
-/** Texto de varias líneas con el estilo de los campos. Dentro de un FormField hereda su id, mensaje y estado. */
+// dentro de un FormField toma su id, mensaje y estado
 export default function TextArea({ status: statusProp, rows = 3, className, ...props }) {
   const { controlProps, status } = useFieldControl(props, statusProp)
 
