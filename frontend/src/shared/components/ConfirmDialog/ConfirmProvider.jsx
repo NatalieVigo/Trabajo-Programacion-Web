@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import ConfirmDialog from './ConfirmDialog.jsx'
 import { ConfirmContext } from './ConfirmContext.js'
 
-/** Expone `confirm(options)`, que abre un único ConfirmDialog y resuelve true (confirmar) o false. */
+// Un solo diálogo; si se pide otro, el anterior se resuelve en false.
 export default function ConfirmProvider({ children }) {
   const [options, setOptions] = useState(null)
   const resolveRef = useRef(null)

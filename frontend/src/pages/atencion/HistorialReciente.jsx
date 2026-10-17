@@ -4,13 +4,9 @@ import { formatDuracion } from '../../utils/duracion.js'
 import { formatDateTime } from '../../utils/format.js'
 import { tituloDeEvento } from './eventoDelHistorial.js'
 
-/** Cuántos eventos se muestran: los últimos del historial. */
 const RECIENTES = 4
 
-/**
- * Historial reciente (HU-5 · 5.6, p25): los últimos cambios del ticket y el tiempo que lleva. El historial completo se
- * abre con «Historial», en la cabecera.
- */
+// Últimos cambios del ticket; el historial completo se abre desde la cabecera.
 export default function HistorialReciente({ eventos, tiempos, cerrado }) {
   const tituloId = useId()
   const recientes = eventos.slice(-RECIENTES)

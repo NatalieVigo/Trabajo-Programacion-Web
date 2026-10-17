@@ -2,13 +2,7 @@ import { useState } from 'react'
 import { correoDisponible } from '../services/usuarios.service.js'
 import { normalizeCorreo, validateCorreo } from '../utils/validators.js'
 
-/**
- * Disponibilidad del correo que se está escribiendo en el registro.
- * status: 'idle' | 'checking' | 'available' | 'taken'. El estado siempre corresponde al valor actual: si el correo
- * cambia vuelve a 'idle' y la respuesta tardía de un valor anterior se descarta. `check()` no consulta si el formato
- * es inválido o si ese correo ya se consultó. `markTaken(correo)` guarda que el servicio lo rechazó por tener cuenta
- * (409 al registrar), para que no vuelva a mostrarse como disponible.
- */
+// Revisa si el correo del registro está libre. Si el correo cambia, vuelve a 'idle'.
 export function useEmailAvailability(value) {
   const [result, setResult] = useState({ correo: null, status: 'idle' })
   const correo = normalizeCorreo(value)
@@ -22,9 +16,9 @@ export function useEmailAvailability(value) {
       const { disponible } = await correoDisponible(correo)
       next = disponible ? 'available' : 'taken'
     } catch {
-      // Sin respuesta no se marca nada: registrar() vuelve a comprobar el correo al enviar.
+      // no se marca nada, igual registrar() lo vuelve a revisar al enviar
     }
-    // Solo resuelve la consulta pendiente de ese correo: no pisa un markTaken() posterior.
+    // así no pisa un markTaken() que llegó después
     setResult((current) =>
       current.correo === correo && current.status === 'checking' ? { correo, status: next } : current,
     )

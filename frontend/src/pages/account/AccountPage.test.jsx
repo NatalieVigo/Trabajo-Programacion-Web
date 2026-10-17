@@ -26,7 +26,6 @@ const filasDelResumen = () =>
     .getAllByRole('term')
     .map((termino) => [termino.textContent, termino.nextElementSibling.textContent])
 
-/** Abre Mi cuenta con la sesión de `cuenta` (un id del seed) y espera el formulario, el resumen y la cabecera. */
 async function abrirMiCuenta(cuenta = DEMO.usuario, rol = 'usuario') {
   const view = renderApp('/mi-cuenta', { usuario: cuenta })
   await screen.findByRole('form', { name: 'Datos personales' })
@@ -230,7 +229,7 @@ describe('AccountPage · edición', () => {
   it('muestra junto al campo el error que devuelve el servicio y lo enfoca', async () => {
     const { user } = await abrirMiCuenta()
     await user.selectOptions(campo('Ambiente habitual'), 'amb-05')
-    // El ambiente deja de existir mientras se completa el formulario.
+    // el ambiente se borra mientras se llena el formulario
     writeTable('ambientes', readTable('ambientes').filter((ambiente) => ambiente.id !== 'amb-05'))
 
     await user.click(botonGuardar())

@@ -4,7 +4,7 @@ import { etapasDe, tiempoPorEstado, tiemposDe } from './tiemposDeAtencion.js'
 
 const estado = (nombre, creadoEn) => ({ estado: nombre, creadoEn })
 
-/** TCK-2026-00130 (p27): abierto 31/08 09:04, cerrado 01/09 15:16, con 18 h 30 min en espera. */
+// TCK-2026-00130, con 18 h 30 min en espera
 const CERRADO = [
   estado('abierto', '2026-08-31T14:04:00.000Z'),
   estado('en_atencion', '2026-08-31T15:12:00.000Z'),

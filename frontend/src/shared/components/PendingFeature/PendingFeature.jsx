@@ -1,10 +1,7 @@
 import EmptyState from '../EmptyState/EmptyState.jsx'
 import { ClockIcon } from '../icons.jsx'
 
-/**
- * Cuerpo de una sección que aún no está disponible (SPEC §5): indica a qué historia corresponde y que la implementa
- * otro integrante del equipo. `action` suele llevar a la vista principal.
- */
+// para secciones que todavía hace otro integrante del equipo
 export default function PendingFeature({ historia, nombre, action, titleAs, className }) {
   return (
     <EmptyState

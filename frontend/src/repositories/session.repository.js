@@ -1,6 +1,6 @@
 export const SESSION_STORAGE_KEY = 'mesa-ayuda:sesion'
 
-/** Web Storage del navegador o, si no está disponible (navegación privada estricta), un sustituto en memoria. */
+// si el storage no está disponible (modo privado) se usa uno en memoria
 function resolveStorage(name) {
   try {
     const storage = window[name]
@@ -18,7 +18,7 @@ function resolveStorage(name) {
   }
 }
 
-// «Recordarme en este equipo» guarda la sesión en localStorage; si no, dura lo que la pestaña (sessionStorage).
+// con "Recordarme" va a localStorage; si no, solo dura lo que la pestaña
 const rememberedStorage = resolveStorage('localStorage')
 const tabStorage = resolveStorage('sessionStorage')
 
@@ -32,10 +32,7 @@ function parseSession(raw) {
   }
 }
 
-/**
- * Sesión de este navegador: { usuarioId, iniciadaEn } bajo la clave `mesa-ayuda:sesion`. Solo guarda y lee:
- * auth.service decide cuándo una sesión es válida. En la entrega 2 guardará el token que emita la API.
- */
+// Solo guarda y lee la sesión; auth.service decide si sigue siendo válida.
 export const sessionRepository = {
   read() {
     return parseSession(tabStorage.getItem(SESSION_STORAGE_KEY)) ?? parseSession(rememberedStorage.getItem(SESSION_STORAGE_KEY))

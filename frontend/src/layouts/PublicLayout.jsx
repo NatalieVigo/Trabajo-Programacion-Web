@@ -4,7 +4,6 @@ import PublicFooter from './PublicFooter.jsx'
 import PublicHeader from './PublicHeader.jsx'
 import './PublicLayout.css'
 
-/** Layout del visitante (p03–p09): cabecera pública, contenido y pie institucional. */
 export default function PublicLayout() {
   useScrollToHash()
 

@@ -1,30 +1,33 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth.js'
 import { LANDING_SECTIONS, ROUTES, landingSectionPath } from '../routes/routePaths.js'
 import './PublicFooter.css'
 
-const FOOTER_SECTIONS = [
-  {
-    id: 'pie-reportar',
-    title: 'Reportar',
-    links: [
-      { label: 'Registrar un ticket', to: ROUTES.iniciarSesion },
-      { label: 'Seguir un ticket', to: ROUTES.iniciarSesion },
-      { label: 'Categorías de servicio', to: landingSectionPath(LANDING_SECTIONS.categorias) },
-    ],
-  },
-  {
-    id: 'pie-ayuda',
-    title: 'Ayuda',
-    links: [
-      { label: 'Preguntas frecuentes', to: landingSectionPath(LANDING_SECTIONS.comoReportar) },
-      { label: 'Tiempos de atención esperados', to: landingSectionPath(LANDING_SECTIONS.tiempos) },
-      { label: 'Emergencias eléctricas · anexo 30111' },
-    ],
-  },
-]
+// sin sesión de usuario, estos enlaces pasan primero por el login
+const enlacesDeReporte = (conCuentaDeUsuario) => ({
+  id: 'pie-reportar',
+  title: 'Reportar',
+  links: [
+    { label: 'Registrar un ticket', to: conCuentaDeUsuario ? ROUTES.usuarioNuevoTicket : ROUTES.iniciarSesion },
+    { label: 'Seguir un ticket', to: conCuentaDeUsuario ? ROUTES.usuarioTickets : ROUTES.iniciarSesion },
+    { label: 'Categorías de servicio', to: landingSectionPath(LANDING_SECTIONS.categorias) },
+  ],
+})
 
-/** Pie institucional (p03). */
+const SECCION_AYUDA = {
+  id: 'pie-ayuda',
+  title: 'Ayuda',
+  links: [
+    { label: 'Preguntas frecuentes', to: landingSectionPath(LANDING_SECTIONS.comoReportar) },
+    { label: 'Tiempos de atención esperados', to: landingSectionPath(LANDING_SECTIONS.tiempos) },
+    { label: 'Emergencias eléctricas · anexo 30111' },
+  ],
+}
+
 export default function PublicFooter() {
+  const { usuario } = useAuth()
+  const secciones = [enlacesDeReporte(usuario?.rol === 'usuario'), SECCION_AYUDA]
+
   return (
     <footer className="public-footer">
       <div className="container public-footer__top">
@@ -37,7 +40,7 @@ export default function PublicFooter() {
           <p>Atención de lunes a sábado, 07:00 a 21:00</p>
         </div>
 
-        {FOOTER_SECTIONS.map((section) => (
+        {secciones.map((section) => (
           <nav key={section.id} className="public-footer__nav" aria-labelledby={section.id}>
             <h2 id={section.id} className="public-footer__heading">
               {section.title}

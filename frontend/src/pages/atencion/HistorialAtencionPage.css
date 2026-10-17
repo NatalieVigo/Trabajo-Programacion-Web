@@ -1,5 +1,4 @@
-/* «Historial» del técnico: sus tickets resueltos y cerrados en filas compactas, como la bandeja (p24). Por debajo de
-   768 px cada fila se apila como una tarjeta. */
+/* Historial del técnico (en móvil cada fila es una tarjeta) */
 .tickets-table {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -55,7 +54,7 @@
   background: var(--color-bg);
 }
 
-/* Las acciones quedan fijas a la derecha cuando el resto de la tabla se desplaza. */
+/* acciones fijas a la derecha al hacer scroll */
 .tickets-table .tickets-table__acciones,
 .tickets-table thead th:last-child {
   position: sticky;
@@ -63,7 +62,6 @@
   background: inherit;
 }
 
-/* Prioridad como barra lateral de la fila (p02). */
 .tickets-table__fila {
   --tickets-table-prioridad: var(--color-border);
 }
@@ -103,8 +101,7 @@
   white-space: normal;
 }
 
-/* Para que las nueve columnas de la bandeja (p24) entren en el ancho del contenido, la categoría, el solicitante y
-   el plazo pasan a dos líneas cuando no caben en una. */
+/* se parten en dos líneas para que entren las nueve columnas */
 .tickets-table .tickets-table__ajustable {
   min-width: 96px;
   white-space: normal;
@@ -175,7 +172,6 @@
     text-align: right;
   }
 
-  /* El asunto puede ocupar varias líneas: la etiqueta va arriba y el contenido ocupa todo el ancho. */
   .tickets-table td.tickets-table__asunto {
     display: block;
     text-align: left;

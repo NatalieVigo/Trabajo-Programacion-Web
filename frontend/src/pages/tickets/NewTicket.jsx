@@ -1,21 +1,32 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageHeader, Alert, SelectInput, TextInput, Button } from "../../shared/components";
+import { PageHeader, Alert, SelectInput, TextInput, Button, Card, PriorityBadge } from "../../shared/components";
 import { TicketConfirmation } from "./TicketConfirmation";
 import { listarDisponibles } from "../../services/categorias.service.js";
-import { listarAmbientes } from "../../services/catalogo.service.js";
-import { crearTicket, existeTicketEnCurso } from "../../services/tickets.service.js";
+import { listarAmbientes } from "../../services/ubicaciones.service.js";
+import { buscarTicketEnCurso, crearTicket } from "../../services/tickets.service.js";
 import { ServiceError } from "../../services/ServiceError.js";
+import { usuarioTicketDetallePath } from "../../routes/routePaths";
 import { PRIORIDAD_LABELS } from "../../utils/format.js";
+import { TIPOS_AMBIENTE } from "../../utils/catalogoValidators.js";
+import { formatDuracion } from "../../utils/duracion.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import './NewTicket.css';
 
-const normalizarClaseCSS = (prioridadStr) => {
-    return (prioridadStr || 'alta')
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-};
+const AYUDA_AMBIENTE = 'Escribe el código que aparece en la puerta, por ejemplo A-201.';
+
+const normalizar = (texto) => String(texto ?? '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLocaleLowerCase('es');
+
+// "Aula · Pabellón A · piso 2", como en el mockup
+const ubicacionDe = (ambiente) => [
+    TIPOS_AMBIENTE[ambiente.tipo] ?? ambiente.tipo,
+    ambiente.pabellonNombre && `Pabellón ${ambiente.pabellonNombre}`,
+    ambiente.piso != null && `piso ${ambiente.piso}`,
+].filter(Boolean).join(' · ');
 
 export const NewTicket = () => {
     const navigate = useNavigate();
@@ -35,14 +46,16 @@ export const NewTicket = () => {
         asunto: '',
         descripcion: ''
     });
+    const [ambienteTexto, setAmbienteTexto] = useState('');
+    const [errorAmbiente, setErrorAmbiente] = useState('');
 
-    const [duplicado, setDuplicado] = useState(false);
+    const [duplicado, setDuplicado] = useState(null);
     const [ticketCreado, setTicketCreado] = useState(null);
 
     useEffect(() => {
         let activo = true;
 
-        // Categorías y ambientes vienen del catálogo (HU-2): solo lo activo admite tickets nuevos.
+        // del catálogo (HU-2) solo lo activo acepta tickets nuevos
         Promise.all([listarDisponibles(), listarAmbientes()])
             .then(([categoriasDisponibles, ambientesDelCatalogo]) => {
                 if (!activo) return;
@@ -51,6 +64,7 @@ export const NewTicket = () => {
 
                 const primeraCategoria = categoriasDisponibles[0];
                 const habitual = ambientesDelCatalogo.find(({ id }) => id === usuario?.ambienteHabitualId);
+                setAmbienteTexto(habitual?.codigo ?? '');
                 setDatosTicket((actual) => ({
                     ...actual,
                     categoriaId: primeraCategoria?.id ?? '',
@@ -70,8 +84,8 @@ export const NewTicket = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'ambienteId' || name === 'categoriaId') setDuplicado(false);
         if (name === 'categoriaId') {
+            setDuplicado(null);
             const categoriaSeleccionada = categorias.find((categoria) => categoria.id === value);
             setDatosTicket((actual) => ({
                 ...actual,
@@ -83,36 +97,92 @@ export const NewTicket = () => {
         }
     };
 
+    // el código exacto o el nombre completo; Buscar también acepta una parte
+    const ambienteExacto = (texto) => {
+        const buscado = normalizar(texto);
+        if (!buscado) return null;
+        return ambientes.find((a) => normalizar(a.codigo) === buscado || normalizar(a.nombre) === buscado) ?? null;
+    };
+
+    const ambienteParecido = (texto) => {
+        const buscado = normalizar(texto);
+        if (!buscado) return null;
+        return ambientes.find((a) => normalizar(a.codigo).includes(buscado) || normalizar(a.nombre).includes(buscado)) ?? null;
+    };
+
+    const cambiarAmbiente = (e) => {
+        const texto = e.target.value;
+        setAmbienteTexto(texto);
+        setErrorAmbiente('');
+        setDuplicado(null);
+        setDatosTicket((actual) => ({ ...actual, ambienteId: ambienteExacto(texto)?.id ?? '' }));
+    };
+
+    const buscarAmbiente = () => {
+        const encontrado = ambienteExacto(ambienteTexto) ?? ambienteParecido(ambienteTexto);
+        if (!encontrado) {
+            setErrorAmbiente(ambienteTexto.trim()
+                ? 'No encontramos ese ambiente. Revisa el código que aparece en la puerta.'
+                : 'Escribe el código del aula o ambiente.');
+            setDatosTicket((actual) => ({ ...actual, ambienteId: '' }));
+            return null;
+        }
+        setAmbienteTexto(encontrado.codigo);
+        setErrorAmbiente('');
+        setDatosTicket((actual) => ({ ...actual, ambienteId: encontrado.id }));
+        return encontrado;
+    };
+
+    // Enter en el campo busca el ambiente en vez de enviar el formulario
+    const teclaEnAmbiente = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            buscarAmbiente();
+        }
+    };
+
     const categoriaActual = categorias.find((categoria) => categoria.id === datosTicket.categoriaId);
     const subcategorias = categoriaActual?.subcategorias ?? [];
     const subcategoriaActual = subcategorias.find((subcategoria) => subcategoria.id === datosTicket.subcategoriaId);
 
     const ambienteActual = ambientes.find((ambiente) => ambiente.id === datosTicket.ambienteId);
 
-    // Aviso de duplicado (HU-3): ya hay un ticket en curso en el mismo ambiente y la misma categoría.
+    // avisa si ya hay un ticket en curso con el mismo ambiente y categoría
     const { ambienteId, categoriaId } = datosTicket;
+    const usuarioId = usuario?.id;
     useEffect(() => {
         if (!ambienteId || !categoriaId) return undefined;
 
         let activo = true;
-        existeTicketEnCurso({ ambienteId, categoriaId })
-            .then((hayDuplicado) => {
-                if (activo) setDuplicado(hayDuplicado);
+        buscarTicketEnCurso({ ambienteId, categoriaId }, usuarioId)
+            .then((repetido) => {
+                if (!activo) return;
+                // el "hace X min" se calcula al recibir el aviso
+                setDuplicado(repetido?.propio
+                    ? { ...repetido, hace: formatDuracion(Date.now() - Date.parse(repetido.creadoEn)) }
+                    : repetido);
             })
             .catch((error) => {
                 if (activo) setErrorRegistro(error.message || 'No se pudo verificar si ya existe un ticket en el aula.');
             });
 
         return () => { activo = false; };
-    }, [ambienteId, categoriaId]);
+    }, [ambienteId, categoriaId, usuarioId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // si no se pulsó Buscar se busca ahora; sin un ambiente del catálogo no se envía
+        const ambiente = ambienteActual ?? buscarAmbiente();
+        if (!ambiente) {
+            document.getElementById('ambiente')?.focus();
+            return;
+        }
+
         setGuardando(true);
         setErrorRegistro('');
         try {
-            const ticket = await crearTicket(datosTicket, usuario?.id);
+            const ticket = await crearTicket({ ...datosTicket, ambienteId: ambiente.id }, usuario?.id);
             setTicketCreado(ticket);
         } catch (error) {
             const detalleError = error instanceof ServiceError
@@ -134,40 +204,55 @@ export const NewTicket = () => {
 
     if (cargandoCatalogos) {
         return (
-            <div className="new-ticket-container" style={{ padding: '40px', textAlign: 'center' }}>
-                <p>Cargando categorías...</p>
-            </div>
+            <Card aria-busy="true">
+                <p role="status" className="text-muted">Cargando categorías…</p>
+            </Card>
         );
     }
 
     return (
-        <div className="new-ticket-container">
+        <div className="nuevo-ticket">
             <PageHeader
-                title="Nuevo ticket"
-                description="Indica qué falla y dónde. La prioridad se sugiere según la categoría y el supervisor puede ajustarla."
+                title="Registrar un ticket"
+                subtitle="Indica qué falla y dónde. La prioridad se sugiere según la categoría y el supervisor puede ajustarla."
             />
 
-            {errorCatalogos && <Alert variant="error">{errorCatalogos}</Alert>}
-            {errorRegistro && <Alert variant="error">{errorRegistro}</Alert>}
+            <div className="nuevo-ticket__avisos">
+                {errorCatalogos && <Alert variant="error">{errorCatalogos}</Alert>}
+                {errorRegistro && <Alert variant="error">{errorRegistro}</Alert>}
 
-            {!errorCatalogos && categorias.length === 0 && (
-                <Alert variant="warning">No hay categorías disponibles para registrar un ticket.</Alert>
-            )}
+                {!errorCatalogos && categorias.length === 0 && (
+                    <Alert variant="warning">No hay categorías disponibles para registrar un ticket.</Alert>
+                )}
 
-            {duplicado && ambienteActual && categoriaActual && (
-                <Alert variant="warning">
-                    Ya existe un ticket de <strong>{categoriaActual.nombre}</strong> en curso para el aula{' '}
-                    <strong>{ambienteActual.codigo}</strong>. Revísalo antes de registrar otro. Puedes continuar si se
-                    trata de otro incidente.
-                </Alert>
-            )}
+                {duplicado && ambienteActual && categoriaActual && (duplicado.propio ? (
+                    <Alert
+                        variant="warning"
+                        className="nuevo-ticket__duplicado"
+                        actions={
+                            <Button variant="secondary" size="sm" to={usuarioTicketDetallePath(duplicado.codigo)}>
+                                Ver ese ticket
+                            </Button>
+                        }
+                    >
+                        Ya existe un ticket abierto para <span className="text-mono">{ambienteActual.codigo}</span> en{' '}
+                        {categoriaActual.nombre}: <span className="text-mono">{duplicado.codigo}</span>, registrado hace{' '}
+                        {duplicado.hace}. Revísalo antes de crear otro.
+                    </Alert>
+                ) : (
+                    <Alert variant="warning">
+                        Ya existe un ticket abierto para <span className="text-mono">{ambienteActual.codigo}</span> en{' '}
+                        {categoriaActual.nombre}, reportado por otra persona. Revisa si es la misma falla antes de crear otro.
+                    </Alert>
+                ))}
+            </div>
 
-            <div className="new-ticket-grid">
-                <div className="main-form-card">
-                    <form className="ticket-form" onSubmit={handleSubmit}>
-                        <div className="form-row">
-                            <div className="input-group">
-                                <label htmlFor="categoriaId">CATEGORÍA</label>
+            <div className="nuevo-ticket__layout">
+                <Card>
+                    <form className="nuevo-ticket__form" onSubmit={handleSubmit}>
+                        <div className="form-grid">
+                            <div className="field">
+                                <label className="field__label" htmlFor="categoriaId">CATEGORÍA</label>
                                 <SelectInput
                                     id="categoriaId"
                                     name="categoriaId"
@@ -178,8 +263,8 @@ export const NewTicket = () => {
                                 />
                             </div>
 
-                            <div className="input-group">
-                                <label htmlFor="subcategoriaId">SUBCATEGORÍA</label>
+                            <div className="field">
+                                <label className="field__label" htmlFor="subcategoriaId">SUBCATEGORÍA</label>
                                 <SelectInput
                                     id="subcategoriaId"
                                     name="subcategoriaId"
@@ -188,74 +273,90 @@ export const NewTicket = () => {
                                     required
                                     options={subcategorias.map(({ id, nombre }) => ({ value: id, label: nombre }))}
                                 />
-                                <span className="field-help-text">Depende de la categoría elegida.</span>
+                                <p className="field__message">Depende de la categoría elegida.</p>
                             </div>
-                        </div>
 
-                        <div className="form-row">
-                            <div className="input-group">
-                                <label htmlFor="ambienteId">AULA O AMBIENTE</label>
-                                <SelectInput
-                                    id="ambienteId"
-                                    name="ambienteId"
-                                    value={datosTicket.ambienteId}
-                                    onChange={handleChange}
-                                    required
-                                    placeholder="Selecciona el aula o ambiente"
-                                    options={ambientes.map(({ id, codigo, nombre }) => ({ value: id, label: `${codigo} · ${nombre}` }))}
+                            <div className="field">
+                                <label className="field__label" htmlFor="ambiente">AMBIENTE</label>
+                                <TextInput
+                                    id="ambiente"
+                                    mono
+                                    value={ambienteTexto}
+                                    onChange={cambiarAmbiente}
+                                    onKeyDown={teclaEnAmbiente}
+                                    list="ambientes-del-catalogo"
+                                    autoComplete="off"
+                                    placeholder="A-201"
+                                    status={errorAmbiente ? 'error' : undefined}
+                                    aria-describedby="ambiente-mensaje"
+                                    endAdornment={
+                                        <Button variant="tertiary" size="sm" onClick={buscarAmbiente}>
+                                            Buscar
+                                        </Button>
+                                    }
                                 />
-                                <span className="field-help-text">
-                                    El lugar donde ocurre la falla, tal como aparece en la puerta.
-                                </span>
+                                <datalist id="ambientes-del-catalogo">
+                                    {ambientes.map(({ id, codigo, nombre }) => (
+                                        <option key={id} value={codigo}>{nombre}</option>
+                                    ))}
+                                </datalist>
+                                <p
+                                    id="ambiente-mensaje"
+                                    className={`field__message${errorAmbiente ? ' field__message--error' : ''}`}
+                                >
+                                    {errorAmbiente || (ambienteActual ? ubicacionDe(ambienteActual) : AYUDA_AMBIENTE)}
+                                </p>
                             </div>
 
-                            <div className="input-group">
-                                <label>PRIORIDAD SUGERIDA</label>
-                                <div className="priority-badge-box">
-                                    <span className={`priority-tag ${normalizarClaseCSS(subcategoriaActual?.prioridadPorDefecto)}`}>
-                                        {PRIORIDAD_LABELS[subcategoriaActual?.prioridadPorDefecto] || '—'}
-                                    </span>
-                                    <span className="priority-label-text">Sugerida por la subcategoría</span>
+                            <div className="field">
+                                <span className="field__label">PRIORIDAD SUGERIDA</span>
+                                <p className="nuevo-ticket__prioridad">
+                                    {subcategoriaActual?.prioridadPorDefecto
+                                        ? <PriorityBadge prioridad={subcategoriaActual.prioridadPorDefecto} />
+                                        : '—'}
+                                    <span className="text-muted">Sugerida por la subcategoría</span>
+                                </p>
+                            </div>
+
+                            <div className="field form-grid__full">
+                                <label className="field__label" htmlFor="asunto">ASUNTO</label>
+                                <TextInput
+                                    id="asunto"
+                                    name="asunto"
+                                    value={datosTicket.asunto}
+                                    onChange={handleChange}
+                                    placeholder="Resumen breve del problema"
+                                    maxLength={120}
+                                    required
+                                />
+                            </div>
+
+                            <div className="field form-grid__full">
+                                <label className="field__label" htmlFor="descripcion">DESCRIPCIÓN</label>
+                                <div className="control">
+                                    <textarea
+                                        id="descripcion"
+                                        name="descripcion"
+                                        className="control__input nuevo-ticket__descripcion"
+                                        value={datosTicket.descripcion}
+                                        onChange={handleChange}
+                                        rows={4}
+                                        maxLength={600}
+                                        required
+                                        placeholder="El proyector enciende el foco pero la imagen no llega a la pantalla..."
+                                    />
                                 </div>
+                                <p className="field__message nuevo-ticket__ayuda">
+                                    <span>Indica qué probaste y desde cuándo ocurre.</span>
+                                    <span>{datosTicket.descripcion.length} / 600</span>
+                                </p>
                             </div>
-                        </div>
 
-                        <div className="input-group">
-                            <label htmlFor="asunto">ASUNTO</label>
-                            <TextInput
-                                id="asunto"
-                                name="asunto"
-                                value={datosTicket.asunto}
-                                onChange={handleChange}
-                                placeholder="Resumen breve del problema"
-                                maxLength={120}
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label htmlFor="descripcion">DESCRIPCIÓN</label>
-                            <textarea
-                                id="descripcion"
-                                name="descripcion"
-                                className="text-area-input"
-                                value={datosTicket.descripcion}
-                                onChange={handleChange}
-                                rows={4}
-                                maxLength={600}
-                                required
-                                placeholder="El proyector enciende el foco pero la imagen no llega a la pantalla..."
-                            />
-                            <div className="field-help-row">
-                                <span>Indica qué probaste y desde cuándo ocurre.</span>
-                                <span>{datosTicket.descripcion.length} / 600</span>
-                            </div>
-                        </div>
-
-                        <div className="input-group">
-                            <label>EVIDENCIA (OPCIONAL)</label>
-                            <div className="file-dropzone">
-                                <span>Arrastra una foto o pulsa para elegir · JPG o PNG hasta 5 MB</span>
+                            <div className="field form-grid__full">
+                                <span className="field__label">EVIDENCIA (OPCIONAL)</span>
+                                <div className="nuevo-ticket__evidencia">
+                                    Arrastra una foto o pulsa para elegir · JPG o PNG hasta 5 MB
+                                </div>
                             </div>
                         </div>
 
@@ -265,27 +366,25 @@ export const NewTicket = () => {
                             </Button>
                             <Button type="button" variant="secondary" onClick={() => navigate(-1)}>Cancelar</Button>
                         </div>
-
                     </form>
-                </div>
+                </Card>
 
-                <aside className="info-sidebar">
-                    <div className="info-card">
-                        <h3>Qué conviene incluir</h3>
-                        <ul className="info-list">
+                <aside className="nuevo-ticket__lateral">
+                    <Card title="Qué conviene incluir">
+                        <ul className="nuevo-ticket__consejos">
                             <li>El aula o ambiente tal como aparece en la puerta.</li>
                             <li>Desde cuándo ocurre la falla y si es intermitente.</li>
                             <li>Qué ya intentaste (cambiar cable, reiniciar equipo).</li>
                             <li>Si hay clase o evento en las próximas horas.</li>
                             <li>Un teléfono de contacto si hay que coordinar el acceso.</li>
                         </ul>
-                    </div>
+                    </Card>
 
-                    <div className="info-card time-card">
-                        <h4>Tiempo esperado para esta categoría</h4>
+                    <div className="nuevo-ticket__tiempo">
+                        <p className="nuevo-ticket__tiempo-titulo">Tiempo esperado para esta categoría</p>
                         <p>
-                            Prioridad {PRIORIDAD_LABELS[subcategoriaActual?.prioridadPorDefecto] || '—'}: atención dentro de{' '}
-                            <strong>{subcategoriaActual?.tiempoEsperadoHoras ?? categoriaActual?.tiempoEsperadoHoras ?? '—'} h</strong> desde el registro.
+                            Prioridad {PRIORIDAD_LABELS[subcategoriaActual?.prioridadPorDefecto]?.toLowerCase() || '—'}: atención dentro de{' '}
+                            {subcategoriaActual?.tiempoEsperadoHoras ?? categoriaActual?.tiempoEsperadoHoras ?? '—'} horas desde el registro.
                         </p>
                     </div>
                 </aside>

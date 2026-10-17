@@ -34,7 +34,7 @@ const INITIAL_VALUES = {
 const cargarOpciones = () =>
   Promise.all([listarUnidades(), listarVinculos()]).then(([unidades, vinculos]) => ({ unidades, vinculos }))
 
-/** Mensaje del correo: error de validación o del servicio, luego el resultado de la verificación de disponibilidad. */
+// primero el error del campo y después lo que diga la verificación
 function correoFeedback(error, availability) {
   if (error) return { error }
   if (availability === 'taken') return { error: VALIDATION_MESSAGES.correoTaken }
@@ -43,7 +43,7 @@ function correoFeedback(error, availability) {
   return {}
 }
 
-/** Formulario de registro (p06): validación en línea y verificación del correo al salir del campo. */
+// el correo se verifica al salir del campo
 export default function RegisterForm() {
   const navigate = useNavigate()
   const toast = useToast()
@@ -60,7 +60,6 @@ export default function RegisterForm() {
       navigate(ROUTES.iniciarSesion, { replace: true, state: { correo: usuario.correo } })
     } catch (error) {
       if (error.code === 'EMAIL_TAKEN') emailAvailability.markTaken(values.correo)
-      // 400 y 409 traen el mensaje de cada campo: el formulario los muestra junto a ellos.
       if (error.fieldErrors) return error.fieldErrors
       toast.error(error.message)
     }

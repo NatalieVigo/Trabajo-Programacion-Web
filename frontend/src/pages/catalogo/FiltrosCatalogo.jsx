@@ -6,15 +6,10 @@ import './CatalogoFiltros.css'
 
 const OPCIONES_PRIORIDAD = PRIORIDADES.map((prioridad) => ({ value: prioridad, label: formatPrioridad(prioridad) }))
 
-/** Cuántos filtros tienen valor. */
 function contarFiltrosActivos({ busqueda, soloActivas, prioridad }) {
   return [busqueda.trim(), soloActivas, prioridad].filter(Boolean).length
 }
 
-/**
- * Búsqueda y filtros del catálogo (p12): «Buscar categoría o subcategoría», «Solo activas» y la prioridad. Con algún
- * filtro activo indica cuántos hay y ofrece limpiarlos.
- */
 export default function FiltrosCatalogo({ filtros, onChange, onLimpiar }) {
   const id = useId()
   const activos = contarFiltrosActivos(filtros)

@@ -9,7 +9,7 @@
   font-size: var(--font-size-aux);
 }
 
-/* Avisos de cobertura a la izquierda y la nota de la carga a la derecha (p16). */
+/* Avisos y nota */
 .tecnicos-page__notas {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

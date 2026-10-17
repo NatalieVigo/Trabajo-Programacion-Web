@@ -8,11 +8,10 @@ import { Button, FormField, Modal, SelectInput, TextInput, useConfirm, useToast 
 import { formatDate, formatRol, getFullName } from '../../utils/format.js'
 import { ROLES_INVITABLES, validateInvitacion } from '../../utils/validators.js'
 
-// Se abre desde «Invitar técnico» (p16): el rol llega elegido y se puede cambiar para invitar a un supervisor.
+// viene con técnico, pero se puede cambiar a supervisor
 const INITIAL_VALUES = { nombres: '', apellidos: '', correo: '', rol: 'tecnico', telefono: '' }
 const ROL_OPTIONS = ROLES_INVITABLES.map((rol) => ({ value: rol, label: formatRol(rol) }))
 
-/** Enlace completo que el supervisor comparte con la persona invitada. */
 const enlaceDeInvitacion = (token) => new URL(invitacionPath(token), window.location.origin).href
 
 function InvitationFields({ form, firstFieldRef }) {
@@ -58,17 +57,14 @@ function InvitationLink({ enlace, venceEn }) {
   )
 }
 
-/**
- * Formulario de la invitación y, una vez creada, el enlace para compartir con «Copiar enlace». Cerrar el formulario
- * con datos ingresados pide confirmación.
- */
+// si se cierra con datos escritos, pide confirmación
 function NewInvitationDialog({ onClose }) {
   const { usuario } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
   const copiar = useCopyLink()
   const formId = useId()
-  // El mismo diálogo pasa del formulario al enlace: el foco va al primer campo y, después, a «Copiar enlace».
+  // primero apunta al primer campo y luego a "Copiar enlace"
   const focoRef = useRef(null)
   const form = useForm({ initialValues: INITIAL_VALUES, validate: validateInvitacion })
   const [creada, setCreada] = useState(null)
@@ -83,7 +79,6 @@ function NewInvitationDialog({ onClose }) {
       toast.success(`Invitación creada para ${getFullName(invitacion)}.`)
       setCreada(invitacion)
     } catch (error) {
-      // 400 y 409 (el correo ya tiene cuenta o una invitación pendiente) traen el mensaje de cada campo.
       if (error.fieldErrors) return error.fieldErrors
       toast.error(error.message)
     }
@@ -157,7 +152,7 @@ function NewInvitationDialog({ onClose }) {
   )
 }
 
-/** «Nueva invitación» (HU-1 · 1.2). Se monta al abrirse, así cada vez empieza con el formulario vacío. */
+// se monta al abrirse para que el formulario empiece vacío
 export default function NewInvitationModal({ open, onClose }) {
   return open ? <NewInvitationDialog onClose={onClose} /> : null
 }

@@ -1,10 +1,7 @@
 import { useContext } from 'react'
 import { ConfirmContext } from './ConfirmContext.js'
 
-/**
- * Pide confirmación antes de una acción:
- * `const ok = await confirm({ title, message, confirmText, cancelText, variant: 'destructive' })`.
- */
+// uso: const ok = await confirm({ title, message, variant: 'destructive' })
 export function useConfirm() {
   const confirm = useContext(ConfirmContext)
   if (!confirm) {

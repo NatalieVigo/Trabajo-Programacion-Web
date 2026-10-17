@@ -16,7 +16,6 @@
   line-height: var(--line-height-aux);
 }
 
-/* La línea que une cada paso con el siguiente ocupa el espacio libre. */
 .stepper__step:not(:last-child) {
   flex: 1;
 }
@@ -69,7 +68,7 @@
   color: var(--color-on-dark);
 }
 
-/* En pantallas angostas los otros pasos muestran solo su número; el nombre queda para los lectores de pantalla. */
+/* en móvil los otros pasos solo muestran su número */
 @media (max-width: 479px) {
   .stepper__step:not(.stepper__step--current) .stepper__label {
     position: absolute;

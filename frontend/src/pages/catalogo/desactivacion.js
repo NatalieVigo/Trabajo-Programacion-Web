@@ -1,7 +1,6 @@
 import { pluralize } from '../../utils/format.js'
 import { nombreDeTipo } from './catalogoFormat.js'
 
-/** Opciones de la confirmación explícita para desactivar algo con tickets en curso (HU-2 · 2.6). */
 export function confirmacionDeDesactivacion(elemento, ticketsEnCurso) {
   const tipo = nombreDeTipo(elemento.tipo)
   return {
@@ -14,11 +13,7 @@ export function confirmacionDeDesactivacion(elemento, ticketsEnCurso) {
   }
 }
 
-/**
- * Ejecuta `operacion(confirmado)` y, si desactiva algo con tickets en curso, antes pide la confirmación con
- * `confirm`. Si el servicio responde 409 OPEN_TICKETS (empezó a tenerlos después de cargar la página), la pide con la
- * cantidad actual y vuelve a intentarlo. Devuelve { cancelado: true } si la persona no confirma, o { resultado }.
- */
+// pide confirmar si hay tickets en curso; si aparecieron después, pregunta y reintenta
 export async function desactivarConfirmando({ elemento, desactiva, confirm, operacion }) {
   const preguntar = (ticketsEnCurso) => confirm(confirmacionDeDesactivacion(elemento, ticketsEnCurso))
   let confirmado = false

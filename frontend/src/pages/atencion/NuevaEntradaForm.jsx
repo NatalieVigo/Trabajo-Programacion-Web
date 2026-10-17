@@ -13,11 +13,7 @@ const TIPOS = [
   { value: 'interno', label: 'Nota interna' },
 ]
 
-/**
- * Nueva entrada de la bitácora (HU-5 · 5.1, p25): un comentario público, que también lee quien reportó el ticket, o
- * una nota interna, solo para el equipo. Quien no puede registrar notas internas solo escribe comentarios.
- * `onGuardada` recibe la atención actualizada y `onDesactualizada` avisa de que hay que volver a cargarla.
- */
+// Comentario público o nota interna (esta solo la ve el equipo).
 export default function NuevaEntradaForm({ ticket, permisos, onGuardada, onDesactualizada }) {
   const { usuario } = useAuth()
   const toast = useToast()
@@ -28,7 +24,7 @@ export default function NuevaEntradaForm({ ticket, permisos, onGuardada, onDesac
     try {
       const actualizada = await agregarEntrada(ticket.codigo, values, usuario.id)
       toast.success(values.tipo === 'interno' ? 'Nota interna guardada.' : 'Comentario publicado.')
-      // Queda listo para otra entrada del mismo tipo.
+      // se mantiene el tipo para la siguiente entrada
       form.resetTo({ tipo: values.tipo, mensaje: '' })
       onGuardada(actualizada)
     } catch (error) {
@@ -69,7 +65,7 @@ export default function NuevaEntradaForm({ ticket, permisos, onGuardada, onDesac
             ? 'Estás escribiendo una nota interna: solo la ve el equipo técnico y el supervisor.'
             : `Estás escribiendo un comentario público: también lo verá ${getDisplayName(ticket.solicitante)}.`}
         </p>
-        {/* p25 no muestra una etiqueta sobre el texto: el tipo elegido arriba la nombra para los lectores de pantalla. */}
+        {/* la etiqueta se oculta por CSS, queda para lectores de pantalla */}
         <FormField
           className="nueva-entrada__campo"
           label={esInterna ? 'Nota interna' : 'Comentario público'}

@@ -8,7 +8,7 @@ const VARIANTS = {
   info: { label: 'Información', Icon: InfoIcon },
 }
 
-/** Notificación (p35). Se cierra sola a los 5 s; el temporizador se pausa con el puntero o el foco encima. */
+// el tiempo se pausa mientras el mouse o el foco están encima
 export default function Toast({ id, type, message, duration, onDismiss }) {
   const [paused, setPaused] = useState(false)
   const { label, Icon } = VARIANTS[type] ?? VARIANTS.info

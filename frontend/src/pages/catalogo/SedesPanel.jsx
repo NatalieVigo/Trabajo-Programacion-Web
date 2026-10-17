@@ -73,11 +73,7 @@ function SedeCard({ sede, eliminandoId, onEditarSede, onEliminarSede, onNuevoPab
   )
 }
 
-/**
- * Pestaña «Sedes y pabellones» de Sedes y ambientes (HU-2 · 2.2): cada sede con sus pabellones y cuántos ambientes
- * tiene cada uno. Solo se eliminan las sedes sin pabellones y los pabellones sin ambientes. Crear y editar abren las
- * ventanas de la página.
- */
+// Pestaña de sedes y pabellones. Solo se puede eliminar lo que está vacío.
 export default function SedesPanel({ sedes, refrescar, onNuevaSede, onEditarSede, onNuevoPabellon, onEditarPabellon }) {
   const { usuario } = useAuth()
   const { eliminandoId, eliminar } = useEliminacion(refrescar)

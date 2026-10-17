@@ -1,6 +1,5 @@
 import './AppFooter.css'
 
-/** Pie de la sesión iniciada (p10). */
 export default function AppFooter() {
   return (
     <footer className="app-footer">

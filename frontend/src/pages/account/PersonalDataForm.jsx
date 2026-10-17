@@ -5,7 +5,7 @@ import { Button, FormField, SelectInput, TextInput, useConfirm, useToast } from 
 import { formatTelefono } from '../../utils/format.js'
 import { validatePerfil } from '../../utils/validators.js'
 
-/** Valores del formulario según la cuenta guardada: el teléfono como «987 654 321» y sin ambiente habitual como ''. */
+// sin ambiente habitual queda '' para el select
 const valoresDe = (usuario) => ({
   nombres: usuario.nombres,
   apellidos: usuario.apellidos,
@@ -14,14 +14,9 @@ const valoresDe = (usuario) => ({
   ambienteHabitualId: usuario.ambienteHabitualId ?? '',
 })
 
-// Como en p10, el ambiente se identifica por su código: «A-201».
 const opcionDeAmbiente = (ambiente) => ({ value: ambiente.id, label: ambiente.codigo })
 
-/**
- * Datos personales de Mi cuenta (p10). El correo no se edita. «Guardar cambios» se habilita al editar algún dato y,
- * tras guardar, la sesión se vuelve a leer para que la cabecera muestre el nombre nuevo. «Descartar» vuelve a los
- * datos guardados, con confirmación si había cambios.
- */
+// Al guardar se relee la sesión para que la cabecera muestre el nombre nuevo.
 export default function PersonalDataForm({ usuario, catalogos, labelledBy, onSaved }) {
   const { refrescarUsuario } = useAuth()
   const toast = useToast()
@@ -34,7 +29,6 @@ export default function PersonalDataForm({ usuario, catalogos, labelledBy, onSav
     try {
       actualizado = await actualizarPerfil(usuario.id, cambios)
     } catch (error) {
-      // 400 trae el mensaje de cada campo: el formulario los muestra junto a ellos.
       if (error.fieldErrors) return error.fieldErrors
       toast.error(error.message)
       return
@@ -46,7 +40,7 @@ export default function PersonalDataForm({ usuario, catalogos, labelledBy, onSav
     try {
       await refrescarUsuario()
     } catch {
-      // Los datos ya se guardaron: si la sesión no se pudo volver a leer, la cabecera se actualiza en la próxima carga.
+      // ya se guardó; la cabecera se actualiza en la próxima carga
     }
   }
 

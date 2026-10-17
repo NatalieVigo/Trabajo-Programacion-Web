@@ -1,4 +1,4 @@
-/* Matriz técnico × categoría (p16). En pantallas angostas se desplaza en horizontal con el técnico fijo a la izquierda. */
+/* Matriz de técnicos */
 .matriz-tecnicos {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -55,7 +55,6 @@
   color: var(--color-text-muted);
 }
 
-/* La especialidad puede pasar a dos líneas para que las columnas de categoría quepan sin desplazar la tabla. */
 .matriz-tecnicos .matriz-tecnicos__especialidad {
   min-width: 160px;
   padding-block: var(--space-2);

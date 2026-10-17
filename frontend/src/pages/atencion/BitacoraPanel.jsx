@@ -15,17 +15,13 @@ const SIN_RESULTADOS = {
   interno: 'Este ticket no tiene notas internas',
 }
 
-/** Por qué la persona solo puede leer la bitácora. */
 function motivoDeSoloLectura(ticket) {
   if (ticket.estado === 'cerrado') return 'El ticket está cerrado: su bitácora ya no admite entradas.'
   if (!ticket.tecnico) return 'Este ticket aún no tiene un técnico asignado: quien lo reciba registrará aquí su avance.'
   return `Este ticket lo atiende ${getDisplayName(ticket.tecnico)}. Puedes consultarlo, pero solo quien lo atiende registra el avance.`
 }
 
-/**
- * Bitácora del ticket (HU-5 · 5.1, p25): las entradas, que el equipo puede filtrar por tipo, y el formulario para
- * agregar una. Quien no puede escribir ve por qué.
- */
+// Bitácora del ticket (HU-5). Si no puedes escribir, se muestra el motivo.
 export default function BitacoraPanel({ atencion, onActualizada, onDesactualizada }) {
   const { ticket, bitacora, permisos } = atencion
   const tituloId = useId()

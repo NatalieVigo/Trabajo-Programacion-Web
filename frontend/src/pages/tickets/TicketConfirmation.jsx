@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Button } from "../../shared/components";
+import { Button, CheckIcon, PriorityBadge, StatusBadge } from "../../shared/components";
 import { ROUTES, usuarioTicketDetallePath } from "../../routes/routePaths";
 import { ambientesRepository, categoriasRepository, subcategoriasRepository } from "../../repositories/catalogo.repository.js";
-import { ESTADO_LABELS, PRIORIDAD_LABELS } from "../../utils/format.js";
 import './TicketConfirmation.css';
 
 export const TicketConfirmation = ({ ticket }) => {
@@ -12,7 +11,6 @@ export const TicketConfirmation = ({ ticket }) => {
 
     if (!ticket) return <Navigate to={ROUTES.usuarioTickets} replace />;
 
-    // Copiar el código del ticket al portapapeles
     const handleCopiarCodigo = () => {
         if (ticket?.codigo) {
             navigator.clipboard.writeText(ticket.codigo);
@@ -21,7 +19,6 @@ export const TicketConfirmation = ({ ticket }) => {
         }
     };
 
-    // Ir a la vista principal con la lista de mis tickets
     const handleIrAMisTickets = () => {
         if (ROUTES?.usuarioTickets) {
             navigate(ROUTES.usuarioTickets);
@@ -30,7 +27,6 @@ export const TicketConfirmation = ({ ticket }) => {
         }
     };
 
-    // Ver a detalle el ticket recién creado
     const handleVerDetalle = () => {
         if (ROUTES?.usuarioTicketDetalle && ticket?.id) {
             navigate(usuarioTicketDetallePath(ticket.id));
@@ -39,8 +35,6 @@ export const TicketConfirmation = ({ ticket }) => {
         }
     };
 
-    const prioridad = PRIORIDAD_LABELS[ticket?.prioridad] || ticket?.prioridad || 'Baja';
-    const prioridadClase = prioridad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const ambiente = ambientesRepository.findById(ticket?.ambienteId);
     const categoria = categoriasRepository.findById(ticket?.categoriaId);
     const subcategoria = subcategoriasRepository.findById(ticket?.subcategoriaId);
@@ -49,59 +43,49 @@ export const TicketConfirmation = ({ ticket }) => {
         : 'En evaluación';
 
     return (
-        <div className="confirmation-container">
-            <div className="confirmation-card">
-                {/* Check de confirmacion */}
-                <div className="check-icon-box">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a"
-                     strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
+        <div className="confirmacion">
+            <div className="confirmacion__card">
+                <div className="confirmacion__icono" aria-hidden="true">
+                    <CheckIcon />
                 </div>
 
-                <h2>Tu ticket quedó registrado</h2>
-                <p className="confirmation-subtitle">
+                <h1 className="confirmacion__titulo">Tu ticket quedó registrado</h1>
+                <p className="confirmacion__subtitulo">
                     Guarda el código: con él puedes buscar el ticket desde la cabecera en cualquier momento.
                 </p>
 
-                {/* Bloque con el codigo generado */}
-                <div className="ticket-code-display">
-                    <span className="code-text">{ticket?.codigo}</span>
-                    <button type="button" className="btn-copy" onClick={handleCopiarCodigo}>
+                <div className="confirmacion__codigo">
+                    <span className="confirmacion__codigo-texto">{ticket?.codigo}</span>
+                    <Button variant="secondary" size="sm" onClick={handleCopiarCodigo}>
                         {copiado ? '¡Copiado!' : 'Copiar'}
-                    </button>
+                    </Button>
                 </div>
 
-                {/* Resumen rapido de prioridad, tiempo y lugar */}
-                <div className="confirmation-details-row">
-                    <div className="detail-box">
-                        <span className="detail-title">PRIORIDAD ASIGNADA</span>
-                        <div className="badges-group">
-                            <span className={`priority-tag ${prioridadClase}`}>
-                                {prioridad}
-                            </span>
-                            <span className="status-badge-open">
-                                {ESTADO_LABELS[ticket?.estado] || ticket?.estado || 'Abierto'}
-                            </span>
-                        </div>
+                {/* Resumen */}
+                <dl className="confirmacion__datos">
+                    <div className="confirmacion__dato">
+                        <dt className="text-label text-muted">Prioridad asignada</dt>
+                        <dd className="confirmacion__etiquetas">
+                            <PriorityBadge prioridad={ticket?.prioridad} />
+                            <StatusBadge estado={ticket?.estado || 'abierto'} />
+                        </dd>
                     </div>
 
-                    <div className="detail-box">
-                        <span className="detail-title">TIEMPO DE ATENCIÓN ESPERADO</span>
-                        <span className="detail-value-text">{tiempoEsperado}</span>
+                    <div className="confirmacion__dato">
+                        <dt className="text-label text-muted">Tiempo de atención esperado</dt>
+                        <dd>{tiempoEsperado}</dd>
                     </div>
 
-                    <div className="detail-box">
-                        <span className="detail-title">AMBIENTE</span>
-                        <span className="detail-value-text">
-                            <strong>{ambiente?.codigo || ticket?.ambienteCodigo || '—'}</strong> · {categoria?.nombre || 'General'}
+                    <div className="confirmacion__dato">
+                        <dt className="text-label text-muted">Ambiente</dt>
+                        <dd>
+                            <span className="text-mono">{ambiente?.codigo || ticket?.ambienteCodigo || '—'}</span> · {categoria?.nombre || 'General'}
                             {subcategoria ? ` · ${subcategoria.nombre}` : ''}
-                        </span>
+                        </dd>
                     </div>
-                </div>
+                </dl>
 
-                {/* Botones para redirigir */}
-                <div className="confirmation-actions">
+                <div className="confirmacion__acciones">
                     <Button variant="primary" onClick={handleVerDetalle}>
                         Ver el detalle del ticket
                     </Button>

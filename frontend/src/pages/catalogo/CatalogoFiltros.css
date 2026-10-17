@@ -1,4 +1,4 @@
-/* Barra de búsqueda y filtros de las listas del catálogo (p12, p14). */
+/* Filtros */
 .catalogo-filtros {
   display: flex;
   flex-wrap: wrap;
@@ -16,7 +16,7 @@
   flex: 0 1 200px;
 }
 
-/* Filtro de encendido y apagado con forma de chip, como «Solo activas ×» (p12). */
+/* Chip de filtro */
 .filtro-chip {
   display: inline-flex;
   align-items: center;

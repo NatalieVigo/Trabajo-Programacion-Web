@@ -27,16 +27,15 @@ import { ServiceError, validationError } from './ServiceError.js'
 import { esTicketEnCurso } from './ticketsEnCurso.js'
 import { etapasDe, tiempoPorEstado, tiemposDe } from './tiemposDeAtencion.js'
 
-/** De la más antigua a la más reciente; si coinciden en el momento, en el orden en que se registraron. */
+// si tienen la misma fecha, desempata el orden en que se registraron
 const porAntiguedad = (a, b) => a.creadoEn.localeCompare(b.creadoEn) || a.id.localeCompare(b.id)
 
-/** Lo que se muestra de una cuenta junto a un ticket: nunca su correo ni su contraseña. */
+// nunca se devuelve el correo ni la contraseña
 function persona(usuarioId) {
   const usuario = usuariosRepository.findById(usuarioId)
   return usuario && { id: usuario.id, nombres: usuario.nombres, apellidos: usuario.apellidos, rol: usuario.rol }
 }
 
-/** El ticket (HU-3) con ese código, sin distinguir mayúsculas. Si no existe, 404 TICKET_NOT_FOUND. */
 function buscarTicket(codigo) {
   const buscado = String(codigo ?? '').trim().toUpperCase()
   const ticket = ticketsRepository.findOne({ codigo: buscado })
@@ -46,13 +45,8 @@ function buscarTicket(codigo) {
   return ticket
 }
 
-/** Solo el id y el nombre de una fila del catálogo (HU-2), o null si no existe. */
 const referencia = (fila) => (fila ? { id: fila.id, nombre: fila.nombre } : null)
 
-/**
- * El ambiente del ticket con su ubicación (catálogo de HU-2) y lo que pasa en él: cuántos tickets siguen en curso
- * allí y cuándo se cerró el último.
- */
 function ambienteDe(ticket) {
   const ambiente = ambientesRepository.findById(ticket.ambienteId)
   const pabellon = ambiente ? pabellonesRepository.findById(ambiente.pabellonId) : null
@@ -77,15 +71,12 @@ function ambienteDe(ticket) {
   }
 }
 
-/** Quien reportó el ticket, con el teléfono para coordinar el acceso al ambiente. */
+// el teléfono sirve para coordinar el acceso al ambiente
 function solicitanteDe(ticket) {
   return { ...persona(ticket.usuarioId), telefono: usuariosRepository.findById(ticket.usuarioId).telefono }
 }
 
-/**
- * Datos del reporte con los nombres de su categoría, su ambiente y las personas. Solo lee lo de otras historias: la
- * subcategoría y la descripción son del registro de HU-3 y quedan en null mientras el ticket no las tenga.
- */
+// subcategoría y descripción vienen del registro (HU-3) y pueden faltar
 function resumirTicket(ticket) {
   return {
     id: ticket.id,
@@ -104,7 +95,6 @@ function resumirTicket(ticket) {
   }
 }
 
-/** Entradas de la bitácora que `permisos` deja leer, con su autor, de la más antigua a la más reciente. */
 function leerBitacora(ticket, permisos) {
   return bitacoraRepository
     .findAll({ ticketId: ticket.id })
@@ -113,15 +103,10 @@ function leerBitacora(ticket, permisos) {
     .map(({ id, tipo, mensaje, creadoEn, autorId }) => ({ id, tipo, mensaje, creadoEn, autor: persona(autorId) }))
 }
 
-/** Cambios de estado del ticket que quedaron en el historial, del más antiguo al más reciente. */
 function estadosDe(ticket) {
   return historialRepository.findAll({ ticketId: ticket.id, tipo: 'estado' }).sort(porAntiguedad)
 }
 
-/**
- * La espera en curso de un ticket en espera: { motivo, retornoEstimado, desde, retornoVencido }, donde
- * `retornoVencido` indica que la fecha estimada de retorno ya pasó. Para cualquier otro estado, null.
- */
 function leerEspera(ticket, ahora = Date.now()) {
   if (ticket.estado !== 'en_espera') return null
   const espera = estadosDe(ticket).findLast((evento) => evento.estado === 'en_espera')
@@ -130,36 +115,27 @@ function leerEspera(ticket, ahora = Date.now()) {
   return { motivo, retornoEstimado, desde: creadoEn, retornoVencido: Date.parse(retornoEstimado) < ahora }
 }
 
-/**
- * Horas de atención esperadas para el ticket: las de su subcategoría, si HU-3 la registró en `subcategoriaId`, o las
- * de su categoría (catálogo de HU-2).
- */
 function tiempoEsperadoDe(ticket) {
   if (Number.isFinite(ticket.tiempoEsperadoHoras)) return ticket.tiempoEsperadoHoras
   const subcategoria = subcategoriasRepository.findById(ticket.subcategoriaId)
   return (subcategoria ?? categoriasRepository.findById(ticket.categoriaId)).tiempoEsperadoHoras
 }
 
-/**
- * Tiempos de la atención hasta el cierre, o hasta ahora si sigue en curso: { totalMs, enEsperaMs, atencionMs,
- * esperadoHoras, dentroDelPlazo }. El plazo se compara con el tiempo de atención, que no cuenta las esperas.
- */
+// el plazo se compara con el tiempo de atención, sin contar las esperas
 function leerTiempos(ticket) {
   const tiempos = tiemposDe(estadosDe(ticket))
   const esperadoHoras = tiempoEsperadoDe(ticket)
   return { ...tiempos, esperadoHoras, dentroDelPlazo: tiempos.atencionMs <= esperadoHoras * HORA_MS }
 }
 
-/** Cómo terminó un ticket que cerró su técnico: { solucion, cerradoEn, cerradoPor }. Si no, null. */
 function leerDesenlace(ticket) {
   if (ticket.estado !== 'cerrado') return null
   const cierre = estadosDe(ticket).findLast((evento) => evento.estado === 'cerrado')
-  // Sin cierre en el historial no hay desenlace que mostrar: lo cerró otra historia, sin solución.
+  // si lo cerró otra historia no hay solución que mostrar
   if (!cierre) return null
   return { solucion: cierre.solucion, cerradoEn: cierre.creadoEn, cerradoPor: persona(cierre.autorId) }
 }
 
-/** La atención del ticket tal como la ve `usuario`: 403 FORBIDDEN si no es del equipo ni quien lo reportó. */
 function leerAtencion(ticket, usuario) {
   const permisos = permisosSobre(ticket, usuario)
   return {
@@ -173,18 +149,7 @@ function leerAtencion(ticket, usuario) {
   }
 }
 
-/**
- * Vista consolidada de la atención de un ticket (HU-5 · 5.1 y 5.6, p25): { ticket, espera, tiempos, desenlace,
- * bitacora: [{ id, tipo, mensaje, creadoEn, autor }], eventos, permisos: { verInternas, comentar, notaInterna,
- * transiciones, cerrar } }.
- * - `ticket`: los datos del reporte, con su ambiente y quien lo reportó.
- * - `espera`: { motivo, retornoEstimado, desde, retornoVencido } mientras el ticket está en espera; si no, null.
- * - `tiempos`: { totalMs, enEsperaMs, atencionMs, esperadoHoras, dentroDelPlazo }, hasta el cierre o hasta ahora.
- * - `desenlace`: { solucion, cerradoEn, cerradoPor } de un ticket cerrado; si no, null.
- * - `eventos`: el historial del ticket, como en obtenerHistorial.
- * El equipo de atención lee toda la bitácora; quien reportó el ticket solo recibe los comentarios públicos. Falla con
- * 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
- */
+// Atención de un ticket (HU-5). Quien lo reportó solo ve los comentarios públicos.
 export function obtenerAtencion(codigo, usuarioId) {
   return simulateRequest(() => {
     const usuario = exigirCuentaActiva(usuarioId)
@@ -192,12 +157,7 @@ export function obtenerAtencion(codigo, usuarioId) {
   })
 }
 
-/**
- * Agrega una entrada a la bitácora: `datos` es { tipo: 'publico' | 'interno', mensaje }. Comenta quien reportó el
- * ticket, el técnico que lo tiene asignado o el supervisor; las notas internas son solo de estos dos últimos. Falla
- * con 409 TICKET_CLOSED si el ticket ya se cerró, 403 FORBIDDEN o 400 VALIDATION_ERROR. Devuelve la atención
- * actualizada.
- */
+// las notas internas solo las escriben el técnico asignado y el supervisor
 export function agregarEntrada(codigo, datos, usuarioId) {
   return simulateRequest(() => {
     const usuario = exigirCuentaActiva(usuarioId)
@@ -234,7 +194,6 @@ export function agregarEntrada(codigo, datos, usuarioId) {
   })
 }
 
-/** 409 del cambio de estado que el estado actual del ticket no admite; `details` trae los que sí admite. */
 function transicionInvalida(ticket, estado) {
   return new ServiceError(
     409,
@@ -245,11 +204,7 @@ function transicionInvalida(ticket, estado) {
   )
 }
 
-/**
- * Deja el nuevo estado en el historial, con su autor, su momento y lo propio de ese estado (el motivo y la fecha
- * estimada de retorno de una espera, o la solución de un cierre), y en el ticket, que al cerrarse toma esa misma fecha
- * de cierre. Devuelve el ticket actualizado.
- */
+// historial y ticket quedan con la misma fecha
 function registrarEstado(ticket, estado, usuario, { motivo = null, retornoEstimado = null, solucion = null } = {}) {
   const ahora = new Date().toISOString()
   historialRepository.insert({
@@ -267,13 +222,7 @@ function registrarEstado(ticket, estado, usuario, { motivo = null, retornoEstima
   return estadoDeTicketRepository.guardar(ticket.id, { estado, cerradoEn: estado === 'cerrado' ? ahora : null })
 }
 
-/**
- * Cambia el estado del ticket (HU-5 · 5.2 y 5.3, p26): `datos` es { estado } y, para dejarlo en espera, además
- * { motivo, retornoEstimado } con la fecha estimada de retorno como «2026-10-05» (de hoy en adelante). Solo lo hace el
- * técnico que lo tiene asignado y solo a un estado que el actual admita (utils/estadosTicket.js). Falla con 403
- * FORBIDDEN, 400 VALIDATION_ERROR o 409 INVALID_TRANSITION, con details: { estado, permitidas }. El cambio queda en el
- * historial y se devuelve la atención actualizada.
- */
+// Solo el técnico asignado cambia el estado. La espera pide motivo y fecha de retorno.
 export function cambiarEstado(codigo, datos, usuarioId) {
   return simulateRequest(() => {
     const usuario = exigirCuentaActiva(usuarioId)
@@ -284,12 +233,11 @@ export function cambiarEstado(codigo, datos, usuarioId) {
     }
     const errorDeEstado = validateNuevoEstado(datos?.estado)
     if (errorDeEstado) throw validationError({ estado: errorDeEstado })
-    // Antes que el detalle del cambio: no tiene sentido pedir el motivo de una espera que el ticket no admite.
+    // va antes que el detalle, no tiene sentido pedir motivo si la espera no se permite
     if (!esTransicionValida(ticket.estado, datos.estado)) throw transicionInvalida(ticket, datos.estado)
     const errores = validateCambioEstado(datos)
     if (hasErrors(errores)) throw validationError(errores)
 
-    // El motivo y la fecha de retorno solo se guardan con la espera: en otro estado se ignoran.
     const detalle =
       datos.estado === 'en_espera'
         ? { motivo: normalizeTexto(datos.motivo), retornoEstimado: finDelDiaEnLima(datos.retornoEstimado) }
@@ -298,12 +246,7 @@ export function cambiarEstado(codigo, datos, usuarioId) {
   })
 }
 
-/**
- * Cierra el ticket (HU-5 · 5.4, p26): `datos` es { solucion }, la descripción de la solución aplicada. Solo lo hace
- * el técnico que lo tiene asignado, con el ticket en atención o resuelto. Falla con 403 FORBIDDEN, 409
- * INVALID_TRANSITION o 400 VALIDATION_ERROR. El ticket queda cerrado con su fecha de cierre y la respuesta trae su
- * desenlace y el tiempo total de atención; desde entonces quien lo reportó puede responder la encuesta (HU-6).
- */
+// Cierra con la solución. Desde ahí quien lo reportó ya puede responder la encuesta.
 export function cerrarTicket(codigo, datos, usuarioId) {
   return simulateRequest(() => {
     const usuario = exigirCuentaActiva(usuarioId)
@@ -329,10 +272,7 @@ export function cerrarTicket(codigo, datos, usuarioId) {
   })
 }
 
-/**
- * Eventos del historial con las personas que nombran y, en cada cambio de estado, cuánto estuvo el ticket en ese
- * estado (`duracionMs`) y si es el actual (`enCurso`). Las asignaciones (HU-4) no tienen duración.
- */
+// las asignaciones no tienen duración, solo los cambios de estado
 function leerEventos(ticket) {
   const estados = estadosDe(ticket)
   const etapas = etapasDe(estados)
@@ -358,14 +298,7 @@ function leerEventos(ticket) {
     }))
 }
 
-/**
- * Historial completo de un ticket (HU-5 · 5.5, p27): { ticket, eventos, etapas, tiempos }.
- * - `eventos`: cada cambio de estado y cada asignación, del más antiguo al más reciente: { id, tipo, estado, creadoEn,
- *   autor, asignadoA, motivo, retornoEstimado, solucion, duracionMs, enCurso }.
- * - `etapas`: el tiempo total en cada estado, [{ estado, ms }].
- * - `tiempos`: los mismos de obtenerAtencion.
- * Lo consultan el equipo de atención y quien reportó el ticket. Falla con 401, 403 FORBIDDEN o 404 TICKET_NOT_FOUND.
- */
+// Historial completo del ticket, con el tiempo que pasó en cada estado.
 export function obtenerHistorial(codigo, usuarioId) {
   return simulateRequest(() => {
     const usuario = exigirCuentaActiva(usuarioId)
@@ -380,7 +313,6 @@ export function obtenerHistorial(codigo, usuarioId) {
   })
 }
 
-/** Momento de la última entrada de bitácora o del último evento del historial del ticket. */
 function ultimaActividadDe(ticket) {
   const momentos = [
     ...bitacoraRepository.findAll({ ticketId: ticket.id }),
@@ -389,12 +321,7 @@ function ultimaActividadDe(ticket) {
   return momentos.sort().at(-1) ?? ticket.creadoEn
 }
 
-/**
- * Historial de atención de un técnico (HU-5 · 5.6): los tickets que tiene o tuvo a su cargo, del de actividad más
- * reciente al más antiguo: [{ id, codigo, asunto, estado, prioridad, creadoEn, cerradoEn, actualizadoEn,
- * dentroDelPlazo, categoria, ambiente: { id, codigo }, solicitante }]. `dentroDelPlazo` indica si la atención no superó
- * el tiempo esperado. Falla con 401 o con 403 FORBIDDEN si la cuenta no es de un técnico.
- */
+// tickets que tiene o tuvo el técnico, primero los de actividad más reciente
 export function listarAtendidos(usuarioId) {
   return simulateRequest(() => {
     const usuario = exigirCuentaActiva(usuarioId)
@@ -427,11 +354,9 @@ export function listarAtendidos(usuarioId) {
   })
 }
 
-/**
- * Obtiene la información enriquecida de un ticket para la vista de encuesta (HU-6).
- */
+// datos del ticket para la vista de la encuesta (HU-6)
 export async function obtenerTicketPorCodigo(codigoTicket) {
-  // Sin código no hay ticket: antes se tomaba el primer ticket cerrado de cualquier cuenta.
+  // antes, sin código, se tomaba el primer ticket cerrado de cualquier cuenta
   if (!codigoTicket) return null
   let ticket
   try {

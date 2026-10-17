@@ -13,7 +13,7 @@ const CIERRE = 'Si necesitas ese acceso, solicítalo a Infraestructura y Servici
 const contenido = () => screen.getByRole('main')
 const botonSolicitar = () => within(contenido()).getByRole('button', { name: 'Solicitar acceso' })
 
-/** Abre `ruta` con la sesión del rol y espera a que la cabecera cargue su contador. */
+// espera a que la cabecera cargue su contador
 async function renderComo(rol, ruta) {
   const view = renderApp(ruta, { usuario: DEMO[rol] })
   await screen.findByText(PILDORA[rol])

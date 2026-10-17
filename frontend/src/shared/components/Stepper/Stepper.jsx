@@ -7,11 +7,7 @@ function estadoDelPaso(numero, actual) {
   return numero === actual ? 'current' : 'upcoming'
 }
 
-/**
- * Pasos de un flujo (p08): número y nombre de cada paso, unidos por una línea. El paso `current` (desde 1) se resalta
- * y se anuncia con aria-current="step"; los anteriores se muestran completados. En pantallas angostas solo queda a la
- * vista el nombre del paso actual.
- */
+// current empieza en 1
 export default function Stepper({ steps, current, label = 'Pasos', className }) {
   return (
     <ol className={cx('stepper', className)} aria-label={label}>

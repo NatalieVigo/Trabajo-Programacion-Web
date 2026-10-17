@@ -27,7 +27,6 @@ const NO_PENDIENTE = {
   revocada: 'Esta invitación fue revocada por el supervisor.',
 }
 
-/** Invitaciones tal como las devuelve la API: con su estado efectivo y el nombre de quien invitó. */
 function presentar(invitaciones) {
   const nombres = new Map(usuariosRepository.findAll().map((usuario) => [usuario.id, getFullName(usuario)]))
   const ahora = Date.now()
@@ -50,7 +49,6 @@ function buscarPorToken(token) {
   return invitacion
 }
 
-/** Solo una invitación pendiente y vigente admite cambios: si no, 410 INVITATION_EXPIRED o 409 INVITATION_NOT_PENDING. */
 function assertPendiente(invitacion) {
   const estado = estadoEfectivo(invitacion)
   if (estado === 'vencida') {
@@ -63,17 +61,11 @@ function assertPendiente(invitacion) {
   return invitacion
 }
 
-/** Invitación del enlace /invitacion/:token con su estado efectivo. Falla con 404 INVITATION_NOT_FOUND. */
 export function obtenerPorToken(token) {
   return simulateRequest(() => presentarUna(buscarPorToken(token)))
 }
 
-/**
- * Activa la cuenta del invitado (HU-1 · 1.2): crea el usuario con el rol, los nombres y el correo de la invitación,
- * el teléfono que confirma y de una a tres especialidades activas, y marca la invitación como aceptada.
- * Falla con 404, 410 INVITATION_EXPIRED, 409 INVITATION_NOT_PENDING, 400 VALIDATION_ERROR o 409 EMAIL_TAKEN.
- * Devuelve el usuario sin credenciales.
- */
+// Activa la cuenta del invitado (HU-1) y deja la invitación como aceptada.
 export function aceptar(token, datos) {
   return simulateRequest(async () => {
     assertPendiente(buscarPorToken(token))
@@ -82,7 +74,7 @@ export function aceptar(token, datos) {
     if (hasErrors(fieldErrors)) throw validationError(fieldErrors)
 
     const credenciales = await createPasswordCredentials(datos.password)
-    // Tras el hash se vuelve a leer la invitación: entre la consulta y las escrituras no media ningún await.
+    // se relee después del hash para que no haya un await entre leer y escribir
     const invitacion = assertPendiente(buscarPorToken(token))
     if (usuariosRepository.findByCorreo(invitacion.correo)) throw emailTakenError()
 
@@ -104,7 +96,6 @@ export function aceptar(token, datos) {
   })
 }
 
-/** El invitado rechaza su invitación pendiente y vigente. Falla con 404, 410 o 409. */
 export function rechazar(token) {
   return simulateRequest(() => {
     const invitacion = assertPendiente(buscarPorToken(token))
@@ -116,11 +107,7 @@ export function rechazar(token) {
   })
 }
 
-/**
- * Un supervisor activo invita a un técnico o a otro supervisor. El enlace usa un token aleatorio de 96 bits y vence
- * a los 7 días. Falla con 403 FORBIDDEN, 400 VALIDATION_ERROR, 409 EMAIL_TAKEN (el correo ya tiene cuenta) o
- * 409 INVITATION_PENDING (el correo ya tiene una invitación vigente).
- */
+// token aleatorio de 96 bits; la invitación vence a los 7 días
 export function crear(datos, invitadoPorId) {
   return simulateRequest(() => {
     const invitador = usuariosRepository.findById(invitadoPorId)

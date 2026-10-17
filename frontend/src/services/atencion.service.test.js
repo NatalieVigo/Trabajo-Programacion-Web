@@ -20,7 +20,7 @@ const LUCIA = 'usr-003'
 const BLOQUEADO = 'usr-004'
 const RENZO = 'usr-005'
 
-/** Lo reportó Camila y lo atiende Julio. */
+// lo reportó Camila y lo atiende Julio
 const EN_ATENCION = 'TCK-2026-00144'
 const EN_ESPERA = 'TCK-2026-00143'
 const RESUELTO = 'TCK-2026-00141'
@@ -29,7 +29,6 @@ const SIN_ASIGNAR = 'TCK-2026-00147'
 const CERRADO = 'TCK-2026-00131'
 const AHORA = '2026-10-01T15:00:00.000Z'
 
-/** Motivo y fecha estimada de retorno válidos para dejar un ticket en espera. */
 const ESPERA = { motivo: 'Tomacorriente solicitado al almacén.', retornoEstimado: '2026-10-05' }
 
 const fallo = (promise) => promise.catch((error) => error)
@@ -37,7 +36,7 @@ const permisosDe = async (codigo, usuarioId) => (await obtenerAtencion(codigo, u
 const estadoDe = (ticketId) => ticketsRepository.findById(ticketId).estado
 const historialDe = (ticketId) => historialRepository.findAll({ ticketId })
 
-/** Cambia un ticket directamente en la base, como lo harían la asignación (HU-4) o la reapertura (HU-3). */
+// simula lo que harían otras historias, como asignar o reabrir
 function modificarTicket(ticketId, cambios) {
   writeTable(
     'tickets',
@@ -572,7 +571,7 @@ describe('atencion.service · tiempos y desenlace', () => {
   })
 
   it('usa el tiempo esperado de la subcategoría cuando el ticket la tiene', async () => {
-    // «Proyector no enciende» (sub-01) espera 2 h; su categoría, Audiovisuales, 4 h.
+    // sub-01 espera 2 h y su categoría 4 h
     modificarTicket('tck-00118', { subcategoriaId: 'sub-01' })
 
     const { tiempos } = await obtenerAtencion('TCK-2026-00118', JULIO)

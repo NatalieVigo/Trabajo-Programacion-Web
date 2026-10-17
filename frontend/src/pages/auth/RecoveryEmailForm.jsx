@@ -4,10 +4,7 @@ import { solicitarRecuperacion } from '../../services/auth.service.js'
 import { Button, FormField, PageHeader, TextInput, useToast } from '../../shared/components'
 import { validateRecuperacion } from '../../utils/validators.js'
 
-/**
- * Paso 1 de la recuperación (p08): el correo de la cuenta. `onEnviado` recibe la respuesta del servicio, que es la
- * misma exista o no la cuenta.
- */
+// la respuesta es la misma exista o no la cuenta
 export default function RecoveryEmailForm({ correoInicial, onEnviado }) {
   const toast = useToast()
   const form = useForm({ initialValues: { correo: correoInicial }, validate: validateRecuperacion })

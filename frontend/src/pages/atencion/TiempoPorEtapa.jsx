@@ -3,10 +3,7 @@ import { Card } from '../../shared/components'
 import { formatDuracion } from '../../utils/duracion.js'
 import { formatEstado } from '../../utils/format.js'
 
-/**
- * Tiempo por etapa (HU-5 · 5.5, p27): cuánto pasó el ticket en cada estado, con una barra proporcional a la etapa más
- * larga. `etapas` es [{ estado, ms }] y `tiempos`, el total y la espera, para indicar qué parte del tiempo fue espera.
- */
+// las barras se miden contra la etapa más larga; etapas es [{ estado, ms }]
 export default function TiempoPorEtapa({ etapas, tiempos }) {
   const tituloId = useId()
   const mayor = Math.max(...etapas.map(({ ms }) => ms), 1)

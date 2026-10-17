@@ -3,7 +3,6 @@ import { useFieldControl } from '../FormField/FormFieldContext.js'
 import TextInput from '../TextInput/TextInput.jsx'
 import './PasswordInput.css'
 
-/** Contraseña con el botón «Mostrar»/«Ocultar» dentro del campo (p04). */
 export default function PasswordInput({ disabled = false, ...props }) {
   const [visible, setVisible] = useState(false)
   const { controlProps } = useFieldControl(props)

@@ -6,11 +6,7 @@ const USUARIO = Object.freeze(['usuario'])
 const TECNICO = Object.freeze(['tecnico'])
 const SUPERVISOR = Object.freeze(['supervisor'])
 
-/**
- * Rutas privadas (SPEC §9) con los roles que pueden verlas y el recurso que muestran, con el que la vista 403 dice qué
- * se intentó ver: «No tienes permiso para ver la cola de atención». AppRoutes protege cada una con RequireRole y, tras
- * iniciar sesión, solo se vuelve a la página pedida si el rol puede verla.
- */
+// recurso es el texto que usa el 403 para decir qué se intentó ver
 export const PRIVATE_ROUTES = Object.freeze(
   [
     { path: ROUTES.usuarioInicio, roles: USUARIO, recurso: 'los tickets del usuario' },
@@ -48,7 +44,7 @@ export const PRIVATE_ROUTES = Object.freeze(
   ].map((route) => Object.freeze(route)),
 )
 
-/** Si el rol puede ver `pathname`. Lo que no es una ruta privada de la tabla nunca se concede. */
+// lo que no está en la tabla nunca se permite
 export function canAccess(rol, pathname) {
   const route = PRIVATE_ROUTES.find(({ path }) => matchPath(path, pathname))
   return route?.roles.includes(rol) ?? false

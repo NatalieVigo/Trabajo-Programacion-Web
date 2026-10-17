@@ -11,10 +11,7 @@ const PLAZO_ENCUESTA_MS = 7 * 24 * 60 * 60 * 1000
 
 const esAbierto = (ticket) => ESTADOS_ABIERTOS.has(ticket.estado)
 
-/**
- * Tickets cerrados sin encuesta cuyo plazo para responderla (7 días desde el cierre) aún no vence, de la que vence
- * antes a la que vence después: { ticketCodigo, cerradoEn, fechaLimite }.
- */
+// encuestas aún a tiempo (7 días desde el cierre), la más urgente primero
 function encuestasPendientes(tickets, encuestas, ahora) {
   const conEncuesta = new Set(encuestas.map((encuesta) => encuesta.ticketId))
   return tickets
@@ -29,7 +26,6 @@ function encuestasPendientes(tickets, encuestas, ahora) {
     }))
 }
 
-/** Tickets que reportó el usuario, sus encuestas respondidas y las que aún puede responder. */
 function actividadDelUsuario(usuarioId) {
   const tickets = ticketsRepository.findAll({ usuarioId })
   const encuestas = encuestasRepository.findAll({ usuarioId })
@@ -62,11 +58,7 @@ const CONTADORES_POR_ROL = {
   },
 }
 
-/**
- * Contadores de la cabecera y del menú lateral (SPEC §9). Solo lee tickets (HU-3) y encuestas (HU-6).
- * usuario: { ticketsAbiertos, ticketsReportados, encuestasPendientes, encuestasRespondidas } ·
- * tecnico: { asignados } · supervisor: { colaSinAsignar }. Falla con 401 si no hay un usuario con rol.
- */
+// Contadores de la cabecera y del menú lateral, según el rol.
 export function obtenerContadores(usuario) {
   return simulateRequest(() => {
     if (!usuario?.id || !Object.hasOwn(CONTADORES_POR_ROL, usuario.rol)) {
@@ -85,7 +77,7 @@ const RESUMEN_DE_CUENTA_POR_ROL = {
       encuestaPendiente: pendientes[0] ?? null,
     }
   },
-  // p10 solo dibuja el resumen del usuario: técnico y supervisor muestran únicamente la fecha de creación de la cuenta.
+  // técnico y supervisor solo muestran la fecha de creación de la cuenta
   tecnico() {
     return {}
   },
@@ -94,10 +86,7 @@ const RESUMEN_DE_CUENTA_POR_ROL = {
   },
 }
 
-/**
- * Resumen de la cuenta para «Mi cuenta» (p10), según el rol. Paso interno de usuarios.service#obtenerResumenCuenta:
- * solo lee tickets y encuestas. La encuesta pendiente es la que vence primero.
- */
+// lo usa usuarios.service para el resumen de "Mi cuenta"
 export function resumenDeCuenta(usuario) {
   return { ...RESUMEN_DE_CUENTA_POR_ROL[usuario.rol](usuario.id), cuentaCreada: usuario.creadoEn }
 }

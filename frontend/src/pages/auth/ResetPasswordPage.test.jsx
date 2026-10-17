@@ -19,7 +19,6 @@ const camilaTieneLaContrasena = (password) => {
   return verifyPassword(password, passwordSalt, passwordHash)
 }
 
-/** Pide un enlace de recuperación para Camila y devuelve su token. */
 async function enlaceDeCamila() {
   const { tokenDemo } = await solicitarRecuperacion(CAMILA)
   return tokenDemo
@@ -108,7 +107,7 @@ describe('ResetPasswordPage · enlace vigente', () => {
     const { user } = await abrirEnlace(await enlaceDeCamila())
     await user.type(campo('Nueva contraseña'), NUEVA)
     await user.type(campo('Confirmar'), NUEVA)
-    // Desde otra pestaña se pide un enlace nuevo, que reemplaza a este.
+    // otra pestaña pide un enlace nuevo que reemplaza a este
     await solicitarRecuperacion(CAMILA)
 
     await user.click(boton('Guardar contraseña'))

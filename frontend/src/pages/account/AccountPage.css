@@ -9,7 +9,6 @@
   padding: var(--space-6) var(--space-6) var(--space-8);
 }
 
-/* Cada sección de la tarjeta (datos personales, contraseña…) se separa de la anterior con una línea. */
 .account-section + .account-section {
   margin-top: var(--space-8);
   padding-top: var(--space-6);
@@ -26,7 +25,6 @@
   outline: none;
 }
 
-/* Por debajo de 1024 px la columna lateral pasa debajo del formulario. */
 @media (max-width: 1023px) {
   .account-page__layout {
     grid-template-columns: minmax(0, 1fr);

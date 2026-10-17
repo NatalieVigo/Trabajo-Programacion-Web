@@ -1,10 +1,6 @@
 import { cx } from '../../../utils/classNames.js'
 import './EmptyState.css'
 
-/**
- * Estado vacío (p15, p21, p23): ícono, título, descripción y una acción opcional. `compact` lo reduce para
- * tarjetas angostas, como las de una columna lateral.
- */
 export default function EmptyState({
   icon,
   title,

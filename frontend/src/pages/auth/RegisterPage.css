@@ -38,7 +38,7 @@
     gap: var(--space-6);
   }
 
-  /* En una columna el aviso va primero: un técnico o supervisor debe leerlo antes de llenar el formulario. */
+  /* el aviso va primero para que lo lean antes del formulario */
   .register-page__aside {
     order: -1;
   }

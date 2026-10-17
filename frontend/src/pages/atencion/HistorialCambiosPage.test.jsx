@@ -5,9 +5,9 @@ import { DEMO, renderApp, ubicacionActual } from '../../test/test-utils.jsx'
 const AHORA = '2026-10-01T15:00:00.000Z'
 const PILDORA = { usuario: 'Mis tickets abiertos', tecnico: 'Asignados a mí', supervisor: 'Cola sin asignar' }
 
-/** Cerrado por Iván Zegarra tras una espera: el ticket del mockup p27. */
+// cerrado por Iván después de una espera
 const CERRADO = 'TCK-2026-00130'
-/** Lo atiende Julio. */
+// lo atiende Julio
 const EN_ATENCION = 'TCK-2026-00144'
 
 const contenido = () => screen.getByRole('main')
@@ -15,7 +15,6 @@ const cambios = (codigo) => within(screen.getByRole('list', { name: `Cambios de 
 const etapas = () => within(screen.getByRole('region', { name: 'Tiempo por etapa' })).getAllByRole('listitem')
 const ruta = () => screen.getByRole('navigation', { name: 'Ruta de navegación' })
 
-/** Abre el historial del ticket en el panel del rol y espera su título y el contador de la cabecera. */
 async function renderHistorial(codigo, rol = 'tecnico') {
   const view = renderApp(`/${rol}/tickets/${codigo}/historial`, { usuario: DEMO[rol] })
   await screen.findByRole('heading', { level: 1, name: 'Historial de cambios' })
@@ -52,12 +51,10 @@ describe('HistorialCambiosPage', () => {
     expect(resuelto).toHaveTextContent('Permaneció 4 h 46 min en este estado')
     expect(document.title).toBe('Historial de TCK-2026-00130 · Mesa de Ayuda')
 
-    // La asignación no es un estado: indica quién asignó a quién, sin duración.
     expect(asignado).toHaveTextContent('Asignado a Iván Zegarra Pinto')
     expect(asignado).toHaveTextContent('31/08/2026 09:50 · Lucía Mendoza Ríos (supervisor)')
     expect(asignado).not.toHaveTextContent('en este estado')
 
-    // Como en p27, el motivo va en el título y el retorno estimado en la línea de detalle.
     expect(enEspera).toHaveTextContent('En espera · Repuesto de canaleta: el almacén lo entrega al día siguiente.')
     expect(enEspera).toHaveTextContent('31/08/2026 16:00 · Iván Zegarra Pinto (técnico) · retorno estimado 01/09/2026')
     expect(enEspera).not.toHaveTextContent('Motivo:')

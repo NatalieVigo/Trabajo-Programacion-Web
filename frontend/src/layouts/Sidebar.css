@@ -100,7 +100,7 @@
   display: none;
 }
 
-/* Por debajo de 1024 px el menú es un panel que se desliza bajo la cabecera, sobre un fondo que oscurece la página. */
+/* Menú móvil */
 @media (max-width: 1023px) {
   .app-sidebar {
     position: fixed;

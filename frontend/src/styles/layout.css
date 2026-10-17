@@ -1,4 +1,3 @@
-/* Contenido centrado a 1200 px (p02) con margen lateral responsivo. */
 .container {
   width: 100%;
   max-width: calc(var(--content-max-width) + 2 * var(--page-gutter));
@@ -6,12 +5,11 @@
   padding-inline: var(--page-gutter);
 }
 
-/* Separación vertical estándar del contenido de una página. */
 .page {
   padding-block: var(--space-8) var(--space-16);
 }
 
-/* Formulario en dos columnas (p06, p07) que pasa a una sola en pantallas angostas. */
+/* Formularios */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

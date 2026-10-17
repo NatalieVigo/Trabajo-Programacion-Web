@@ -6,10 +6,7 @@ import ChangePasswordSection from './ChangePasswordSection.jsx'
 import PersonalDataSection from './PersonalDataSection.jsx'
 import './AccountPage.css'
 
-/**
- * Mi cuenta (HU-1 · 1.5 y 1.6, mockup p10), para cualquier rol: la tarjeta principal reúne las secciones de la cuenta
- * (datos personales y cambio de contraseña) y la columna lateral, el perfil con su resumen.
- */
+// Mi cuenta (HU-1), la misma página para todos los roles.
 export default function AccountPage() {
   const { usuario } = useAuth()
   useDocumentTitle('Mi cuenta')

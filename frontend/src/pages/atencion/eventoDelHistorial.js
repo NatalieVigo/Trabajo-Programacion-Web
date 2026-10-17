@@ -1,6 +1,5 @@
 import { formatEstado, formatPrioridad, getDisplayName } from '../../utils/format.js'
 
-/** Nombre de un evento del historial: el estado al que pasó el ticket o a quién se asignó. */
 export function tituloDeEvento(evento) {
   if (evento.tipo === 'prioridad') {
     return `Prioridad cambiada de ${formatPrioridad(evento.prioridadAnterior)} a ${formatPrioridad(evento.prioridadNueva)}`

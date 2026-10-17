@@ -14,7 +14,6 @@ const habilitadasDe = (tecnicoId) =>
     .map(({ categoriaId }) => categoriaId)
     .sort()
 
-/** Abre la matriz con la sesión de Lucía y espera la tabla y el contador de la cabecera. */
 async function renderMatriz() {
   const view = renderApp('/supervisor/tecnicos', { usuario: DEMO.supervisor })
   await screen.findByRole('table', { name: 'Categorías habilitadas por técnico' })

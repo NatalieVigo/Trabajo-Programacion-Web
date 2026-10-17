@@ -1,5 +1,3 @@
-/* Vista consolidada de un ticket (p25): cabecera con el código y dos columnas de contenido. La ruta de navegación es
-   la del historial de cambios (p27). */
 .ticket-atencion__breadcrumb {
   margin-bottom: var(--space-2);
   color: var(--color-text-muted);
@@ -75,7 +73,6 @@
   gap: var(--space-2);
 }
 
-/* A la izquierda, la espera o el desenlace y la bitácora; a la derecha, los datos del reporte (p25). */
 .ticket-atencion__layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
@@ -91,7 +88,7 @@
   min-width: 0;
 }
 
-/* Tarjetas de la columna lateral: datos del reporte, ambiente e historial reciente. */
+/* Tarjetas laterales */
 .ticket-dato-card {
   display: flex;
   flex-direction: column;
@@ -184,7 +181,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Desenlace del ticket cerrado: la solución a todo el ancho y, debajo, el cierre y el tiempo total. */
+/* Desenlace */
 .desenlace__titulo {
   margin-bottom: var(--space-4);
   font-size: var(--font-size-subtitle);
@@ -247,7 +244,7 @@
   line-height: var(--line-height-aux);
 }
 
-/* Nueva entrada (p25): al elegir «Nota interna» toma el tono de advertencia, igual que las notas ya guardadas. */
+/* Nueva entrada */
 .nueva-entrada {
   margin-top: var(--space-4);
   padding: var(--space-4);
@@ -273,7 +270,6 @@
   gap: var(--space-2);
 }
 
-/* Cada tipo es un radio con forma de botón: el radio sigue siendo el control para el teclado y el lector. */
 .nueva-entrada__tipo {
   position: relative;
   display: inline-flex;
@@ -318,7 +314,7 @@
   pointer-events: none;
 }
 
-/* La etiqueta del texto queda solo para lectores de pantalla, como .visually-hidden: p25 no la dibuja. */
+/* etiqueta solo para lectores de pantalla */
 .nueva-entrada__campo > .field__label {
   position: absolute;
   width: 1px;
@@ -352,7 +348,6 @@
   background: var(--nueva-entrada-hover);
 }
 
-/* Por debajo de 1024 px los datos del reporte pasan debajo de la bitácora. */
 @media (max-width: 1023px) {
   .ticket-atencion__layout {
     grid-template-columns: minmax(0, 1fr);

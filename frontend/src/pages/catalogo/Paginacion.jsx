@@ -2,7 +2,7 @@ import { Button } from '../../shared/components'
 import { cx } from '../../utils/classNames.js'
 import './Paginacion.css'
 
-/** «Anterior · 1 · 2 · Siguiente» (p12, p14). No se muestra si todo cabe en una página. */
+// no se muestra si todo cabe en una página
 export default function Paginacion({ pagina, totalPaginas, onCambiar, etiqueta }) {
   if (totalPaginas <= 1) return null
   const paginas = Array.from({ length: totalPaginas }, (_, indice) => indice + 1)

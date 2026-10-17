@@ -13,7 +13,6 @@ const celdas = (nombre) =>
     .map((celda) => celda.textContent)
 const sub = (nombre, categoria) => `${nombre} (subcategoría de ${categoria})`
 
-/** Abre el catálogo con la sesión de Lucía y espera la tabla y el contador de la cabecera. */
 async function renderCatalogo() {
   const view = renderApp('/supervisor/categorias', { usuario: DEMO.supervisor })
   await screen.findByRole('table', { name: 'Catálogo de servicios' })

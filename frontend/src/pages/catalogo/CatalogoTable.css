@@ -1,4 +1,4 @@
-/* Tablas del catálogo de servicios (p12, p14, p16): filas compactas que por debajo de 768 px se apilan en tarjetas. */
+/* Tablas del catálogo */
 .catalogo-table {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -65,7 +65,7 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* Subcategorías: con sangría bajo su categoría (árbol de dos niveles, p12). */
+/* Subcategorías */
 .catalogo-table .catalogo-table__row--sub .catalogo-table__name {
   padding-left: var(--space-8);
   font-weight: var(--font-weight-regular);
@@ -84,7 +84,7 @@
   font-size: var(--font-size-label);
 }
 
-/* Las acciones quedan fijas a la derecha cuando el resto de la tabla se desplaza. */
+/* Acciones fijas al hacer scroll */
 .catalogo-table .catalogo-table__actions,
 .catalogo-table thead th:last-child {
   position: sticky;
@@ -96,7 +96,6 @@
   background: var(--color-surface);
 }
 
-/* Alineadas a la izquierda: «Editar» queda en la misma columna aunque la fila no ofrezca «Eliminar». */
 .catalogo-table .catalogo-table__actions {
   text-align: left;
 }

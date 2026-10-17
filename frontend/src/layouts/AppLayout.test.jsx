@@ -13,7 +13,6 @@ const enlacesDe = (menu) =>
     .getAllByRole('link')
     .map((link) => [link.textContent, link.getAttribute('href')])
 
-/** Abre la aplicación con la sesión iniciada y espera a que la cabecera muestre el contador del rol. */
 async function renderPanel(route, rol = 'usuario') {
   const view = renderApp(route, { usuario: DEMO[rol] })
   await screen.findByText(PILDORA[rol])
@@ -149,7 +148,7 @@ describe('AppLayout · menú lateral', () => {
 
     await user.click(botonMenu())
     await user.click(within(screen.getByRole('navigation', { name: 'Mis servicios' })).getByRole('link', { name: 'Nuevo ticket' }))
-    expect(await screen.findByRole('heading', { level: 1, name: 'Nuevo ticket' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Registrar un ticket' })).toBeInTheDocument()
     expect(botonMenu()).toHaveAttribute('aria-expanded', 'false')
 
     await user.click(botonMenu())

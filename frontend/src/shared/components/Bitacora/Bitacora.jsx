@@ -8,12 +8,7 @@ const TIPOS = {
   interno: 'Nota interna · no visible para el usuario',
 }
 
-/**
- * Bitácora de un ticket (p20, p25): sus entradas en orden, cada una con el autor, su rol y el momento. `entradas` es
- * [{ id, tipo, mensaje, creadoEn, autor: { nombres, apellidos, rol } }]. Con `mostrarTipo` cada entrada indica si es
- * un comentario público o una nota interna y las internas se resaltan; la vista del usuario no lo necesita porque
- * solo recibe comentarios públicos.
- */
+// El usuario no usa mostrarTipo porque solo le llegan comentarios públicos.
 export default function Bitacora({ entradas, mostrarTipo = false, className, ...rest }) {
   return (
     <ol {...rest} className={cx('bitacora', className)}>

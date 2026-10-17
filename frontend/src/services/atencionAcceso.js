@@ -2,15 +2,11 @@ import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { sePuedeCerrar, transicionesDesde } from '../utils/estadosTicket.js'
 import { ServiceError } from './ServiceError.js'
 
-/** Pasos internos de los servicios de atención (HU-5): quién hace la petición y qué puede hacer con un ticket. */
+// Helpers de atención (HU-5): quién pide y qué puede hacer con el ticket.
 
-/** Roles del equipo de atención: ven las notas internas de la bitácora. */
+// estos roles ven las notas internas
 const EQUIPO = Object.freeze(['tecnico', 'supervisor'])
 
-/**
- * La cuenta que hace la petición, como la tomaría el servidor de la sesión: 401 UNAUTHENTICATED si no existe y 403
- * FORBIDDEN si el supervisor la bloqueó.
- */
 export function exigirCuentaActiva(usuarioId) {
   const usuario = usuariosRepository.findById(usuarioId)
   if (!usuario) {
@@ -22,21 +18,12 @@ export function exigirCuentaActiva(usuarioId) {
   return usuario
 }
 
-/** Si `usuario` es el técnico que tiene asignado el ticket: solo él cambia su estado y lo cierra. */
+// solo el técnico asignado cambia el estado y lo cierra
 export function esSuTecnico(ticket, usuario) {
   return usuario.rol === 'tecnico' && ticket.asignadoA === usuario.id
 }
 
-/**
- * Lo que `usuario` puede hacer con `ticket`. Lo ven el equipo de atención y quien lo reportó; cualquier otra cuenta
- * recibe 403 FORBIDDEN. Devuelve:
- * - `verInternas`: lee las notas internas (solo el equipo).
- * - `comentar`: publica comentarios (quien lo reportó, el técnico que lo tiene asignado y el supervisor).
- * - `notaInterna`: registra notas internas (el técnico que lo tiene asignado y el supervisor).
- * - `transiciones`: estados a los que puede pasar el ticket (solo el técnico que lo tiene asignado).
- * - `cerrar`: puede cerrarlo con su solución (ese mismo técnico, con el ticket en atención o resuelto).
- * Un ticket cerrado o cancelado ya no admite entradas ni cambios de estado.
- */
+// Qué puede hacer el usuario con el ticket; cerrado o cancelado ya no admite cambios.
 export function permisosSobre(ticket, usuario) {
   const esEquipo = EQUIPO.includes(usuario.rol)
   const loReporto = ticket.usuarioId === usuario.id

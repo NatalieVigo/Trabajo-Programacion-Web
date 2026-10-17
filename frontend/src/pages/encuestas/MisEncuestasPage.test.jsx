@@ -12,14 +12,14 @@ describe('MisEncuestasPage (Vista 6.2)', () => {
   it('muestra el listado de encuestas respondidas del usuario con sus métricas', async () => {
     renderApp('/usuario/encuestas', { usuario: DEMO.usuario })
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Mis encuestas' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mis encuestas' })).toBeInTheDocument()
     expect(screen.getByText(/encuestas respondidas/i)).toBeInTheDocument()
     expect(screen.getByText(/TICKET \/ ASUNTO/i)).toBeInTheDocument()
     expect(screen.getByText(/PLAZO DE EDICIÓN/i)).toBeInTheDocument()
   })
 
   it('permite navegar al formulario de edición al hacer clic en Editar encuesta', async () => {
-    // Registrar una encuesta reciente (con fecha actual) para que esté dentro del plazo de 7 días
+    // con fecha de hoy, así sigue dentro de los 7 días para editar
     await registrarEncuesta({
       codigoTicket: 'TCK-2026-00131',
       usuarioId: DEMO.usuario,

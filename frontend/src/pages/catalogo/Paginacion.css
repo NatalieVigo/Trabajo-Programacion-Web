@@ -40,7 +40,7 @@
   color: var(--color-on-dark);
 }
 
-/* Pie de las listas del catálogo: «Mostrando…» a la izquierda y la paginación a la derecha. */
+/* Pie de las listas */
 .catalogo-pie {
   display: flex;
   flex-wrap: wrap;

@@ -6,7 +6,7 @@ import { obtenerTicketPorCodigo } from '../../services/atencion.service.js'
 import { obtenerResumenCuenta } from '../../services/usuarios.service.js'
 import { useToast } from '../../shared/components/Toast/useToast.js'
 import Button from '../../shared/components/Button/Button.jsx'
-import { Card, EmptyState } from '../../shared/components'
+import { Card, EmptyState, PageHeader } from '../../shared/components'
 import './EncuestaPage.css'
 
 const SIN_PENDIENTES = {
@@ -39,7 +39,7 @@ export default function EncuestaPage() {
   useEffect(() => {
     async function CargarDatos() {
       try {
-        // «Encuesta pendiente» (sin código): la que vence primero, igual que el contador del menú.
+        // sin código se abre la que vence primero, como en el contador del menú
         let codigo = codigoTicket
         if (!codigo) {
           const resumen = await obtenerResumenCuenta(usuarioId)
@@ -116,7 +116,15 @@ export default function EncuestaPage() {
     }
   }
 
-  if (cargando) return <div className="page-loader">Cargando encuesta...</div>
+  if (cargando) {
+    return (
+      <Card aria-busy="true">
+        <p role="status" className="text-muted">
+          Cargando encuesta…
+        </p>
+      </Card>
+    )
+  }
 
   if (noDisponible) {
     return (
@@ -134,137 +142,122 @@ export default function EncuestaPage() {
     )
   }
 
+  const aspectos = [
+    { id: 'rapidez', etiqueta: 'Rapidez', valor: rapidez, cambiar: setRapidez },
+    { id: 'trato', etiqueta: 'Trato del técnico', valor: trato, cambiar: setTrato },
+    { id: 'solucion', etiqueta: 'Solución del problema', valor: solucion, cambiar: setSolucion },
+  ]
+
   return (
-    <div className="encuesta-page-container">
-      <div className="encuesta-form-card">
-        <h2>¿Cómo fue la atención de tu ticket?</h2>
-        <p className="encuesta-subtitle">
-          Tu respuesta ayuda al área de Infraestructura a mejorar los tiempos y el trato. Toma menos de un minuto.
-        </p>
+    <div className="encuesta">
+      <PageHeader
+        title="¿Cómo fue la atención de tu ticket?"
+        subtitle="Tu respuesta ayuda al área de Infraestructura a mejorar los tiempos y el trato. Toma menos de un minuto."
+      />
 
-        <form onSubmit={handleSubmit}>
-          <div className="rating-group">
-            <label className="rating-label">PUNTAJE GENERAL</label>
-            <div className="rating-buttons">
-              {[1, 2, 3, 4, 5].map((val) => (
-                <button
-                  key={val}
-                  type="button"
-                  className={`btn-star ${puntajeGeneral === val ? 'active' : ''}`}
-                  onClick={() => setPuntajeGeneral(val)}
-                  aria-pressed={puntajeGeneral === val}
-                >
-                  {val}
-                </button>
-              ))}
-              <span className="rating-hint">{getTextoPuntaje(puntajeGeneral)}</span>
-            </div>
-          </div>
-
-          <div className="aspectos-grid">
-            <span className="rating-label">CALIFICACIÓN POR ASPECTOS</span>
-
-            <div className="aspecto-row">
-              <span>Rapidez</span>
-              <div className="star-row">
+      <div className="encuesta__layout">
+        <Card>
+          <form className="encuesta__form" onSubmit={handleSubmit}>
+            <div className="encuesta__grupo" role="group" aria-labelledby="encuesta-general">
+              <span id="encuesta-general" className="text-label text-muted">
+                PUNTAJE GENERAL
+              </span>
+              <div className="encuesta__puntajes">
                 {[1, 2, 3, 4, 5].map((val) => (
                   <button
                     key={val}
                     type="button"
-                    className={rapidez === val ? 'selected' : ''}
-                    onClick={() => setRapidez(val)}
-                    aria-pressed={rapidez === val}
+                    className="encuesta__puntaje encuesta__puntaje--grande"
+                    onClick={() => setPuntajeGeneral(val)}
+                    aria-pressed={puntajeGeneral === val}
                   >
                     {val}
                   </button>
                 ))}
+                <span className="encuesta__texto-puntaje">{getTextoPuntaje(puntajeGeneral)}</span>
               </div>
             </div>
 
-            <div className="aspecto-row">
-              <span>Trato del técnico</span>
-              <div className="star-row">
-                {[1, 2, 3, 4, 5].map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    className={trato === val ? 'selected' : ''}
-                    onClick={() => setTrato(val)}
-                    aria-pressed={trato === val}
-                  >
-                    {val}
-                  </button>
+            <div className="encuesta__grupo">
+              <span className="text-label text-muted">CALIFICACIÓN POR ASPECTOS</span>
+              <div className="encuesta__aspectos">
+                {aspectos.map(({ id, etiqueta, valor, cambiar }) => (
+                  <div key={id} className="encuesta__aspecto" role="group" aria-labelledby={`encuesta-${id}`}>
+                    <span id={`encuesta-${id}`}>{etiqueta}</span>
+                    <div className="encuesta__puntajes">
+                      {[1, 2, 3, 4, 5].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          className="encuesta__puntaje"
+                          onClick={() => cambiar(val)}
+                          aria-pressed={valor === val}
+                        >
+                          {val}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
 
-            <div className="aspecto-row">
-              <span>Solución del problema</span>
-              <div className="star-row">
-                {[1, 2, 3, 4, 5].map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    className={solucion === val ? 'selected' : ''}
-                    onClick={() => setSolucion(val)}
-                    aria-pressed={solucion === val}
-                  >
-                    {val}
-                  </button>
-                ))}
+            <div className="field">
+              <label className="field__label" htmlFor="comentario">
+                COMENTARIO (OPCIONAL)
+              </label>
+              <div className="control">
+                <textarea
+                  id="comentario"
+                  className="control__input encuesta__comentario"
+                  value={comentario}
+                  onChange={(e) => setComentario(e.target.value)}
+                  placeholder="Escribe aquí tu opinión sobre el servicio recibido..."
+                  maxLength={500}
+                />
               </div>
+              <p className="field__message">Tu comentario lo lee el supervisor del área; el técnico lo ve sin tu nombre.</p>
             </div>
-          </div>
 
-          <div className="comentario-group">
-            <label htmlFor="comentario">COMENTARIO (OPCIONAL)</label>
-            <textarea
-              id="comentario"
-              value={comentario}
-              onChange={(e) => setComentario(e.target.value)}
-              placeholder="Escribe aquí tu opinión sobre el servicio recibido..."
-              maxLength={500}
-            />
-            <p className="privacy-note">
-              Tu comentario lo lee el supervisor del área; el técnico lo ve sin tu nombre.
-            </p>
-          </div>
+            <div className="encuesta__acciones">
+              <Button type="submit" variant="primary">
+                Enviar encuesta
+              </Button>
+              <Button type="button" variant="tertiary" onClick={() => navigate('/usuario/tickets')}>
+                Responder después
+              </Button>
+            </div>
+          </form>
+        </Card>
 
-          <div className="actions-row">
-            <Button type="submit" variant="primary">
-              Enviar encuesta
-            </Button>
-            <Button type="button" variant="tertiary" onClick={() => navigate('/usuario/tickets')}>
-              Responder después
-            </Button>
-          </div>
-        </form>
-      </div>
+        <aside className="encuesta__lateral">
+          <Card title="Ticket evaluado">
+            <p className="encuesta__codigo">{ticket?.codigo}</p>
+            <p className="encuesta__asunto">{ticket?.asunto}</p>
+            <dl className="encuesta__datos">
+              <div>
+                <dt>Categoría</dt>
+                <dd>{ticket?.categoriaNombre}</dd>
+              </div>
+              <div>
+                <dt>Ambiente</dt>
+                <dd className="text-mono">{ticket?.ambienteCodigo}</dd>
+              </div>
+              <div>
+                <dt>Técnico</dt>
+                <dd>{ticket?.tecnicoNombre || 'Atendido'}</dd>
+              </div>
+              <div>
+                <dt>Cerrado</dt>
+                <dd>{ticket?.fechaCierre || 'Recientemente'}</dd>
+              </div>
+            </dl>
+          </Card>
 
-      <div className="ticket-summary-card">
-        <h3>Ticket evaluado</h3>
-        <p className="ticket-code">{ticket?.codigo}</p>
-        <p className="ticket-asunto">{ticket?.asunto}</p>
-
-        <div className="detail-list">
-          <div>
-            <span>Categoría:</span> <strong>{ticket?.categoriaNombre}</strong>
-          </div>
-          <div>
-            <span>Ambiente:</span> <strong>{ticket?.ambienteCodigo}</strong>
-          </div>
-          <div>
-            <span>Técnico:</span> <strong>{ticket?.tecnicoNombre || 'Atendido'}</strong>
-          </div>
-          <div>
-            <span>Cerrado:</span> <strong>{ticket?.fechaCierre || 'Recientemente'}</strong>
-          </div>
-        </div>
-
-        <div className="edition-notice">
-          Puedes editar tu respuesta hasta 7 días después de enviarla.
-        </div>
+          <p className="encuesta__nota">Puedes editar tu respuesta hasta 7 días después de enviarla.</p>
+        </aside>
       </div>
     </div>
   )
 }
+

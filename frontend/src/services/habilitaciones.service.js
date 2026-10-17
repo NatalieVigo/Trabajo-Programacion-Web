@@ -10,15 +10,11 @@ import { SIN_TICKETS, contarTicketsPor } from './ticketsEnCurso.js'
 const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es')
 const porNombreCompleto = (a, b) => getFullName(a).localeCompare(getFullName(b), 'es')
 
-/** Técnicos que pueden recibir habilitaciones: con rol técnico y cuenta activa (HU-1), por nombre. */
 function tecnicosActivos() {
   return usuariosRepository.findAll({ rol: 'tecnico', estado: 'activo' }).sort(porNombreCompleto)
 }
 
-/**
- * La matriz técnico × categoría (p16). Lee las cuentas (HU-1) y los tickets (HU-3) sin modificarlos: la especialidad
- * que cada técnico declaró al activar su cuenta y su carga actual (tickets asignados en curso).
- */
+// lee cuentas y tickets de otras historias, sin modificarlos
 function leerMatriz() {
   const categorias = categoriasRepository.findAll().sort(porNombre)
   const existentes = new Set(categorias.map((categoria) => categoria.id))
@@ -48,20 +44,12 @@ function leerMatriz() {
   }
 }
 
-/**
- * Técnicos por categoría (HU-2 · 2.3, p16): { categorias: [{ id, nombre, activa, ticketsEnCurso }], tecnicos: [{ id,
- * nombres, apellidos, especialidades (declaradas), carga, habilitadas }] }. Las categorías van por nombre y las
- * listas de cada técnico, en ese mismo orden.
- */
+// Matriz de técnicos por categoría (HU-2), todo ordenado por nombre de categoría.
 export function obtenerMatriz() {
   return simulateRequest(leerMatriz)
 }
 
-/**
- * Guarda la matriz: `cambios` es { tecnicoId: [categoriaIds] } con las categorías en las que queda habilitado cada
- * técnico que se envía; los demás no cambian. Falla con 403 FORBIDDEN o con 400 VALIDATION_ERROR si nombra un técnico
- * que no está activo o una categoría que no existe. Devuelve la matriz actualizada.
- */
+// cambios es { tecnicoId: [categoriaIds] }; los técnicos que no vienen no se tocan
 export function guardarMatriz(cambios, supervisorId) {
   return simulateRequest(() => {
     exigirSupervisorActivo(supervisorId)

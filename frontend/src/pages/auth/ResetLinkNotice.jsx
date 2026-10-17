@@ -19,10 +19,7 @@ const AVISOS = {
   },
 }
 
-/**
- * Aviso de un enlace de restablecimiento que ya no sirve, con el patrón de mensajes de p09: no existe o se pidió otro
- * después (404), venció o ya se usó (410). Lleva a pedir un enlace nuevo.
- */
+// enlace que ya no sirve: no existe, venció o ya se usó
 export default function ResetLinkNotice({ code }) {
   const { codigo, etiqueta, titulo, descripcion } = AVISOS[code] ?? AVISOS.RESET_TOKEN_NOT_FOUND
 

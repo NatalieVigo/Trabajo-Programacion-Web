@@ -1,21 +1,19 @@
 import { pluralize } from '../../utils/format.js'
 
-/** Más tickets en curso por técnico habilitado que esto merece un aviso (p16). */
+// con más tickets en curso por técnico que esto, se muestra un aviso
 export const TICKETS_POR_TECNICO = 2
 
-/** Categorías habilitadas de cada técnico: { tecnicoId: [categoriaIds] }. */
 export function habilitadasDe(tecnicos) {
   return Object.fromEntries(tecnicos.map(({ id, habilitadas }) => [id, habilitadas]))
 }
 
 const mismasCategorias = (a = [], b = []) => a.length === b.length && a.every((id) => b.includes(id))
 
-/** Técnicos cuya lista de categorías habilitadas cambió respecto de lo guardado. */
 export function tecnicosCambiados(guardadas, actuales) {
   return Object.keys(actuales).filter((tecnicoId) => !mismasCategorias(guardadas[tecnicoId], actuales[tecnicoId]))
 }
 
-/** Marca o desmarca la `categoriaId` de un técnico, conservando el orden de las `categorias`. */
+// mantiene el mismo orden que la lista de categorías
 export function alternarHabilitacion(habilitadas, tecnicoId, categoriaId, categorias) {
   const actuales = habilitadas[tecnicoId] ?? []
   const siguientes = actuales.includes(categoriaId)
@@ -24,11 +22,7 @@ export function alternarHabilitacion(habilitadas, tecnicoId, categoriaId, catego
   return { ...habilitadas, [tecnicoId]: siguientes }
 }
 
-/**
- * Avisos sobre cómo está cubierta cada categoría activa con las habilitaciones que se están editando: ninguna persona
- * habilitada, o más de dos tickets en curso por técnico habilitado (p16: «Climatización tiene solo dos técnicos
- * habilitados y 5 tickets abiertos…»).
- */
+// avisa si una categoría activa no tiene técnicos o tiene demasiados tickets por técnico
 export function avisosDeCobertura(categorias, habilitadas) {
   const listas = Object.values(habilitadas)
   return categorias
@@ -48,7 +42,6 @@ export function avisosDeCobertura(categorias, habilitadas) {
     })
 }
 
-/** Encabezado corto de una categoría en la matriz, como en p16: «Redes y conectividad» → «Redes». */
 export function nombreCorto(nombre) {
   return nombre.split(/\s+/)[0]
 }

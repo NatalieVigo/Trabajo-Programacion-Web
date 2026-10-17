@@ -3,7 +3,7 @@ import { readTable, writeTable } from '../repositories/db.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { obtenerContadores } from './resumen.service.js'
 
-// TCK-2026-00131 se cerró el 28/09/2026 a las 22:20 UTC sin encuesta: queda pendiente 7 días.
+// TCK-2026-00131 se cerró sin encuesta el 28/09 y tiene 7 días de plazo
 const FIN_PLAZO_ENCUESTA = '2026-10-05T22:20:00.000Z'
 
 const usuario = (id) => usuariosRepository.findById(id)

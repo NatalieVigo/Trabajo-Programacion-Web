@@ -15,10 +15,7 @@ const SUBTITULO = 'Marca las categorías que cada técnico puede atender, según
 
 const invitarTecnico = <InvitarTecnicoButton />
 
-/**
- * Edita la matriz cargada: las casillas cambian una copia local y «Guardar matriz» envía solo los técnicos que
- * cambiaron. Los avisos de cobertura se recalculan mientras se marca.
- */
+// se edita una copia local y al guardar solo se envían los técnicos que cambiaron
 function EditorDeMatriz({ matrizInicial }) {
   const { usuario } = useAuth()
   const toast = useToast()
@@ -119,7 +116,7 @@ function EditorDeMatriz({ matrizInicial }) {
   )
 }
 
-/** Técnicos por categoría (HU-2 · 2.3, mockup p16): carga la matriz y la entrega al editor. */
+// Técnicos por categoría (HU-2). Carga la matriz y se la pasa al editor.
 export default function TecnicosCategoriaPage() {
   const { status, data, reload } = useAsyncData(obtenerMatriz)
   useDocumentTitle(TITULO)

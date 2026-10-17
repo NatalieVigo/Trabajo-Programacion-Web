@@ -41,10 +41,7 @@ function FilaAmbiente({ ambiente, eliminando, onEditar, onEliminar }) {
   )
 }
 
-/**
- * Ambientes del campus (p14) con su ubicación, capacidad y tickets en curso. «Eliminar» solo aparece en los que no
- * se usan. `ref` llega a la tabla, para devolverle el foco.
- */
+// el ref va a la tabla para poder devolverle el foco
 export default function AmbientesTable({ ref, ambientes, eliminandoId, onEditar, onEliminar }) {
   return (
     <div className="catalogo-table">

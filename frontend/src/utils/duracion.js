@@ -5,10 +5,7 @@ const MINUTOS_POR_DIA = 24 * 60
 
 const dosDigitos = (numero) => String(numero).padStart(2, '0')
 
-/**
- * Duración legible a partir de milisegundos, sin segundos: «46 min», «3 h 24 min», «4 h 05 min», «1 d 6 h 12 min».
- * Lo que no llega a un minuto se muestra como «menos de 1 min».
- */
+// sin segundos, por ejemplo "3 h 24 min" o "1 d 6 h 12 min"
 export function formatDuracion(ms) {
   const total = Math.floor(Math.max(ms, 0) / MINUTO_MS)
   if (total === 0) return 'menos de 1 min'

@@ -19,14 +19,9 @@ import { validateActivacion } from '../../utils/validators.js'
 import EspecialidadesField from './EspecialidadesField.jsx'
 import './InvitationForm.css'
 
-/** Errores que indican que la invitación cambió mientras se completaba el formulario: hay que volver a leerla. */
+// con estos errores hay que volver a leer la invitación
 const INVITACION_CAMBIADA = new Set(['INVITATION_NOT_FOUND', 'INVITATION_EXPIRED', 'INVITATION_NOT_PENDING'])
 
-/**
- * Activación de una cuenta de técnico o supervisor (p07): datos de la invitación de solo lectura, teléfono,
- * contraseña y especialidades. `onInvitacionCambiada` vuelve a leer la invitación tras rechazarla o si dejó de
- * estar vigente mientras se completaba el formulario.
- */
 export default function InvitationForm({ invitacion, onInvitacionCambiada }) {
   const navigate = useNavigate()
   const toast = useToast()
@@ -50,11 +45,10 @@ export default function InvitationForm({ invitacion, onInvitacionCambiada }) {
       toast.success(`Tu cuenta de ${rol} está activa. Ya puedes iniciar sesión.`)
       navigate(ROUTES.iniciarSesion, { replace: true, state: { correo: usuario.correo } })
     } catch (error) {
-      // El correo viene de la invitación y no se puede editar: además del mensaje junto al campo, se indica qué hacer.
+      // el correo no se puede editar, así que se le dice qué hacer
       if (error.code === 'EMAIL_TAKEN') {
         toast.error('Este correo ya tiene una cuenta. Inicia sesión con ella o pide ayuda al supervisor.')
       }
-      // 400 y 409 EMAIL_TAKEN traen el mensaje de cada campo: el formulario los muestra junto a ellos.
       if (error.fieldErrors) return error.fieldErrors
       notificarError(error)
     }

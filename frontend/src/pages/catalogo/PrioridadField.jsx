@@ -5,11 +5,7 @@ import { formatPrioridad } from '../../utils/format.js'
 import '../../shared/components/FormField/FormField.css'
 import './PrioridadField.css'
 
-/**
- * Prioridad por defecto (p13): una opción entre Crítica, Alta, Media y Baja. Cada una es un radio con forma de botón,
- * así el teclado y el lector de pantalla lo usan como un grupo de radios. Recibe las props de useForm#getFieldProps:
- * `onChange` recibe el evento del radio y `onBlur`, el del radio que pierde el foco al salir del grupo.
- */
+// Son radios con forma de botón, así el teclado y el lector los tratan como un grupo.
 export default function PrioridadField({ name, value, onChange, onBlur, error, label = 'Prioridad por defecto' }) {
   const id = useId()
   const mensajeId = `${id}-mensaje`

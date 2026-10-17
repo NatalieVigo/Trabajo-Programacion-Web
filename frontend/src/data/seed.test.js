@@ -13,7 +13,7 @@ import { formatDate } from '../utils/format.js'
 const EN_CURSO = ['abierto', 'en_atencion', 'en_espera']
 const CORREO_INSTITUCIONAL = /^[a-z0-9._%+-]+@(aloe\.)?ulima\.edu\.pe$/
 
-// Valida que el seed cumpla el contrato de datos (docs/contrato-datos.md) y los escenarios de la SPEC.
+// el seed tiene que cumplir el contrato de datos
 describe('datos semilla', () => {
   it('usa correos institucionales únicos en minúsculas y teléfonos de 9 dígitos', () => {
     const usuarios = usuariosRepository.findAll()

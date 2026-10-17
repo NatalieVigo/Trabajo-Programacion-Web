@@ -12,7 +12,7 @@ import { esTicketDesactualizado } from './erroresDeAtencion.js'
 import '../../shared/components/FormField/FormField.css'
 import './AtencionModales.css'
 
-/** Estados que se eligen en este diálogo, con lo que significa cada uno. A «Cerrado» se llega cerrando el ticket. */
+// "Cerrado" no va aquí, se llega cerrando el ticket
 const OPCIONES = [
   { estado: 'en_atencion', detalle: 'estás trabajando en la falla' },
   { estado: 'en_espera', detalle: 'falta un repuesto o depende de un tercero' },
@@ -20,7 +20,7 @@ const OPCIONES = [
   { estado: 'abierto', detalle: 'vuelve a la cola de atención' },
 ]
 
-/** Los demás estados: primero los que el actual admite y luego los que no, que se muestran deshabilitados. */
+// primero los permitidos; los otros salen deshabilitados al final
 function opcionesDesde(estadoActual, transiciones) {
   const otras = OPCIONES.filter(({ estado }) => estado !== estadoActual).map((opcion) => ({
     ...opcion,
@@ -29,16 +29,11 @@ function opcionesDesde(estadoActual, transiciones) {
   return [...otras.filter(({ disponible }) => disponible), ...otras.filter(({ disponible }) => !disponible)]
 }
 
-/** Lo que se envía al servicio: el motivo y la fecha de retorno solo acompañan a la espera. */
 function datosDelCambio({ estado, motivo, retornoEstimado }) {
   return estado === 'en_espera' ? { estado, motivo, retornoEstimado } : { estado }
 }
 
-/**
- * Cambiar estado (HU-5 · 5.2 y 5.3, modal de p26): solo se pueden elegir los estados que el actual admite
- * (`transiciones`); los demás aparecen deshabilitados, con el motivo. Al elegir «En espera» pide el motivo de la
- * espera y la fecha estimada de retorno. `onCambiado` recibe la atención actualizada. Se monta al abrirse.
- */
+// Modal para cambiar el estado (HU-5). Se monta al abrirse.
 export default function CambiarEstadoModal({ ticket, transiciones, onClose, onCambiado, onDesactualizada }) {
   const { usuario } = useAuth()
   const toast = useToast()
@@ -46,11 +41,10 @@ export default function CambiarEstadoModal({ ticket, transiciones, onClose, onCa
   const formId = useId()
   const errorId = useId()
   const primeraRef = useRef(null)
-  // El día en que se abrió el diálogo: la fecha de retorno no puede ser anterior.
+  // la fecha de retorno no puede ser antes de hoy
   const [hoy] = useState(hoyEnLima)
   const opciones = opcionesDesde(ticket.estado, transiciones)
   const form = useForm({
-    // Con un solo cambio posible ya viene elegido.
     initialValues: { estado: transiciones.length === 1 ? transiciones[0] : '', motivo: '', retornoEstimado: '' },
     validate: validateCambioEstado,
   })
@@ -108,7 +102,6 @@ export default function CambiarEstadoModal({ ticket, transiciones, onClose, onCa
             className={cx('estado-opciones', error && 'estado-opciones--error')}
             aria-describedby={error ? errorId : undefined}
           >
-            {/* p26 no muestra un título sobre las opciones: queda para lectores de pantalla. */}
             <legend className="visually-hidden">Nuevo estado</legend>
             {opciones.map(({ estado, detalle, disponible }, indice) => (
               <label key={estado} className={cx('estado-opcion', !disponible && 'is-disabled')}>

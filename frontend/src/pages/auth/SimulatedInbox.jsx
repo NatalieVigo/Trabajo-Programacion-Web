@@ -3,10 +3,7 @@ import { Alert, Button } from '../../shared/components'
 
 const TITULO = 'Bandeja simulada · solo entrega 1'
 
-/**
- * La entrega 1 no envía correos: este aviso muestra lo que llegaría a la bandeja de entrada. Con `tokenDemo` (la
- * cuenta existe) permite abrir el enlace de restablecimiento; sin él, indica que no llegó ningún correo.
- */
+// Como todavía no se mandan correos, aquí se simula lo que llegaría a la bandeja.
 export default function SimulatedInbox({ tokenDemo }) {
   return (
     <Alert

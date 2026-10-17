@@ -16,14 +16,12 @@ const pasoActual = () =>
   })
 const bandeja = () => screen.getByRole('status', { name: BANDEJA })
 
-/** Pide el enlace para `correo` y espera el paso 2. Devuelve su título. */
 async function pedirEnlace(user, correo) {
   await user.type(campo('Correo institucional'), correo)
   await user.click(boton('Enviar enlace'))
   return screen.findByRole('heading', { level: 1, name: 'Revisa tu correo' })
 }
 
-/** El panel de la usuaria cargó sus contadores: no quedan consultas pendientes. */
 async function esperarPanel() {
   expect(await screen.findByText('Mis tickets abiertos')).toBeInTheDocument()
   await waitFor(() => expect(screen.queryByText('Cargando tu resumen…')).not.toBeInTheDocument())
@@ -150,7 +148,7 @@ describe('ForgotPasswordPage · reenvío del enlace', () => {
   it('se habilita al terminar la cuenta de 45 segundos; al reenviar avisa, cambia el enlace y vuelve a contar', async () => {
     const { user } = renderApp('/recuperar-contrasena')
     const titulo = await pedirEnlace(user, CAMILA)
-    // La cuenta regresiva arranca con el paso 2, al mismo tiempo que el foco pasa a su título.
+    // la cuenta regresiva arranca junto con el foco en el título
     await vi.waitFor(() => expect(titulo).toHaveFocus())
     const reenviar = boton('Reenviar enlace (disponible en 0:45)')
     expect(reenviar).toBeDisabled()

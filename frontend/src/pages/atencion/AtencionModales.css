@@ -1,4 +1,4 @@
-/* Diálogos de la atención de un ticket (p26). Cada estado es un radio con su explicación en una fila completa. */
+/* Cambiar estado */
 .estado-opciones {
   display: flex;
   flex-direction: column;
@@ -47,7 +47,6 @@
   outline: none;
 }
 
-/* Un estado al que el actual no puede pasar (p26): se ve, pero no se elige. */
 .estado-opcion.is-disabled,
 .estado-opcion.is-disabled:hover {
   border-color: var(--color-border);
@@ -64,12 +63,12 @@
   margin-top: var(--space-2);
 }
 
-/* Motivo y fecha de retorno, que solo se piden al dejar el ticket en espera (p26). */
+/* En espera */
 .estado-espera {
   margin-top: var(--space-5);
 }
 
-/* Cierre del ticket (p26): la solución y, debajo, el tiempo total de atención junto al estado final. */
+/* Cierre */
 .cierre {
   display: flex;
   flex-direction: column;

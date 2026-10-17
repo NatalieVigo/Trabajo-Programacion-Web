@@ -1,7 +1,7 @@
 import AuthProvider from './context/AuthProvider.jsx'
 import { ConfirmProvider, ToastProvider } from './shared/components'
 
-/** Proveedores globales de la aplicación (sin el router, para reutilizarlos en las pruebas con MemoryRouter). */
+// sin el router, así las pruebas pueden usarlos con MemoryRouter
 export default function AppProviders({ children }) {
   return (
     <ToastProvider>

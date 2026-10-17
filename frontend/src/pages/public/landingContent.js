@@ -1,7 +1,7 @@
 import { LANDING_SECTIONS } from '../../routes/routePaths.js'
 import { formatPrioridad } from '../../utils/format.js'
 
-/** Tiempo de referencia por prioridad, en horas hábiles desde el registro del ticket. */
+// en horas hábiles
 const TIEMPOS_ATENCION = [
   { prioridad: 'critica', horas: 2 },
   { prioridad: 'alta', horas: 8 },
@@ -9,16 +9,12 @@ const TIEMPOS_ATENCION = [
   { prioridad: 'baja', horas: 72 },
 ]
 
-// «Crítica 2 h · alta 8 h · media 24 h · baja 72 h hábiles.»
 const resumenTiempos = `${TIEMPOS_ATENCION.map(({ prioridad, horas }, index) => {
   const etiqueta = formatPrioridad(prioridad)
   return `${index === 0 ? etiqueta : etiqueta.toLowerCase()} ${horas} h`
 }).join(' · ')} hábiles.`
 
-/**
- * Los cuatro recuadros de p03. `seccion` es el destino de los enlaces «Categorías de servicio» y «Tiempos de
- * atención» de la cabecera y del pie.
- */
+// seccion es el id al que apuntan los enlaces de la cabecera y del pie
 export const DESTACADOS = [
   {
     titulo: 'Qué se reporta',

@@ -20,7 +20,6 @@ const TIPOS_AMBIENTE = ['aula', 'laboratorio', 'auditorio', 'oficina', 'bibliote
 
 const unicos = (valores) => new Set(valores).size === valores.length
 
-// Valida que las tablas del catálogo (HU-2) del seed cumplan sus reglas y se refieran a datos que existen.
 describe('datos semilla · catálogo de servicios', () => {
   it('las categorías y subcategorías cumplen las reglas del formulario', () => {
     const categorias = categoriasRepository.findAll()

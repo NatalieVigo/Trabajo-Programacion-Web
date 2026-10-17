@@ -31,10 +31,7 @@ const AVISOS = {
 
 const volverAlInicio = <Button to={ROUTES.home}>Ir al inicio</Button>
 
-/**
- * Aviso de una invitación con la que ya no se puede activar la cuenta (vencida, aceptada, rechazada o revocada) o que
- * no existe (sin `invitacion`). Sigue el patrón de mensajes de p09 y lleva al inicio.
- */
+// Sin invitacion es que no existe; si no, ya no sirve para activar la cuenta.
 export default function InvitationNotice({ invitacion }) {
   if (!invitacion) {
     return (

@@ -3,7 +3,7 @@ import { Card, PageHeader } from '../../shared/components'
 import LoginForm from './LoginForm.jsx'
 import './LoginPage.css'
 
-/** Inicio de sesión (HU-1 · 1.3, mockups p04 y p05): formulario y aviso «Acceso por rol». */
+// Inicio de sesión (HU-1)
 export default function LoginPage() {
   useDocumentTitle('Iniciar sesión')
 

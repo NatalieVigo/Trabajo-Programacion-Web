@@ -1,7 +1,6 @@
 import { cx } from '../../../utils/classNames.js'
 import './PageHeader.css'
 
-/** Título de pantalla (28/32) con subtítulo y acciones opcionales a la derecha. */
 export default function PageHeader({ title, subtitle, actions, className }) {
   return (
     <div className={cx('page-header', className)}>

@@ -1,3 +1,4 @@
+import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { LANDING_SECTIONS, ROUTES, landingSectionPath } from '../../routes/routePaths.js'
 import { Button } from '../../shared/components'
@@ -6,12 +7,12 @@ import HeroIllustration from './HeroIllustration.jsx'
 import { DESTACADOS } from './landingContent.js'
 import './LandingPage.css'
 
-/**
- * 1.1 Landing pública (p03): presentación y los cuatro recuadros. «Cómo reportar» lleva a los recuadros y
- * «Categorías de servicio» y «Tiempos de atención», al recuadro que los resume.
- */
+// Landing pública. Los enlaces de la cabecera saltan a los recuadros de abajo.
 export default function LandingPage() {
   useDocumentTitle('Inicio')
+  const { usuario } = useAuth()
+  // solo el usuario va directo al formulario, los demás pasan por el login
+  const registrarTicket = usuario?.rol === 'usuario' ? ROUTES.usuarioNuevoTicket : ROUTES.iniciarSesion
 
   return (
     <div className="container page landing">
@@ -26,7 +27,7 @@ export default function LandingPage() {
             el ambiente y la categoría; el supervisor lo prioriza y lo asigna a un técnico el mismo día.
           </p>
           <div className="landing-hero__actions">
-            <Button to={ROUTES.iniciarSesion}>Registrar un ticket</Button>
+            <Button to={registrarTicket}>Registrar un ticket</Button>
             <Button to={landingSectionPath(LANDING_SECTIONS.comoReportar)} variant="secondary">
               Ver cómo reportar
             </Button>

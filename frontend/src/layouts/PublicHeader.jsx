@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth.js'
+import { getRoleHome } from '../routes/roleHome.js'
 import { LANDING_SECTIONS, ROUTES, landingSectionPath } from '../routes/routePaths.js'
-import { Button, CloseIcon, MenuIcon } from '../shared/components'
+import { Avatar, Button, CloseIcon, MenuIcon } from '../shared/components'
 import { cx } from '../utils/classNames.js'
+import { formatRol, getDisplayName } from '../utils/format.js'
+import LogoutButton from './LogoutButton.jsx'
 import './PublicHeader.css'
 
 const NAV_LINKS = [
@@ -12,12 +16,10 @@ const NAV_LINKS = [
   { label: 'Tiempos de atención', to: landingSectionPath(LANDING_SECTIONS.tiempos) },
 ]
 
-/**
- * Cabecera pública (p03). Por debajo de 1024 px la navegación se pliega en el botón «Menú», que se cierra
- * al elegir un enlace, con Esc o al tocar fuera de la cabecera. Con la sesión iniciada, «Iniciar sesión» lleva a la
- * vista del rol (GuestOnly).
- */
+// En móvil el menú se cierra al elegir un enlace, con Esc o al tocar fuera.
 export default function PublicHeader() {
+  const { usuario } = useAuth()
+  const vistaDelRol = usuario ? getRoleHome(usuario.rol) : null
   const [menuOpen, setMenuOpen] = useState(false)
   const headerRef = useRef(null)
   const toggleRef = useRef(null)
@@ -72,14 +74,30 @@ export default function PublicHeader() {
               ))}
             </ul>
           </nav>
-          <div className="public-header__actions">
-            <Button to={ROUTES.iniciarSesion} variant="secondary" size="sm" onClick={closeMenu}>
-              Iniciar sesión
-            </Button>
-            <Button to={ROUTES.registro} size="sm" onClick={closeMenu}>
-              Registrarme
-            </Button>
-          </div>
+          {vistaDelRol ? (
+            <div className="public-header__actions public-header__actions--sesion">
+              <p className="public-header__cuenta">
+                <Avatar nombres={usuario.nombres} apellidos={usuario.apellidos} size="sm" />
+                <span className="public-header__identidad">
+                  <span className="public-header__nombre">{getDisplayName(usuario)}</span>
+                  <span className="public-header__rol">{formatRol(usuario.rol)}</span>
+                </span>
+              </p>
+              <Button to={vistaDelRol.path} size="sm" onClick={closeMenu}>
+                {vistaDelRol.label}
+              </Button>
+              <LogoutButton className="btn btn--secondary btn--sm" />
+            </div>
+          ) : (
+            <div className="public-header__actions">
+              <Button to={ROUTES.iniciarSesion} variant="secondary" size="sm" onClick={closeMenu}>
+                Iniciar sesión
+              </Button>
+              <Button to={ROUTES.registro} size="sm" onClick={closeMenu}>
+                Registrarme
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </header>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { SearchIcon } from '../shared/components'
 import './TicketSearch.css'
 
-/** Buscador de la cabecera (p10): con Enter lleva a la lista de tickets del rol con ?codigo=. */
+// con Enter va a la lista de tickets del rol filtrada por ?codigo=
 export default function TicketSearch({ ticketsPath }) {
   const navigate = useNavigate()
   const inputId = useId()

@@ -2,10 +2,7 @@ import { useId } from 'react'
 import { Card } from '../../shared/components'
 import { formatDateTime, formatTelefono, getDisplayName } from '../../utils/format.js'
 
-/**
- * Datos del reporte (HU-5 · 5.6, p25): quién reportó el ticket y cómo ubicarlo, la subcategoría, cuándo se registró y
- * la descripción. La subcategoría y la descripción se muestran cuando el ticket las tiene.
- */
+// subcategoría y descripción solo salen si el ticket las tiene
 export default function DatosDelReporte({ ticket }) {
   const tituloId = useId()
   const filas = [

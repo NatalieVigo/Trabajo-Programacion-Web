@@ -1,6 +1,6 @@
-/** Búsqueda, filtros y paginación de las listas del catálogo (HU-2), en la interfaz y sin pedir datos de nuevo. */
+// Filtros y paginación de las listas del catálogo (HU-2), todo del lado del cliente.
 
-/** «Huamán» y «huaman» se buscan igual: sin tildes y en minúsculas. */
+// sin tildes y en minúsculas, así "Huamán" y "huaman" dan lo mismo
 export function normalizarBusqueda(texto) {
   return String(texto ?? '')
     .normalize('NFD')
@@ -8,22 +8,18 @@ export function normalizarBusqueda(texto) {
     .toLowerCase()
 }
 
-/** Si cada palabra de la `busqueda` aparece en alguno de los `textos`. Una búsqueda vacía coincide con todo. */
+// cada palabra debe aparecer en algún texto; si la búsqueda está vacía, todo coincide
 export function coincideBusqueda(textos, busqueda) {
   const palabras = normalizarBusqueda(busqueda).split(/\s+/).filter(Boolean)
   const texto = normalizarBusqueda(textos.join(' '))
   return palabras.every((palabra) => texto.includes(palabra))
 }
 
-/** Si alguno de los filtros tiene valor. */
 export function hayFiltros(filtros) {
   return Object.values(filtros).some(Boolean)
 }
 
-/**
- * La `pagina` pedida de `elementos` (se ajusta si quedó fuera de rango, por ejemplo tras eliminar): { pagina,
- * totalPaginas, visibles, desde, hasta }, con `desde` y `hasta` contados desde 1 para «Mostrando 1–10 de 48».
- */
+// ajusta la página si quedó fuera de rango (por ejemplo tras eliminar)
 export function paginar(elementos, pagina, porPagina) {
   const totalPaginas = Math.max(1, Math.ceil(elementos.length / porPagina))
   const actual = Math.min(Math.max(1, pagina), totalPaginas)
@@ -39,12 +35,8 @@ export function paginar(elementos, pagina, porPagina) {
 
 export const CATALOGO_SIN_FILTROS = Object.freeze({ busqueda: '', soloActivas: false, prioridad: '' })
 
-/**
- * Catálogo filtrado (p12). «Solo activas» deja las categorías activas y las subcategorías disponibles, y la prioridad
- * se aplica a cada fila. La búsqueda encuentra categorías y subcategorías: si coincide el nombre de una categoría,
- * se muestran también sus subcategorías. Una categoría aparece si cumple los filtros o si alguna de sus subcategorías
- * los cumple (para mostrar a qué categoría pertenece).
- */
+// Si coincide el nombre de la categoría, salen también sus subcategorías.
+// La categoría sale si cumple o si alguna de sus subcategorías cumple.
 export function filtrarCatalogo(categorias, { busqueda, soloActivas, prioridad }) {
   const cumple = (elemento) =>
     (!soloActivas || (elemento.tipo === 'subcategoria' ? elemento.disponible : elemento.activa)) &&
@@ -60,14 +52,12 @@ export function filtrarCatalogo(categorias, { busqueda, soloActivas, prioridad }
   })
 }
 
-/** Filas de un catálogo: cada categoría y cada subcategoría. */
 export function contarFilas(categorias) {
   return categorias.reduce((total, { subcategorias }) => total + 1 + subcategorias.length, 0)
 }
 
 export const AMBIENTES_SIN_FILTROS = Object.freeze({ busqueda: '', sedeId: '', pabellonId: '', tipo: '' })
 
-/** Ambientes de la sede, el pabellón y el tipo elegidos ('' = todos) cuyo código o nombre coincide con la búsqueda. */
 export function filtrarAmbientes(ambientes, { busqueda, sedeId, pabellonId, tipo }) {
   return ambientes.filter(
     (ambiente) =>

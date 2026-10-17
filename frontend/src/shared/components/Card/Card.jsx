@@ -1,7 +1,6 @@
 import { cx } from '../../../utils/classNames.js'
 import './Card.css'
 
-/** Superficie blanca con borde. `as` cambia el elemento (section, article…) y `title` agrega una cabecera. */
 export default function Card({ as: Component = 'div', title, titleAs: Title = 'h2', actions, className, children, ...rest }) {
   return (
     <Component {...rest} className={cx('card', className)}>

@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import Button from '../Button/Button.jsx'
 import Modal from '../Modal/Modal.jsx'
 
-/** Confirmación (p23). «Cancelar» recibe el foco inicial; una acción destructiva usa el botón rojo. */
+// el foco empieza en Cancelar
 export default function ConfirmDialog({
   open,
   title,

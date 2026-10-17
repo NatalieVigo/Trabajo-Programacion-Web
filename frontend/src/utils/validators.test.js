@@ -190,7 +190,7 @@ describe('validators', () => {
       expect(validateEspecialidades(['cat-01', 'cat-03'], activas)).toBeNull()
       expect(validateEspecialidades(['cat-01', 'cat-06'], activas)).toBe(noDisponible)
       expect(validateEspecialidades(['cat-99'], activas)).toBe(noDisponible)
-      // La cantidad se revisa primero: con cero o más de tres categorías el mensaje es el del rango.
+      // la cantidad se revisa primero
       expect(validateEspecialidades([], activas)).toBe('Elige entre una y tres categorías.')
       expect(validateEspecialidades(['cat-01', 'cat-02', 'cat-03', 'cat-06'], activas)).toBe(
         'Elige entre una y tres categorías.',

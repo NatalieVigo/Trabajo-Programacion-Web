@@ -1,13 +1,13 @@
 import { readTable, writeTable } from './db.js'
 
-/** `filter` puede ser un predicado o un objeto de igualdades: { rol: 'tecnico', estado: 'activo' }. */
+// filter puede ser una función o un objeto tipo { rol: 'tecnico' }
 function matches(row, filter) {
   if (!filter) return true
   if (typeof filter === 'function') return filter(row)
   return Object.entries(filter).every(([field, value]) => row[field] === value)
 }
 
-/** CRUD genérico sobre una tabla de la base simulada. Sin reglas de negocio: eso vive en los servicios. */
+// CRUD genérico por tabla, las reglas de negocio van en los servicios
 export function createRepository(table) {
   const findAll = (filter) => readTable(table).filter((row) => matches(row, filter))
   const findOne = (filter) => readTable(table).find((row) => matches(row, filter)) ?? null
