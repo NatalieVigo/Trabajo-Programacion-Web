@@ -274,8 +274,9 @@ export function cambiarEstado(id, activa, supervisorId, { confirmado = false } =
 
 /**
  * Lo que admite tickets nuevos: las categorías activas, por nombre, cada una con sus subcategorías activas
- * ({ id, nombre, descripcion, prioridadPorDefecto, tiempoEsperadoHoras, subcategorias }). Es la lectura que el
- * catálogo ofrece a las demás historias; no incluye contadores ni datos de administración.
+ * ({ id, nombre, descripcion, prioridadPorDefecto, tiempoEsperadoHoras, subcategorias }). Como el registro de tickets
+ * (HU-3) exige una subcategoría, una categoría activa sin ninguna subcategoría activa no se ofrece. Es la lectura que
+ * el catálogo ofrece a las demás historias; no incluye contadores ni datos de administración.
  */
 export function listarDisponibles() {
   return simulateRequest(() => {
@@ -296,5 +297,6 @@ export function listarDisponibles() {
           .filter((subcategoria) => subcategoria.categoriaId === categoria.id)
           .map(campos),
       }))
+      .filter((categoria) => categoria.subcategorias.length > 0)
   })
 }
