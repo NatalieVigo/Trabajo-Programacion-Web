@@ -1,5 +1,6 @@
 import { startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import * as authService from '../services/auth.service.js'
+import { DB_STORAGE_KEY } from '../repositories/db.js'
 import { PageLoader } from '../shared/components'
 import { AuthContext } from './AuthContext.js'
 
@@ -67,6 +68,25 @@ export default function AuthProvider({ children }) {
     setSesion(siguiente)
     return siguiente.usuario
   }, [])
+
+  // Un bloqueo desde otra pestaña invalida también la sesión que ya estaba abierta.
+  useEffect(() => {
+    if (sesion.estado !== 'autenticado') return undefined
+    let activo = true
+    const actualizar = () => authService.obtenerSesion().then((restaurada) => {
+      if (activo) setSesion(segunSesion(restaurada))
+    }, () => {})
+    const desdeStorage = (event) => { if (event.key === DB_STORAGE_KEY || event.key === null) actualizar() }
+    window.addEventListener('storage', desdeStorage)
+    window.addEventListener('focus', actualizar)
+    window.addEventListener('mesa-ayuda:cuentas-actualizadas', actualizar)
+    return () => {
+      activo = false
+      window.removeEventListener('storage', desdeStorage)
+      window.removeEventListener('focus', actualizar)
+      window.removeEventListener('mesa-ayuda:cuentas-actualizadas', actualizar)
+    }
+  }, [sesion.estado, sesion.usuario?.id])
 
   const value = useMemo(
     () => ({ ...sesion, user: sesion.usuario, iniciarSesion, cerrarSesion, refrescarUsuario }),

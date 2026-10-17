@@ -16,6 +16,10 @@ export const PRIVATE_ROUTES = Object.freeze(
     { path: ROUTES.usuarioInicio, roles: USUARIO, recurso: 'los tickets del usuario' },
     { path: ROUTES.usuarioNuevoTicket, roles: USUARIO, recurso: 'el registro de tickets' },
     { path: ROUTES.usuarioTickets, roles: USUARIO, recurso: 'los tickets del usuario' },
+    { path: ROUTES.usuarioTicketDetalle, roles: USUARIO, recurso: 'el detalle del ticket' },
+    { path: ROUTES.usuarioTicketConfirmacion, roles: USUARIO, recurso: 'la confirmación del ticket' },
+    
+  
     { path: ROUTES.usuarioEncuestaPendiente, roles: USUARIO, recurso: 'la encuesta pendiente' },
     { path: ROUTES.usuarioEncuestas, roles: USUARIO, recurso: 'las encuestas del usuario' },
     { path: ROUTES.usuarioEncuestaEvaluar, roles: USUARIO, recurso: 'la encuesta de satisfacción' },
@@ -35,7 +39,9 @@ export const PRIVATE_ROUTES = Object.freeze(
     { path: ROUTES.supervisorAmbientes, roles: SUPERVISOR, recurso: 'las sedes y ambientes' },
     { path: ROUTES.supervisorTecnicos, roles: SUPERVISOR, recurso: 'los técnicos por categoría' },
     { path: ROUTES.supervisorSatisfaccion, roles: SUPERVISOR, recurso: 'la satisfacción por técnico y categoría' },
+    { path: ROUTES.supervisorCarga, roles: SUPERVISOR, recurso: 'la carga por técnico' },
     { path: ROUTES.supervisorUsuarios, roles: SUPERVISOR, recurso: 'la gestión de usuarios' },
+    { path: ROUTES.supervisorUsuarioFicha, roles: SUPERVISOR, recurso: 'la ficha del usuario' },
 
     { path: ROUTES.miCuenta, roles: ROLES },
     { path: ROUTES.accesoDenegado, roles: ROLES },

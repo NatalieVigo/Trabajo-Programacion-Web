@@ -17,13 +17,14 @@ import RegisterPage from '../pages/auth/RegisterPage.jsx'
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage.jsx'
 import ForbiddenPage from '../pages/errors/ForbiddenPage.jsx'
 import NotFoundPage from '../pages/errors/NotFoundPage.jsx'
-import { HISTORIAS } from '../pages/placeholders/historias.js'
-import PlaceholderPage from '../pages/placeholders/PlaceholderPage.jsx'
 import LandingPage from '../pages/public/LandingPage.jsx'
 import EncuestaPage from '../pages/encuestas/EncuestaPage.jsx'
 import MisEncuestasPage from '../pages/encuestas/MisEncuestasPage.jsx'
 import SatisfaccionSupervisorPage from '../pages/supervisor/SatisfaccionSupervisorPage.jsx'
 import SupervisorHomePage from '../pages/supervisor/SupervisorHomePage.jsx'
+import CargaTecnicosPage from '../pages/supervisor/CargaTecnicosPage.jsx'
+import UsuariosPage from '../pages/supervisor/UsuariosPage.jsx'
+import FichaUsuarioPage from '../pages/supervisor/FichaUsuarioPage.jsx'
 import TechnicianHomePage from '../pages/technician/TechnicianHomePage.jsx'
 import GuestOnly from './GuestOnly.jsx'
 import RequireAuth from './RequireAuth.jsx'
@@ -31,14 +32,21 @@ import RequireRole from './RequireRole.jsx'
 import { PRIVATE_ROUTES } from './routeAccess.js'
 import { ROUTES } from './routePaths.js'
 
-const pendiente = (title, historia) => <PlaceholderPage title={title} pendiente={historia} />
+import { MyTickets } from '../pages/tickets/MyTickets.jsx'
+import { TicketDetail } from '../pages/tickets/TicketDetail.jsx'
+import { NewTicket } from '../pages/tickets/NewTicket.jsx'
+import { TicketConfirmation } from '../pages/tickets/TicketConfirmation.jsx'
 
 /** Página de cada ruta privada. Quién puede verla lo define la tabla de routeAccess.js. */
 const PRIVATE_PAGES = {
-  // /usuario ya no tiene pantalla propia: lleva a la vista principal del usuario, «Mis tickets».
   [ROUTES.usuarioInicio]: <Navigate to={ROUTES.usuarioTickets} replace />,
-  [ROUTES.usuarioNuevoTicket]: pendiente('Nuevo ticket', HISTORIAS.tickets),
-  [ROUTES.usuarioTickets]: pendiente('Mis tickets', HISTORIAS.tickets),
+
+  
+  [ROUTES.usuarioNuevoTicket]: <NewTicket />,  
+  [ROUTES.usuarioTickets]: <MyTickets />,      
+  [ROUTES.usuarioTicketDetalle]: <TicketDetail />, 
+  [ROUTES.usuarioTicketConfirmacion]: <TicketConfirmation />, 
+
   [ROUTES.usuarioEncuestas]: <MisEncuestasPage />,
   [ROUTES.usuarioEncuestaPendiente]: <EncuestaPage />,
   [ROUTES.usuarioEncuestaEvaluar]: <EncuestaPage />,
@@ -49,6 +57,7 @@ const PRIVATE_PAGES = {
   [ROUTES.tecnicoTicketHistorial]: <HistorialCambiosPage />,
 
   [ROUTES.supervisorTablero]: <SupervisorHomePage />,
+  [ROUTES.supervisorCarga]: <CargaTecnicosPage />,
   [ROUTES.supervisorCola]: <ColaPage />,
   [ROUTES.supervisorTicket]: <TicketAtencionPage />,
   [ROUTES.supervisorTicketHistorial]: <HistorialCambiosPage />,
@@ -58,7 +67,8 @@ const PRIVATE_PAGES = {
   [ROUTES.supervisorAmbientes]: <UbicacionesPage />,
   [ROUTES.supervisorTecnicos]: <TecnicosCategoriaPage />,
   [ROUTES.supervisorSatisfaccion]: <SatisfaccionSupervisorPage />,
-  [ROUTES.supervisorUsuarios]: pendiente('Usuarios', HISTORIAS.metricas),
+  [ROUTES.supervisorUsuarios]: <UsuariosPage />,
+  [ROUTES.supervisorUsuarioFicha]: <FichaUsuarioPage />,
 
   [ROUTES.miCuenta]: <AccountPage />,
   [ROUTES.accesoDenegado]: <ForbiddenPage />,

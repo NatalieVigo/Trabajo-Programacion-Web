@@ -35,7 +35,7 @@ export function esSuTecnico(ticket, usuario) {
  * - `notaInterna`: registra notas internas (el técnico que lo tiene asignado y el supervisor).
  * - `transiciones`: estados a los que puede pasar el ticket (solo el técnico que lo tiene asignado).
  * - `cerrar`: puede cerrarlo con su solución (ese mismo técnico, con el ticket en atención o resuelto).
- * Un ticket cerrado ya no admite entradas ni cambios de estado.
+ * Un ticket cerrado o cancelado ya no admite entradas ni cambios de estado.
  */
 export function permisosSobre(ticket, usuario) {
   const esEquipo = EQUIPO.includes(usuario.rol)
@@ -43,7 +43,7 @@ export function permisosSobre(ticket, usuario) {
   if (!esEquipo && !loReporto) {
     throw new ServiceError(403, 'FORBIDDEN', 'No tienes permiso para ver este ticket.')
   }
-  const admiteEntradas = ticket.estado !== 'cerrado'
+  const admiteEntradas = !['cerrado', 'cancelado'].includes(ticket.estado)
   const loGestiona = esSuTecnico(ticket, usuario)
   const loAtiende = usuario.rol === 'supervisor' || loGestiona
   return {

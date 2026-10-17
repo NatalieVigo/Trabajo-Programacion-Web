@@ -55,16 +55,21 @@ const referencia = (fila) => (fila ? { id: fila.id, nombre: fila.nombre } : null
  */
 function ambienteDe(ticket) {
   const ambiente = ambientesRepository.findById(ticket.ambienteId)
-  const pabellon = pabellonesRepository.findById(ambiente.pabellonId)
-  const delAmbiente = ticketsRepository.findAll({ ambienteId: ambiente.id })
+  const pabellon = ambiente ? pabellonesRepository.findById(ambiente.pabellonId) : null
+  const codigo = ambiente?.codigo ?? ticket.ambienteCodigo ?? 'Sin ambiente'
+  const delAmbiente = ambiente
+    ? ticketsRepository.findAll({ ambienteId: ambiente.id })
+    : ticketsRepository.findAll().filter(
+        (otro) => (otro.ambienteCodigo ?? '').trim().toLocaleLowerCase('es') === codigo.trim().toLocaleLowerCase('es'),
+      )
   const cierres = delAmbiente.map(({ cerradoEn }) => cerradoEn).filter(Boolean)
   return {
-    id: ambiente.id,
-    codigo: ambiente.codigo,
-    nombre: ambiente.nombre,
-    tipo: ambiente.tipo,
-    piso: ambiente.piso,
-    capacidad: ambiente.capacidad,
+    id: ambiente?.id ?? ticket.ambienteId ?? null,
+    codigo,
+    nombre: ambiente?.nombre ?? codigo,
+    tipo: ambiente?.tipo ?? null,
+    piso: ambiente?.piso ?? null,
+    capacidad: ambiente?.capacidad ?? null,
     pabellon: pabellon?.nombre ?? null,
     sede: sedesRepository.findById(pabellon?.sedeId)?.nombre ?? null,
     ticketsEnCurso: delAmbiente.filter(esTicketEnCurso).length,
@@ -200,6 +205,9 @@ export function agregarEntrada(codigo, datos, usuarioId) {
     const permisos = permisosSobre(ticket, usuario)
     if (ticket.estado === 'cerrado') {
       throw new ServiceError(409, 'TICKET_CLOSED', 'El ticket está cerrado: su bitácora ya no admite entradas.')
+    }
+    if (ticket.estado === 'cancelado') {
+      throw new ServiceError(409, 'TICKET_CLOSED', 'El ticket está cancelado: su bitácora ya no admite entradas.')
     }
     const esInterna = datos?.tipo === 'interno'
     if (!(esInterna ? permisos.notaInterna : permisos.comentar)) {
@@ -408,7 +416,10 @@ export function listarAtendidos(usuarioId) {
           actualizadoEn: ultimaActividadDe(ticket),
           dentroDelPlazo: leerTiempos(ticket).dentroDelPlazo,
           categoria: referencia(categoriasRepository.findById(ticket.categoriaId)),
-          ambiente: { id: ambiente.id, codigo: ambiente.codigo },
+          ambiente: {
+            id: ambiente?.id ?? ticket.ambienteId ?? null,
+            codigo: ambiente?.codigo ?? ticket.ambienteCodigo ?? 'Sin ambiente',
+          },
           solicitante: persona(ticket.usuarioId),
         }
       })
@@ -420,15 +431,13 @@ export function listarAtendidos(usuarioId) {
  * Obtiene la información enriquecida de un ticket para la vista de encuesta (HU-6).
  */
 export async function obtenerTicketPorCodigo(codigoTicket) {
+  // Sin código no hay ticket: antes se tomaba el primer ticket cerrado de cualquier cuenta.
+  if (!codigoTicket) return null
   let ticket
-  if (codigoTicket) {
-    try {
-      ticket = buscarTicket(codigoTicket)
-    } catch {
-      ticket = ticketsRepository.findAll().find((t) => t.codigo === codigoTicket || t.id === codigoTicket) || null
-    }
-  } else {
-    ticket = ticketsRepository.findAll().find((t) => t.estado === 'cerrado') || ticketsRepository.findAll()[0] || null
+  try {
+    ticket = buscarTicket(codigoTicket)
+  } catch {
+    ticket = ticketsRepository.findAll().find((t) => t.codigo === codigoTicket || t.id === codigoTicket) || null
   }
 
   if (!ticket) return null
@@ -442,7 +451,7 @@ export async function obtenerTicketPorCodigo(codigoTicket) {
     codigo: ticket.codigo,
     asunto: ticket.asunto,
     categoriaNombre: categoria?.nombre || 'General',
-    ambienteCodigo: ambiente?.codigo || 'Ambiente',
+    ambienteCodigo: ambiente?.codigo || ticket.ambienteCodigo || 'Ambiente',
     tecnicoNombre: tecnico ? `${tecnico.nombres} ${tecnico.apellidos}` : 'No asignado',
     fechaCierre: ticket.cerradoEn ? new Date(ticket.cerradoEn).toLocaleDateString('es-PE') : 'Recientemente',
   }

@@ -81,7 +81,7 @@ describe('LoginPage', () => {
     [
       'supervisor',
       { correo: 'lmendoza@ulima.edu.pe', password: 'Supervisor2026' },
-      'Tablero',
+      'Tablero de métricas',
       'Cola sin asignar',
       'Bienvenida, Lucía. Hay 2 tickets sin asignar en la cola.',
       'usr-003',

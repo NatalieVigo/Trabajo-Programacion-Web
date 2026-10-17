@@ -29,6 +29,7 @@ export const ESTADO_LABELS = {
   resuelto: 'Resuelto',
   cerrado: 'Cerrado',
   reabierto: 'Reabierto',
+  cancelado: 'Cancelado',
 }
 
 export const ROL_LABELS = {

@@ -1,0 +1,354 @@
+import { useState, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Alert, Button, TextInput, SelectInput } from "../../shared/components";
+import { ROUTES, usuarioTicketDetallePath } from "../../routes/routePaths";
+import { ticketsRepository } from "../../repositories/tickets.repository.js";
+import { ambientesRepository, categoriasRepository, subcategoriasRepository } from "../../repositories/catalogo.repository.js";
+import { ESTADO_LABELS, PRIORIDAD_LABELS, formatDate } from "../../utils/format.js";
+import { esTicketEnCurso } from "../../services/ticketsEnCurso.js";
+import { useAuth } from "../../hooks/useAuth.js";
+import './MyTickets.css';
+
+export const MyTickets = () => {
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { usuario } = useAuth();
+
+    const [tickets] = useState(() => {
+        return usuario?.id ? ticketsRepository.findAll({ usuarioId: usuario.id }) : [];
+    });
+
+    const opcionesCategorias = [
+        { value: '', label: 'Categoría: todas' },
+        ...categoriasRepository.findAll().map(({ id, nombre }) => ({ value: id, label: nombre })),
+    ];
+
+    // Inputs para controlar la busqueda y los combos
+    const [busqueda, setBusqueda] = useState('');
+    const codigoBuscado = searchParams.get('codigo')?.trim() || '';
+    const busquedaActual = codigoBuscado || busqueda;
+    const [filtroEstado, setFiltroEstado] = useState('');
+    const [filtroCategoria, setFiltroCategoria] = useState('');
+    const [fechaInicio, setFechaInicio] = useState('');
+    const [fechaFin, setFechaFin] = useState('');
+    
+    const [paginaActual, setPaginaActual] = useState(1);
+    const registrosPorPagina = 8;
+
+    const totalTickets = tickets.length;
+    const ticketsEnCursoCount = useMemo(() => tickets.filter(esTicketEnCurso).length, [tickets]);
+
+    const obtenerCategoriaTexto = (t) => {
+        const categoria = categoriasRepository.findById(t.categoriaId);
+        const subcategoria = subcategoriasRepository.findById(t.subcategoriaId);
+        return [categoria?.nombre || t.categoriaNombre || t.categoria, subcategoria?.nombre || t.subcategoriaNombre]
+            .filter(Boolean)
+            .join(' · ') || 'General';
+    };
+
+    const obtenerAmbienteTexto = (t) => {
+        const ambiente = ambientesRepository.findById(t.ambienteId);
+        return ambiente?.codigo || t.ambienteCodigo || t.ambiente || '-';
+    };
+
+    const obtenerFechaTexto = (t) => {
+        const f = t.creadoEn || t.fechaCreacion || t.fecha || t.registrado;
+        return f ? formatDate(f) || String(f).split(',')[0] : 'Reciente';
+    };
+
+    const parseFecha = (t) => {
+        const f = t.creadoEn || t.fechaCreacion || t.fecha;
+        if (!f) return 0;
+        
+        const dateObj = new Date(f);
+        if (!isNaN(dateObj.getTime())) return dateObj.getTime();
+
+        const partes = String(f).split(/[/,-]/);
+        if (partes.length >= 3) {
+            return new Date(`${partes[2]}-${partes[1]}-${partes[0]}T00:00:00`).getTime();
+        }
+        return 0;
+    };
+
+    const ticketsFiltrados = useMemo(() => {
+        return tickets.filter(ticket => {
+            const codigo = ticket.codigo || '';
+            const asunto = ticket.asunto || ticket.descripcion || '';
+            const ambiente = obtenerAmbienteTexto(ticket);
+            const estado = String(ticket.estado || 'abierto').toLowerCase().replaceAll(' ', '_');
+            
+            // Texto libre
+            const coincideBusqueda =
+                codigo.toLowerCase().includes(busquedaActual.toLowerCase()) ||
+                asunto.toLowerCase().includes(busquedaActual.toLowerCase()) ||
+                ambiente.toLowerCase().includes(busquedaActual.toLowerCase());
+
+            // Estado del ticket
+            let coincideEstado = true;
+            if (filtroEstado === 'en_curso') {
+                coincideEstado = esTicketEnCurso(ticket);
+            } else if (filtroEstado !== '') {
+                coincideEstado = estado === filtroEstado;
+            }
+
+            // Categoria principal o ID
+            let coincideCategoria = true;
+            if (filtroCategoria !== '') {
+                const catFiltroLower = filtroCategoria.toLowerCase().trim();
+                const catNombreVal = obtenerCategoriaTexto(ticket).toLowerCase().trim();
+                coincideCategoria = ticket.categoriaId === filtroCategoria || catNombreVal.includes(catFiltroLower);
+            }
+
+            // Rango de fechas
+            let coincideFecha = true;
+            const tiempoTicket = parseFecha(ticket);
+            
+            if (tiempoTicket > 0) {
+                if (fechaInicio) {
+                    const tiempoInicio = new Date(`${fechaInicio}T00:00:00`).getTime();
+                    if (tiempoTicket < tiempoInicio) coincideFecha = false;
+                }
+                if (fechaFin) {
+                    const tiempoFin = new Date(`${fechaFin}T23:59:59`).getTime();
+                    if (tiempoTicket > tiempoFin) coincideFecha = false;
+                }
+            }
+
+            return coincideBusqueda && coincideEstado && coincideCategoria && coincideFecha;
+        });
+    }, [tickets, busquedaActual, filtroEstado, filtroCategoria, fechaInicio, fechaFin]);
+
+    const totalPaginas = Math.ceil(ticketsFiltrados.length / registrosPorPagina) || 1;
+    const paginaVisible = Math.min(paginaActual, totalPaginas);
+    const ticketsPaginados = useMemo(() => {
+        const inicio = (paginaVisible - 1) * registrosPorPagina;
+        return ticketsFiltrados.slice(inicio, inicio + registrosPorPagina);
+    }, [ticketsFiltrados, paginaVisible]);
+
+    const actualizarFiltro = (setter) => (event) => {
+        setter(event.target.value);
+        setPaginaActual(1);
+    };
+
+    const actualizarBusqueda = (event) => {
+        setBusqueda(event.target.value);
+        setPaginaActual(1);
+        if (searchParams.has('codigo')) {
+            const siguientesParametros = new URLSearchParams(searchParams);
+            siguientesParametros.delete('codigo');
+            setSearchParams(siguientesParametros, { replace: true });
+        }
+    };
+
+    const limpiarFiltros = () => {
+        setBusqueda('');
+        setFiltroEstado('');
+        setFiltroCategoria('');
+        setFechaInicio('');
+        setFechaFin('');
+        setPaginaActual(1);
+        if (searchParams.has('codigo')) {
+            const siguientesParametros = new URLSearchParams(searchParams);
+            siguientesParametros.delete('codigo');
+            setSearchParams(siguientesParametros, { replace: true });
+        }
+    };
+
+    const irANuevoTicket = () => {
+        if (ROUTES?.usuarioNuevoTicket) {
+            navigate(ROUTES.usuarioNuevoTicket);
+        } else {
+            navigate('/usuario/tickets/nuevo');
+        }
+    };
+
+    const irADetalle = (ticketId) => {
+        navigate(usuarioTicketDetallePath(ticketId));
+    };
+
+    return (
+        <div className="my-tickets-container">
+            <div className="my-tickets-header">
+                <div>
+                    <h1 className="page-title">Mis tickets</h1>
+                    <p className="page-subtitle">
+                        {totalTickets} tickets registrados · {ticketsEnCursoCount} en curso
+                    </p>
+                </div>
+                <Button variant="primary" onClick={irANuevoTicket}>
+                    Registrar un ticket
+                </Button>
+            </div>
+
+            {codigoBuscado && (
+                <Alert variant="info">
+                    Buscaste el código <code>{codigoBuscado}</code>; estos son tus resultados.
+                </Alert>
+            )}
+
+            {/* Filtros superiores */}
+            <div className="filters-bar" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="search-box">
+                    <TextInput
+                        placeholder="Buscar ticket..."
+                        value={busquedaActual}
+                        onChange={actualizarBusqueda}
+                    />
+                </div>
+
+                {/* Combo estado */}
+                <div className="category-select-wrapper">
+                    <SelectInput
+                        value={filtroEstado}
+                        onChange={actualizarFiltro(setFiltroEstado)}
+                        options={[
+                            { value: '', label: 'Estado: todos' },
+                            { value: 'en_curso', label: 'Estado: en curso' },
+                            { value: 'abierto', label: 'Abierto' },
+                            { value: 'en_atencion', label: 'En atención' },
+                            { value: 'en_espera', label: 'En espera' },
+                            { value: 'reabierto', label: 'Reabierto' },
+                            { value: 'resuelto', label: 'Resuelto' },
+                            { value: 'cerrado', label: 'Cerrado' },
+                            { value: 'cancelado', label: 'Cancelado' }
+                        ]}
+                    />
+                </div>
+
+                {/* Rango de fechas */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 
+                    '#fff', padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc' }}>
+                    <input 
+                        type="date" 
+                        value={fechaInicio} 
+                        onChange={actualizarFiltro(setFechaInicio)}
+                        style={{ border: 'none', outline: 'none', color: '#555' }}
+                        title="Fecha Desde"
+                    />
+                    <span style={{ color: '#aaa' }}>–</span>
+                    <input 
+                        type="date" 
+                        value={fechaFin} 
+                        onChange={actualizarFiltro(setFechaFin)}
+                        style={{ border: 'none', outline: 'none', color: '#555' }}
+                        title="Fecha Hasta"
+                    />
+                </div>
+
+                {/* Combo categorias */}
+                <div className="category-select-wrapper">
+                    <SelectInput
+                        value={filtroCategoria}
+                        onChange={actualizarFiltro(setFiltroCategoria)}
+                        options={opcionesCategorias}
+                    />
+                </div>
+
+                <button type="button" className="btn-clean-filters" onClick={limpiarFiltros}>
+                    Limpiar filtros
+                </button>
+            </div>
+
+            {/* Tabla de tickets */}
+            <div className="table-card">
+                <table className="tickets-table">
+                    <thead>
+                        <tr>
+                            <th>CÓDIGO</th>
+                            <th>ASUNTO</th>
+                            <th>CATEGORÍA</th>
+                            <th>AMBIENTE</th>
+                            <th>REGISTRADO</th>
+                            <th>PRIORIDAD</th>
+                            <th>ESTADO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {ticketsPaginados.length > 0 ? (
+                            ticketsPaginados.map((ticket) => (
+                                <tr key={ticket.id || ticket.codigo}>
+                                    <td className="code-cell">
+                                        <button
+                                            type="button"
+                                            className="btn-link-code"
+                                            onClick={() => irADetalle(ticket.id || ticket.codigo)}
+                                        >
+                                            {ticket.codigo}
+                                        </button>
+                                    </td>
+                                    <td className="subject-cell">{ticket.asunto || ticket.descripcion || 'Sin asunto'}</td>
+                                    <td className="category-cell">
+                                        {obtenerCategoriaTexto(ticket)}
+                                    </td>
+                                    <td className="location-cell">
+                                        {obtenerAmbienteTexto(ticket)}
+                                    </td>
+                                    <td className="date-cell">
+                                        {obtenerFechaTexto(ticket)}
+                                    </td>
+                                    <td>
+                                        <span className={`priority-tag ${(ticket.prioridad || 
+                                            'baja').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`}>
+                                            {PRIORIDAD_LABELS[ticket.prioridad] || ticket.prioridad || 'Baja'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className={`status-tag ${(ticket.estado || 
+                                            'abierto').toLowerCase().replaceAll(' ', '-').replaceAll('_', '-')}`}>
+                                            {ESTADO_LABELS[ticket.estado] || ticket.estado || 'Abierto'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="7" className="empty-table-msg">
+                                    No se encontraron tickets con los filtros aplicados.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+
+                {/* Controles de paginacion */}
+                <div className="table-pagination">
+                    <span className="pagination-info">
+                        Mostrando {ticketsFiltrados.length > 0 ? (paginaVisible - 1) * registrosPorPagina + 1 : 0}–
+                        {Math.min(paginaVisible * registrosPorPagina, ticketsFiltrados.length)} de {ticketsFiltrados.length} tickets
+                    </span>
+
+                    <div className="pagination-buttons">
+                        <button
+                            type="button"
+                            className="btn-page"
+                            disabled={paginaVisible === 1}
+                            onClick={() => setPaginaActual(p => Math.max(Math.min(p, totalPaginas) - 1, 1))}
+                        >
+                            Anterior
+                        </button>
+
+                        {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((numPage) => (
+                            <button
+                                key={numPage}
+                                type="button"
+                                className={`btn-page ${paginaVisible === numPage ? 'active' : ''}`}
+                                onClick={() => setPaginaActual(numPage)}
+                            >
+                                {numPage}
+                            </button>
+                        ))}
+
+                        <button
+                            type="button"
+                            className="btn-page"
+                            disabled={paginaVisible === totalPaginas}
+                            onClick={() => setPaginaActual(p => Math.min(Math.min(p, totalPaginas) + 1, totalPaginas))}
+                        >
+                            Siguiente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};

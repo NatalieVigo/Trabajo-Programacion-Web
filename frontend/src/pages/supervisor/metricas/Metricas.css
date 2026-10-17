@@ -1,0 +1,46 @@
+.hu7-page .page-header { align-items: center; }
+.hu7-periodo { position: relative; font-size: var(--font-size-aux); }
+.hu7-periodo summary { cursor: pointer; display: flex; gap: var(--space-2); align-items: center; min-height: var(--control-height); padding: var(--space-2) var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); color: var(--color-text-muted); list-style: none; }
+.hu7-periodo summary::-webkit-details-marker { display: none; }
+.hu7-periodo__panel { position: absolute; right: 0; top: calc(100% + 4px); z-index: var(--z-drawer); display: grid; gap: var(--space-3); width: 280px; padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: var(--shadow-overlay); }
+.hu7-periodo__panel label { display: grid; gap: var(--space-1); }
+.hu7-indicadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin-bottom: var(--space-5); }
+.hu7-indicador { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-5); }
+.hu7-indicador h2 { font-size: 11px; text-transform: uppercase; letter-spacing: var(--letter-spacing-label); font-weight: var(--font-weight-medium); }
+.hu7-indicador > strong { font-size: 36px; line-height: 40px; font-weight: var(--font-weight-semibold); }
+.hu7-indicador p { font-size: var(--font-size-aux); color: var(--color-text-muted); }
+.hu7-indicador--peligro { border-color: var(--color-danger); color: var(--color-danger); }
+.hu7-indicador--peligro p { color: inherit; }
+.hu7-indicador .hu7-variacion { color: var(--color-success); }
+.hu7-graficos { display: grid; grid-template-columns: 1fr 1.1fr 1.1fr; gap: var(--space-4); }
+.hu7-graficos > .card { min-height: 360px; padding: var(--space-5); }
+.hu7-graficos h2 { font-size: var(--font-size-subtitle); margin-bottom: 0; }
+.hu7-barras { list-style: none; display: grid; gap: var(--space-3); padding: 0; }
+.hu7-barras__etiqueta { display: flex; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-1); font-size: var(--font-size-aux); }
+.hu7-barras__etiqueta span:last-child { color: var(--color-text-muted); }
+.hu7-barras__pista { height: 10px; background: var(--color-bg); }
+.hu7-barras__pista > div { height: 100%; background: var(--color-primary); }
+.hu7-barras--ambientes .hu7-barras__pista > div { background: var(--color-accent); }
+.hu7-barras--ambientes .hu7-barras__etiqueta span:first-child { font-family: var(--font-mono); }
+.hu7-estados { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
+.hu7-anillo { width: 150px; height: 150px; border-radius: 50%; padding: 26px; flex-shrink: 0; }
+.hu7-anillo > div { display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 50%; width: 100%; height: 100%; background: var(--color-surface); }
+.hu7-anillo strong { font-size: 28px; }
+.hu7-anillo span { font-size: var(--font-size-aux); color: var(--color-text-muted); }
+.hu7-estados ul { list-style: none; display: grid; gap: var(--space-2); padding: 0; font-size: var(--font-size-aux); }
+.hu7-estados li { display: flex; align-items: center; gap: var(--space-2); }
+.hu7-estados__color { width: 10px; height: 10px; flex-shrink: 0; }
+.hu7-tabla-scroll { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); }
+.hu7-tabla { width: 100%; border-collapse: collapse; font-size: var(--font-size-aux); }
+.hu7-tabla th, .hu7-tabla td { height: var(--table-row-height); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-border); text-align: left; vertical-align: middle; }
+.hu7-tabla thead th { height: 36px; background: var(--color-bg); font-size: 11px; font-weight: var(--font-weight-medium); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: var(--letter-spacing-label); }
+.hu7-tabla tbody th { font-weight: var(--font-weight-semibold); }
+.hu7-tabla tr:last-child > * { border-bottom: none; }
+.hu7-tabla tbody tr:hover { background: var(--color-bg); }
+.hu7-carga { min-width: 1100px; }
+.hu7-carga__puntaje { color: var(--color-primary); font-weight: var(--font-weight-semibold); }
+.hu7-carga__notas { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-4); font-size: var(--font-size-aux); }
+.hu7-carga__notas > .card { padding: var(--space-4); color: var(--color-text-muted); }
+.hu7-carga__notas > .alert { border: 0; border-left: 3px solid var(--color-primary); border-radius: 0; }
+@media (max-width: 1000px) { .hu7-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hu7-graficos { grid-template-columns: 1fr; } .hu7-graficos > .card { min-height: auto; } }
+@media (max-width: 640px) { .hu7-indicadores, .hu7-carga__notas { grid-template-columns: 1fr; } .hu7-periodo__panel { right: auto; left: 0; max-width: calc(100vw - 48px); } }
