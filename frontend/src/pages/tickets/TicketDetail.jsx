@@ -192,7 +192,8 @@ export const TicketDetail = () => {
                             Agregar información
                         </Button>
                     )}
-                    {['resuelto', 'cerrado'].includes(estado) && (
+                    {/* La encuesta (HU-6) está disponible una vez cerrado el ticket, no al resolverlo. */}
+                    {estado === 'cerrado' && (
                         <Button
                             variant="primary"
                             onClick={() => navigate(encuestaEvaluarPath(ticket.codigo))}
