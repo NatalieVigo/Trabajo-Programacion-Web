@@ -1,14 +1,11 @@
 import { useId, useRef } from 'react'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
-import { listarAmbientes, listarUnidades } from '../../services/catalogo.service.js'
+import { obtenerOpcionesCuenta } from '../../services/usuarios.service.js'
 import { Alert, Button } from '../../shared/components'
 import PersonalDataForm from './PersonalDataForm.jsx'
 
-const cargarCatalogos = () =>
-  Promise.all([listarUnidades(), listarAmbientes()]).then(([unidades, ambientes]) => ({ unidades, ambientes }))
-
 export default function PersonalDataSection({ usuario }) {
-  const catalogos = useAsyncData(cargarCatalogos)
+  const catalogos = useAsyncData(obtenerOpcionesCuenta)
   const tituloId = useId()
   const tituloRef = useRef(null)
   // al guardar el botón se deshabilita, así que el foco pasa al título
