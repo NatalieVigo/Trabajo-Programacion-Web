@@ -4,6 +4,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import AppProviders from '../AppProviders.jsx'
 import { sessionRepository } from '../repositories/session.repository.js'
 import AppRoutes from '../routes/AppRoutes.jsx'
+import { tokenDePrueba } from './apiSimulada/index.js'
 
 export const DEMO = Object.freeze({
   usuario: 'usr-001',
@@ -15,7 +16,7 @@ export const DEMO = Object.freeze({
 
 // como si hubiera ingresado sin "Recordarme"
 export function guardarSesion(usuarioId) {
-  sessionRepository.save({ usuarioId, iniciadaEn: new Date().toISOString() })
+  sessionRepository.save({ usuarioId, iniciadaEn: new Date().toISOString(), token: tokenDePrueba(usuarioId) })
 }
 
 // con usuario la sesión se restaura al montar, así que hay que esperar con findBy

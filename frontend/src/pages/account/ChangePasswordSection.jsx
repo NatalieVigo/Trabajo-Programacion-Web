@@ -14,7 +14,7 @@ export default function ChangePasswordSection({ usuario }) {
 
   async function actualizar(values) {
     try {
-      await cambiarPassword(usuario.id, values)
+      await cambiarPassword(values)
     } catch (error) {
       // la contraseña actual incorrecta también llega como error de campo
       if (error.fieldErrors) return error.fieldErrors

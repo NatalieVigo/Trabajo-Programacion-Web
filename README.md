@@ -2,7 +2,10 @@
 
 Proyecto del curso de Programación Web de la Universidad de Lima.
 
-Este es un avance del proyecto: por ahora solo tiene el front-end, hecho con React y Vite. Los datos son de prueba y se guardan en el navegador.
+El repositorio tiene dos partes:
+
+- `frontend/`: la interfaz, hecha con React y Vite. HU-1 (cuenta y acceso) ya usa la API; las demás historias siguen con los datos de prueba guardados en el navegador.
+- `backend/`: la API REST de la entrega 2, hecha con Node.js, Express y MySQL (XAMPP). Ver [backend/README.md](backend/README.md).
 
 ## Integrantes
 
@@ -26,3 +29,5 @@ npm run dev
 ```
 
 Luego abre http://localhost:5173 en el navegador.
+
+Para iniciar sesión la API debe estar encendida: sigue los pasos de [backend/README.md](backend/README.md).

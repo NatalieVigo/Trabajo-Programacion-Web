@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { SESSION_STORAGE_KEY, sessionRepository } from './session.repository.js'
 
-const sesion = { usuarioId: 'usr-001', iniciadaEn: '2026-10-01T15:00:00.000Z' }
+const sesion = { usuarioId: 'usr-001', iniciadaEn: '2026-10-01T15:00:00.000Z', token: 'token-de-la-api' }
 
 describe('sessionRepository', () => {
   it('sin «recordar» guarda la sesión solo en la pestaña (sessionStorage)', () => {
@@ -33,7 +33,14 @@ describe('sessionRepository', () => {
     expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
   })
 
-  it.each([['{esto no es JSON'], ['null'], [JSON.stringify({ usuarioId: 42 })], [JSON.stringify({ usuarioId: 'usr-001' })]])(
+  it.each([
+    ['{esto no es JSON'],
+    ['null'],
+    [JSON.stringify({ usuarioId: 42 })],
+    [JSON.stringify({ usuarioId: 'usr-001' })],
+    // una sesión de la entrega 1, sin el token de la API
+    [JSON.stringify({ usuarioId: 'usr-001', iniciadaEn: '2026-10-01T15:00:00.000Z' })],
+  ])(
     'ignora una sesión guardada inválida: %s',
     (guardado) => {
       localStorage.setItem(SESSION_STORAGE_KEY, guardado)

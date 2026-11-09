@@ -22,11 +22,12 @@ function resolveStorage(name) {
 const rememberedStorage = resolveStorage('localStorage')
 const tabStorage = resolveStorage('sessionStorage')
 
+// sin el token que entrega la API no hay sesión
 function parseSession(raw) {
   try {
     const session = JSON.parse(raw)
-    const isValid = typeof session?.usuarioId === 'string' && typeof session.iniciadaEn === 'string'
-    return isValid ? { usuarioId: session.usuarioId, iniciadaEn: session.iniciadaEn } : null
+    const isValid = ['usuarioId', 'iniciadaEn', 'token'].every((campo) => typeof session?.[campo] === 'string')
+    return isValid ? { usuarioId: session.usuarioId, iniciadaEn: session.iniciadaEn, token: session.token } : null
   } catch {
     return null
   }
