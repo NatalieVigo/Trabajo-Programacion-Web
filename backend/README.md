@@ -7,7 +7,7 @@ API REST de la entrega 2, hecha con Node.js, Express y MySQL (XAMPP).
 Se necesita tener Node.js y XAMPP instalados.
 
 1. Abre el panel de XAMPP y enciende **MySQL**.
-2. Copia `.env.example` como `.env` y completa `DB_PASSWORD` con la contraseña de `root` de tu MySQL (vacía si no tiene).
+2. Copia `.env.example` como `.env` y completa `DB_USER` y `DB_PASSWORD` con un usuario de tu MySQL (en XAMPP recién instalado es `root` sin contraseña). El usuario necesita permiso para crear las bases `mesa_ayuda` y `mesa_ayuda_test`.
 3. Instala, crea la base y enciende la API:
 
 ```
