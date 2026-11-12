@@ -1,5 +1,4 @@
 import { useId } from 'react'
-import { useAuth } from '../../hooks/useAuth.js'
 import { eliminarPabellon, eliminarSede } from '../../services/ubicaciones.service.js'
 import { Button, Card, EmptyState } from '../../shared/components'
 import { pluralize } from '../../utils/format.js'
@@ -75,7 +74,6 @@ function SedeCard({ sede, eliminandoId, onEditarSede, onEliminarSede, onNuevoPab
 
 // Pestaña de sedes y pabellones. Solo se puede eliminar lo que está vacío.
 export default function SedesPanel({ sedes, refrescar, onNuevaSede, onEditarSede, onNuevoPabellon, onEditarPabellon }) {
-  const { usuario } = useAuth()
   const { eliminandoId, eliminar } = useEliminacion(refrescar)
 
   if (sedes.length === 0) {
@@ -96,7 +94,7 @@ export default function SedesPanel({ sedes, refrescar, onNuevaSede, onEditarSede
       titulo: '¿Eliminar la sede?',
       mensaje: `«${sede.nombre}» se quitará del catálogo. Esta acción no se puede deshacer.`,
       confirmText: 'Eliminar sede',
-      eliminarEnServicio: () => eliminarSede(sede.id, usuario.id),
+      eliminarEnServicio: () => eliminarSede(sede.id),
       exito: `Sede “${sede.nombre}” eliminada correctamente.`,
     })
   }
@@ -107,7 +105,7 @@ export default function SedesPanel({ sedes, refrescar, onNuevaSede, onEditarSede
       titulo: '¿Eliminar el pabellón?',
       mensaje: `El pabellón «${pabellon.nombre}» se quitará del catálogo. Esta acción no se puede deshacer.`,
       confirmText: 'Eliminar pabellón',
-      eliminarEnServicio: () => eliminarPabellon(pabellon.id, usuario.id),
+      eliminarEnServicio: () => eliminarPabellon(pabellon.id),
       exito: `Pabellón “${pabellon.nombre}” eliminado correctamente.`,
     })
   }

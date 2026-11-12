@@ -1,5 +1,4 @@
 import { useId, useRef, useState } from 'react'
-import { useAuth } from '../../hooks/useAuth.js'
 import { eliminarAmbiente } from '../../services/ubicaciones.service.js'
 import { Button, Card, EmptyState, SearchIcon, SelectInput, TextInput } from '../../shared/components'
 import { pluralize } from '../../utils/format.js'
@@ -88,7 +87,6 @@ function FiltrosAmbientes({ filtros, sedes, onChange, onLimpiar }) {
 
 // Pestaña de ambientes (HU-2). Crear y editar abren el modal de la página.
 export default function AmbientesPanel({ ambientes, sedes, refrescar, onNuevo, onEditar, onIrASedes }) {
-  const { usuario } = useAuth()
   const tablaRef = useRef(null)
   const [filtros, setFiltros] = useState(AMBIENTES_SIN_FILTROS)
   const [pagina, setPagina] = useState(1)
@@ -109,7 +107,7 @@ export default function AmbientesPanel({ ambientes, sedes, refrescar, onNuevo, o
       titulo: '¿Eliminar el ambiente?',
       mensaje: `«${ambiente.codigo} · ${ambiente.nombre}» se quitará del catálogo. Esta acción no se puede deshacer.`,
       confirmText: 'Eliminar ambiente',
-      eliminarEnServicio: () => eliminarAmbiente(ambiente.id, usuario.id),
+      eliminarEnServicio: () => eliminarAmbiente(ambiente.id),
       exito: `Ambiente “${ambiente.codigo}” eliminado correctamente.`,
     })
     // el botón ya no existe, así que el foco va a la tabla

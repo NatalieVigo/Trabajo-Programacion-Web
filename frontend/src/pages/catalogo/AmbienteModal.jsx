@@ -1,5 +1,4 @@
 import { useRef } from 'react'
-import { useAuth } from '../../hooks/useAuth.js'
 import { useForm } from '../../hooks/useForm.js'
 import { actualizarAmbiente, crearAmbiente } from '../../services/ubicaciones.service.js'
 import { FormField, SelectInput, TextInput, useToast } from '../../shared/components'
@@ -26,7 +25,6 @@ const opcionesDePabellon = (sedes) =>
 
 // Modal de ambiente. Se monta al abrir, así siempre parte de sus valores.
 export default function AmbienteModal({ ambiente, sedes, onClose, onGuardado }) {
-  const { usuario } = useAuth()
   const toast = useToast()
   const codigoRef = useRef(null)
   const form = useForm({ initialValues: valoresDe(ambiente), validate: validateAmbiente })
@@ -34,8 +32,8 @@ export default function AmbienteModal({ ambiente, sedes, onClose, onGuardado }) 
   async function guardar(values) {
     try {
       const guardado = ambiente
-        ? await actualizarAmbiente(ambiente.id, values, usuario.id)
-        : await crearAmbiente(values, usuario.id)
+        ? await actualizarAmbiente(ambiente.id, values)
+        : await crearAmbiente(values)
       toast.success(`Ambiente “${guardado.codigo}” ${ambiente ? 'actualizado' : 'creado'} correctamente.`)
       onGuardado(guardado)
     } catch (error) {
