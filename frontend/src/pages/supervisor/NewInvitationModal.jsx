@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { useAuth } from '../../hooks/useAuth.js'
 import { useCopyLink } from '../../hooks/useCopyLink.js'
 import { useForm } from '../../hooks/useForm.js'
 import { invitacionPath } from '../../routes/routePaths.js'
@@ -58,6 +59,7 @@ function InvitationLink({ enlace, venceEn }) {
 
 // si se cierra con datos escritos, pide confirmación
 function NewInvitationDialog({ onClose }) {
+  const { usuario } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
   const copiar = useCopyLink()
@@ -73,7 +75,7 @@ function NewInvitationDialog({ onClose }) {
 
   async function crearInvitacion(values) {
     try {
-      const invitacion = await crear(values)
+      const invitacion = await crear(values, usuario.id)
       toast.success(`Invitación creada para ${getFullName(invitacion)}.`)
       setCreada(invitacion)
     } catch (error) {

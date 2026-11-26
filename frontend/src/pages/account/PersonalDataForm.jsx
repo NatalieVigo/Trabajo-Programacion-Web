@@ -27,7 +27,7 @@ export default function PersonalDataForm({ usuario, catalogos, labelledBy, onSav
     const cambios = { ...values, ambienteHabitualId: values.ambienteHabitualId || null }
     let actualizado
     try {
-      actualizado = await actualizarPerfil(cambios)
+      actualizado = await actualizarPerfil(usuario.id, cambios)
     } catch (error) {
       if (error.fieldErrors) return error.fieldErrors
       toast.error(error.message)

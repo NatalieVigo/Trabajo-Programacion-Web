@@ -1,9 +1,10 @@
-import { useCallback } from 'react'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
-import { obtenerCategorias } from '../../services/invitaciones.service.js'
+import { listarCategorias } from '../../services/catalogo.service.js'
 import { Alert, Button, ChipToggleGroup } from '../../shared/components'
 import { cx } from '../../utils/classNames.js'
 import { MAX_ESPECIALIDADES } from '../../utils/validators.js'
+
+const cargarCategoriasActivas = () => listarCategorias({ soloActivas: true })
 
 function avisoCategorias({ status, data }) {
   if (status === 'loading') return 'Cargando categorías…'
@@ -13,10 +14,9 @@ function avisoCategorias({ status, data }) {
   return undefined
 }
 
-// de una a tres categorías activas del catálogo de HU-2, que la API da con el token de la invitación
-export default function EspecialidadesField({ token, value, onChange, onBlur, error, className }) {
-  const cargarCategorias = useCallback(() => obtenerCategorias(token), [token])
-  const categorias = useAsyncData(cargarCategorias)
+// de una a tres categorías activas, que salen del catálogo de HU-2
+export default function EspecialidadesField({ value, onChange, onBlur, error, className }) {
+  const categorias = useAsyncData(cargarCategoriasActivas)
   const options = categorias.data?.map((categoria) => ({ value: categoria.id, label: categoria.nombre })) ?? []
 
   return (
