@@ -2,7 +2,7 @@
 
 Proyecto del curso de Programación Web de la Universidad de Lima.
 
-Este es un avance del proyecto: por ahora solo tiene el front-end, hecho con React y Vite. Los datos son de prueba y se guardan en el navegador.
+Este repositorio tiene el front-end, hecho con React y Vite. HU-1 (cuenta y acceso) ya usa la API REST, que está en el repositorio [Trabajo-Programacion-Web-backend](https://github.com/NatalieVigo/Trabajo-Programacion-Web-backend); las demás historias siguen con los datos de prueba guardados en el navegador.
 
 ## Integrantes
 
@@ -26,3 +26,5 @@ npm run dev
 ```
 
 Luego abre http://localhost:5173 en el navegador.
+
+Para iniciar sesión la API debe estar encendida: sigue los pasos del README de [Trabajo-Programacion-Web-backend](https://github.com/NatalieVigo/Trabajo-Programacion-Web-backend).

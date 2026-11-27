@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useAuth } from '../hooks/useAuth.js'
 import { SESSION_STORAGE_KEY, sessionRepository } from '../repositories/session.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
+import { tokenDePrueba } from '../test/apiSimulada/index.js'
 import { DEMO, guardarSesion, renderApp, renderWithProviders } from '../test/test-utils.jsx'
 
 const JULIO = { correo: 'jparedes@ulima.edu.pe', password: 'Tecnico2026' }
@@ -57,7 +58,10 @@ describe('AuthProvider', () => {
   })
 
   it('restaura también una sesión recordada en el equipo', async () => {
-    sessionRepository.save({ usuarioId: DEMO.supervisor, iniciadaEn: '2026-10-01T15:00:00.000Z' }, { recordar: true })
+    sessionRepository.save(
+      { usuarioId: DEMO.supervisor, iniciadaEn: '2026-10-01T15:00:00.000Z', token: tokenDePrueba(DEMO.supervisor) },
+      { recordar: true },
+    )
 
     renderWithProviders(<SesionActual />)
 

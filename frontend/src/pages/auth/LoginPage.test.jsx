@@ -4,6 +4,7 @@ import { SESSION_STORAGE_KEY } from '../../repositories/session.repository.js'
 import { ticketsRepository } from '../../repositories/tickets.repository.js'
 import { usuariosRepository } from '../../repositories/usuarios.repository.js'
 import { obtenerContadores } from '../../services/resumen.service.js'
+import { tokenDePrueba } from '../../test/apiSimulada/index.js'
 import { soltarFoco } from '../../test/focus.js'
 import { renderApp } from '../../test/test-utils.jsx'
 
@@ -93,7 +94,7 @@ describe('LoginPage', () => {
     expect(await screen.findByText(bienvenida)).toBeInTheDocument()
     expect(await screen.findByRole('heading', { level: 1, name: inicio })).toBeInTheDocument()
     await esperarPanel(pildora)
-    expect(sesionGuardada(sessionStorage)).toEqual({ usuarioId: id, iniciadaEn: AHORA })
+    expect(sesionGuardada(sessionStorage)).toEqual({ usuarioId: id, iniciadaEn: AHORA, token: tokenDePrueba(id) })
     expect(localStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
   })
 
@@ -126,7 +127,7 @@ describe('LoginPage', () => {
     await ingresarCon(user, CAMILA)
 
     await esperarPanel('Mis tickets abiertos')
-    expect(sesionGuardada(localStorage)).toEqual({ usuarioId: 'usr-001', iniciadaEn: AHORA })
+    expect(sesionGuardada(localStorage)).toEqual({ usuarioId: 'usr-001', iniciadaEn: AHORA, token: tokenDePrueba('usr-001') })
     expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
   })
 
