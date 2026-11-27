@@ -3,8 +3,7 @@ import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useEmailAvailability } from '../../hooks/useEmailAvailability.js'
 import { useForm } from '../../hooks/useForm.js'
 import { ROUTES } from '../../routes/routePaths.js'
-import { listarUnidades, listarVinculos } from '../../services/catalogo.service.js'
-import { registrar } from '../../services/usuarios.service.js'
+import { obtenerOpcionesRegistro, registrar } from '../../services/usuarios.service.js'
 import {
   Alert,
   Button,
@@ -31,9 +30,6 @@ const INITIAL_VALUES = {
   aceptaTerminos: false,
 }
 
-const cargarOpciones = () =>
-  Promise.all([listarUnidades(), listarVinculos()]).then(([unidades, vinculos]) => ({ unidades, vinculos }))
-
 // primero el error del campo y después lo que diga la verificación
 function correoFeedback(error, availability) {
   if (error) return { error }
@@ -49,7 +45,7 @@ export default function RegisterForm() {
   const toast = useToast()
   const confirm = useConfirm()
   const form = useForm({ initialValues: INITIAL_VALUES, validate: validateRegistro })
-  const opciones = useAsyncData(cargarOpciones)
+  const opciones = useAsyncData(obtenerOpcionesRegistro)
   const emailAvailability = useEmailAvailability(form.values.correo)
   const opcionesListas = opciones.status === 'success'
 
