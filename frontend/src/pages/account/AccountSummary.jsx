@@ -93,7 +93,7 @@ function EncuestaPendiente({ encuesta }) {
 
 // Perfil con su resumen; al usuario también le muestra su encuesta pendiente.
 export default function AccountSummary({ usuario }) {
-  const cargarResumen = useCallback(() => obtenerResumenCuenta(usuario.id), [usuario.id])
+  const cargarResumen = useCallback(() => obtenerResumenCuenta(usuario), [usuario])
   const resumen = useAsyncData(cargarResumen)
 
   return (

@@ -109,6 +109,7 @@ export default function InvitationForm({ invitacion, onInvitacionCambiada }) {
             </FormField>
 
             <EspecialidadesField
+              token={invitacion.token}
               className="form-grid__full"
               value={form.values.especialidades}
               onChange={(especialidades) => form.setFieldValue('especialidades', especialidades)}
