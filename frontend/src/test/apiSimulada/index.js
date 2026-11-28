@@ -9,6 +9,7 @@ import * as encuestas from './encuestas.js'
 import * as habilitaciones from './habilitaciones.js'
 import * as invitaciones from './invitaciones.js'
 import * as metricas from './metricas.js'
+import * as resumen from './resumen.js'
 import * as solicitudesAcceso from './solicitudesAcceso.js'
 import { ambientesRepository, categoriasRepository, subcategoriasRepository } from '../../repositories/catalogo.repository.js'
 import { ticketsRepository } from '../../repositories/tickets.repository.js'
@@ -61,6 +62,8 @@ const RUTAS = [
   ['GET', '/cuenta', ({ cuenta }) => usuarios.sanitizeUsuario(cuenta), { sesion: true }],
   ['PATCH', '/cuenta', ({ cuenta, body }) => usuarios.actualizarPerfil(cuenta.id, body), { sesion: true }],
   ['GET', '/cuenta/opciones', () => usuarios.opcionesCuenta(), { sesion: true }],
+  ['GET', '/cuenta/resumen', ({ cuenta }) => resumen.resumenDeCuenta(cuenta), { sesion: true }],
+  ['GET', '/cuenta/contadores', ({ cuenta }) => resumen.contadoresDe(cuenta), { sesion: true }],
   ['PUT', '/cuenta/contrasena', ({ cuenta, body }) => auth.cambiarPassword(cuenta.id, body), { sesion: true }],
   ['POST', '/invitaciones', ({ cuenta, body }) => invitaciones.crear(body, cuenta.id), { sesion: true, status: 201 }],
   ['GET', `/invitaciones/${TOKEN}`, ({ params }) => invitaciones.obtenerPorToken(params[0])],
