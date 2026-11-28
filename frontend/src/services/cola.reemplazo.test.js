@@ -6,7 +6,7 @@ import {
   autoasignarTicket,
   listarBandeja,
   listarCola,
-} from './cola.service.js'
+} from '../test/colaConSesion.js'
 
 const SUPERVISOR = 'usr-003'
 const JULIO = 'usr-002'

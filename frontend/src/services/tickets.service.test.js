@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { resetDb, readTable, writeTable } from '../repositories/db.js'
 import { guardarSesion } from '../test/test-utils.jsx'
 import { agregarEntrada, obtenerAtencion } from './atencion.service.js'
-import { listarCola } from './cola.service.js'
+import { listarCola } from '../test/colaConSesion.js'
 import { ServiceError } from './ServiceError.js'
 import {
   buscarTicketEnCurso,

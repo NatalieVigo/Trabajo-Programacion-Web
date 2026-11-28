@@ -85,7 +85,6 @@ export default function EncuestaPage() {
     try {
       await registrarEncuesta({
         codigoTicket: codigoFinal,
-        usuarioId: currentUser?.id,
         puntajeGeneral,
         rapidez,
         trato,

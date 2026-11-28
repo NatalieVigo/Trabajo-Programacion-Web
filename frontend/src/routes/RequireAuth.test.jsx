@@ -27,7 +27,8 @@ describe('RequireAuth', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Mis tickets' })).toBeInTheDocument()
     expect(ubicacionActual()).toBe('/usuario/tickets?codigo=TCK-2026-00147')
-    expect(screen.getByRole('button', { name: 'TCK-2026-00147' })).toBeInTheDocument()
+    // Mis tickets ya carga de la API: el título aparece antes que la tabla
+    expect(await screen.findByRole('button', { name: 'TCK-2026-00147' })).toBeInTheDocument()
     expect(await screen.findByText('Mis tickets abiertos')).toBeInTheDocument()
   })
 

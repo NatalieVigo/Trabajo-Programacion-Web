@@ -656,13 +656,16 @@ describe('atencion.service · cerrarTicket', () => {
   })
 
   it('al cerrarlo, quien lo reportó tiene un ticket abierto menos y una encuesta pendiente más (HU-6)', async () => {
-    const camila = { id: CAMILA, rol: 'usuario' }
-    const antes = await obtenerContadores(camila)
+    const contadoresDeCamila = () => {
+      guardarSesion(CAMILA)
+      return obtenerContadores()
+    }
+    const antes = await contadoresDeCamila()
 
     await cerrarTicket(EN_ATENCION, { solucion: SOLUCION }, JULIO)
 
     expect(antes).toMatchObject({ ticketsAbiertos: 3, encuestasPendientes: 1 })
-    expect(await obtenerContadores(camila)).toMatchObject({ ticketsAbiertos: 2, encuestasPendientes: 2 })
+    expect(await contadoresDeCamila()).toMatchObject({ ticketsAbiertos: 2, encuestasPendientes: 2 })
   })
 
   it('no cierra un ticket en espera, en cola ni ya cerrado', async () => {

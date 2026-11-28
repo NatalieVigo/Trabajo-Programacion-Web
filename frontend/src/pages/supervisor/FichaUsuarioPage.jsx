@@ -33,7 +33,7 @@ function ReportesCuenta({ reportes }) {
 export default function FichaUsuarioPage() {
   const { id } = useParams()
   const { usuario } = useAuth()
-  const cargar = useCallback(() => obtenerFichaCuenta(id, usuario.id), [id, usuario.id])
+  const cargar = useCallback(() => obtenerFichaCuenta(id), [id])
   const consulta = useAsyncData(cargar)
   const [bloqueando, setBloqueando] = useState(false)
   const [guardando, setGuardando] = useState(false)
@@ -47,7 +47,7 @@ export default function FichaUsuarioPage() {
     if (!ok) return
     setGuardando(true)
     try {
-      await desbloquearCuenta(id, usuario.id)
+      await desbloquearCuenta(id)
       toast.success(`Cuenta desbloqueada. ${d.cuenta.nombre} puede volver a iniciar sesión.`)
       consulta.reload()
     } catch (e) { toast.error(e.message); consulta.reload() }

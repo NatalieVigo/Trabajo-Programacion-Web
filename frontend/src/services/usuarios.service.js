@@ -1,6 +1,4 @@
 import { apiRequest } from './api.js'
-import { simulateRequest } from './request.js'
-import { resumenDeCuenta } from './resumen.service.js'
 
 // Registro público (HU-1). La API repite las validaciones del formulario.
 export function registrar(datos) {
@@ -26,9 +24,9 @@ export function actualizarPerfil(cambios) {
   return apiRequest('/cuenta', { method: 'PATCH', body: cambios })
 }
 
-// Lee tickets y encuestas, que siguen en el navegador hasta que HU-3 y HU-6 pasen a la API
-// (entonces será GET /api/cuenta/resumen). HU-6 todavía pasa solo el id del usuario.
+// Resumen de "Mi cuenta" (p10) con la encuesta pendiente que abre HU-6. La API saca la cuenta del token; el
+// parámetro se conserva para no cambiar a quienes la llaman.
+// eslint-disable-next-line no-unused-vars
 export function obtenerResumenCuenta(usuario) {
-  const cuenta = typeof usuario === 'string' ? { id: usuario, rol: 'usuario' } : usuario
-  return simulateRequest(() => resumenDeCuenta(cuenta))
+  return apiRequest('/cuenta/resumen')
 }

@@ -1,10 +1,15 @@
 import { usuariosRepository } from '../../repositories/usuarios.repository.js'
 import { ServiceError, errorInesperado } from '../../services/ServiceError.js'
+import * as administracionUsuarios from './administracionUsuarios.js'
 import * as atencion from './atencion.js'
 import * as auth from './auth.js'
 import * as categorias from './categorias.js'
+import * as cola from './cola.js'
+import * as encuestas from './encuestas.js'
 import * as habilitaciones from './habilitaciones.js'
 import * as invitaciones from './invitaciones.js'
+import * as metricas from './metricas.js'
+import * as resumen from './resumen.js'
 import * as solicitudesAcceso from './solicitudesAcceso.js'
 import { ambientesRepository, categoriasRepository, subcategoriasRepository } from '../../repositories/catalogo.repository.js'
 import { ticketsRepository } from '../../repositories/tickets.repository.js'
@@ -26,6 +31,7 @@ const TOKEN = '([^/]+)'
 const ID = '([^/]+)'
 // como permitirRoles('supervisor') del backend
 const SUPERVISOR = { sesion: true, roles: ['supervisor'] }
+const TECNICO = { sesion: true, roles: ['tecnico'] }
 
 function incluirCatalogos(ticket) {
   const categoria = categoriasRepository.findById(ticket.categoriaId)
@@ -39,7 +45,7 @@ function incluirCatalogos(ticket) {
   }
 }
 
-// las mismas rutas de HU-1, HU-2, HU-3 y HU-5 que src/routes del repositorio del backend
+// las mismas rutas de HU-1 a HU-7 que src/routes del repositorio del backend
 const RUTAS = [
   ['POST', '/auth/login', async ({ body }) => {
     const { usuario } = await auth.iniciarSesion(body)
@@ -56,6 +62,8 @@ const RUTAS = [
   ['GET', '/cuenta', ({ cuenta }) => usuarios.sanitizeUsuario(cuenta), { sesion: true }],
   ['PATCH', '/cuenta', ({ cuenta, body }) => usuarios.actualizarPerfil(cuenta.id, body), { sesion: true }],
   ['GET', '/cuenta/opciones', () => usuarios.opcionesCuenta(), { sesion: true }],
+  ['GET', '/cuenta/resumen', ({ cuenta }) => resumen.resumenDeCuenta(cuenta), { sesion: true }],
+  ['GET', '/cuenta/contadores', ({ cuenta }) => resumen.contadoresDe(cuenta), { sesion: true }],
   ['PUT', '/cuenta/contrasena', ({ cuenta, body }) => auth.cambiarPassword(cuenta.id, body), { sesion: true }],
   ['POST', '/invitaciones', ({ cuenta, body }) => invitaciones.crear(body, cuenta.id), { sesion: true, status: 201 }],
   ['GET', `/invitaciones/${TOKEN}`, ({ params }) => invitaciones.obtenerPorToken(params[0])],
@@ -96,6 +104,17 @@ const RUTAS = [
     incluirCatalogos(await tickets.reabrirTicket(params[0], body?.motivo, cuenta.id)), { sesion: true }],
   ['GET', '/habilitaciones', () => habilitaciones.obtenerMatriz(), SUPERVISOR],
   ['PUT', '/habilitaciones', ({ body }) => habilitaciones.guardarMatriz(body), SUPERVISOR],
+  // HU-4
+  ['GET', '/cola', ({ cuenta }) => cola.listarCola(cuenta.id), SUPERVISOR],
+  ['GET', '/cola/bandeja', ({ cuenta }) => cola.listarBandeja(cuenta.id), TECNICO],
+  ['POST', '/cola/asignaciones', async ({ cuenta, body }) =>
+    ({ actualizados: await cola.asignarTickets(body?.ids, body?.tecnicoId, body?.nota ?? '', cuenta.id) }), SUPERVISOR],
+  ['PATCH', '/cola/prioridad', async ({ cuenta, body }) =>
+    ({ actualizados: await cola.cambiarPrioridadTickets(body?.ids, body?.prioridad, body?.motivo, cuenta.id) }), SUPERVISOR],
+  ['POST', '/cola/devoluciones', async ({ cuenta, body }) =>
+    ({ actualizados: await cola.devolverTickets(body?.ids, cuenta.id) }), SUPERVISOR],
+  ['POST', `/cola/${ID}/autoasignacion`, async ({ cuenta, params }) =>
+    ({ id: await cola.autoasignarTicket(params[0], cuenta.id) }), TECNICO],
   // HU-5: quién puede ver o cambiar cada ticket lo revisa atencion.js, como el servicio del backend
   ['GET', '/atencion', ({ cuenta }) => atencion.listarAtendidos(cuenta), { sesion: true, roles: ['tecnico'] }],
   ['GET', `/atencion/${ID}`, ({ params, cuenta }) => atencion.obtenerAtencion(params[0], cuenta), { sesion: true }],
@@ -107,6 +126,28 @@ const RUTAS = [
     { sesion: true }],
   ['PATCH', `/atencion/${ID}/cierre`, ({ params, body, cuenta }) => atencion.cerrarTicket(params[0], body, cuenta),
     { sesion: true }],
+  // HU-6: /satisfaccion va antes de /encuestas/:codigo
+  ['GET', '/encuestas', ({ cuenta }) => encuestas.listarMisEncuestas(cuenta), { sesion: true }],
+  ['GET', '/encuestas/satisfaccion', ({ query }) => encuestas.reporteSatisfaccion({
+    desde: query.get('desde'),
+    hasta: query.get('hasta'),
+    puntaje: query.get('puntaje') ?? undefined,
+  }), SUPERVISOR],
+  ['GET', `/encuestas/${ID}`, ({ params, cuenta }) => encuestas.obtenerEncuesta(params[0], cuenta), { sesion: true }],
+  ['PUT', `/encuestas/${ID}`, ({ params, body, cuenta }) => encuestas.responderEncuesta(params[0], body ?? {}, cuenta),
+    { sesion: true }],
+  // HU-7: el rango llega en la query, como ?desde=AAAA-MM-DD&hasta=AAAA-MM-DD
+  ['GET', '/metricas/tablero', ({ query, cuenta }) =>
+    metricas.obtenerTablero(cuenta.id, { desde: query.get('desde'), hasta: query.get('hasta') }), SUPERVISOR],
+  ['GET', '/metricas/carga-tecnicos', ({ query, cuenta }) =>
+    metricas.obtenerCargaTecnicos(cuenta.id, { desde: query.get('desde'), hasta: query.get('hasta') }), SUPERVISOR],
+  ['GET', '/usuarios', ({ cuenta }) => administracionUsuarios.listarCuentas(cuenta.id), SUPERVISOR],
+  ['GET', `/usuarios/${ID}`, ({ params, cuenta }) => administracionUsuarios.obtenerFichaCuenta(params[0], cuenta.id),
+    SUPERVISOR],
+  ['PATCH', `/usuarios/${ID}/bloqueo`, ({ params, body, cuenta }) =>
+    administracionUsuarios.bloquearCuenta(params[0], body ?? {}, cuenta.id), SUPERVISOR],
+  ['PATCH', `/usuarios/${ID}/desbloqueo`, ({ params, cuenta }) =>
+    administracionUsuarios.desbloquearCuenta(params[0], cuenta.id), SUPERVISOR],
 ].map(([metodo, ruta, atender, { sesion = false, roles = null, status = 200 } = {}]) => ({
   metodo,
   patron: new RegExp(`^${ruta}$`),
@@ -123,7 +164,8 @@ function responder(status, datos) {
   })
 }
 
-// Reemplaza a fetch en las pruebas del frontend: simula las rutas de HU-1, HU-2 y HU-3 sobre los datos del navegador.
+// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1 a HU-7 como la API, sobre los datos
+// del navegador.
 export async function fetchSimulado(url, { method = 'GET', headers, body } = {}) {
   const { pathname, searchParams } = new URL(url)
   const ruta = pathname.replace(/^\/api/, '')

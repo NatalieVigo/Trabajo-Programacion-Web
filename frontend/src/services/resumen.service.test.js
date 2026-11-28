@@ -1,12 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { readTable, writeTable } from '../repositories/db.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
+import { guardarSesion } from '../test/test-utils.jsx'
 import { obtenerContadores } from './resumen.service.js'
 
 // TCK-2026-00131 se cerró sin encuesta el 28/09 y tiene 7 días de plazo
 const FIN_PLAZO_ENCUESTA = '2026-10-05T22:20:00.000Z'
 
-const usuario = (id) => usuariosRepository.findById(id)
+// la API saca la cuenta del token de la sesión
+const usuario = (id) => {
+  guardarSesion(id)
+  return usuariosRepository.findById(id)
+}
 
 function cambiarTicket(id, cambios) {
   writeTable(
@@ -84,9 +89,7 @@ describe('resumen.service · obtenerContadores', () => {
     await expect(obtenerContadores(usuario('usr-003'))).resolves.toEqual({ colaSinAsignar: 1, colaTotal: 6, usuariosTotal: 10 })
   })
 
-  it('responde 401 sin un usuario con rol', async () => {
+  it('responde 401 sin sesión', async () => {
     await expect(obtenerContadores(null)).rejects.toMatchObject({ status: 401, code: 'UNAUTHENTICATED' })
-    await expect(obtenerContadores({ id: 'usr-001', rol: 'visitante' })).rejects.toMatchObject({ status: 401 })
-    await expect(obtenerContadores({ id: 'usr-001', rol: 'constructor' })).rejects.toMatchObject({ status: 401 })
   })
 })

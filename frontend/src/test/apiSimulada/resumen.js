@@ -1,0 +1,87 @@
+// Simulador de la API (solo pruebas del frontend): la lógica de la entrega 1, que ahora vive en
+// src/services/resumen.service.js del repositorio del backend.
+import { historialRepository } from '../../repositories/atencion.repository.js'
+import { usuariosRepository } from '../../repositories/usuarios.repository.js'
+import { encuestasRepository, ticketsRepository } from '../../repositories/tickets.repository.js'
+import { fechaEnLima, hoyEnLima } from '../../utils/fechaLima.js'
+
+const ESTADOS_ABIERTOS = new Set(['abierto', 'en_atencion', 'en_espera', 'reabierto'])
+const ESTADOS_EN_COLA = new Set(['abierto', 'reabierto'])
+const PLAZO_ENCUESTA_MS = 7 * 24 * 60 * 60 * 1000
+
+const esAbierto = (ticket) => ESTADOS_ABIERTOS.has(ticket.estado)
+
+// encuestas aún a tiempo (7 días desde el cierre), la más urgente primero
+function encuestasPendientes(tickets, encuestas, ahora) {
+  const conEncuesta = new Set(encuestas.map((encuesta) => encuesta.ticketId))
+  return tickets
+    .filter((ticket) => ticket.estado === 'cerrado' && !conEncuesta.has(ticket.id))
+    .map((ticket) => ({ ticket, limite: Date.parse(ticket.cerradoEn) + PLAZO_ENCUESTA_MS }))
+    .filter(({ limite }) => limite >= ahora)
+    .sort((a, b) => a.limite - b.limite)
+    .map(({ ticket, limite }) => ({
+      ticketCodigo: ticket.codigo,
+      cerradoEn: ticket.cerradoEn,
+      fechaLimite: new Date(limite).toISOString(),
+    }))
+}
+
+function actividadDelUsuario(usuarioId) {
+  const tickets = ticketsRepository.findAll({ usuarioId })
+  const encuestas = encuestasRepository.findAll({ usuarioId })
+  return { tickets, encuestas, pendientes: encuestasPendientes(tickets, encuestas, Date.now()) }
+}
+
+const CONTADORES_POR_ROL = {
+  usuario(usuarioId) {
+    const { tickets, encuestas, pendientes } = actividadDelUsuario(usuarioId)
+    return {
+      ticketsAbiertos: tickets.filter(esAbierto).length,
+      ticketsReportados: tickets.length,
+      encuestasPendientes: pendientes.length,
+      encuestasRespondidas: encuestas.length,
+    }
+  },
+  tecnico(usuarioId) {
+    const asignados = ticketsRepository.findAll({ asignadoA: usuarioId })
+    const hoy = hoyEnLima()
+    return {
+      asignados: asignados.length,
+      enAtencion: asignados.filter(({ estado }) => estado === 'en_atencion').length,
+      enEspera: asignados.filter(({ estado }) => estado === 'en_espera').length,
+      resueltosHoy: asignados.filter(({ id, estado }) => estado === 'resuelto' && historialRepository.findAll({ ticketId: id, tipo: 'estado' }).some((evento) => evento.estado === 'resuelto' && fechaEnLima(evento.creadoEn) === hoy)).length,
+    }
+  },
+  supervisor() {
+    const enCola = ticketsRepository.findAll((ticket) => ticket.asignadoA === null && ESTADOS_EN_COLA.has(ticket.estado))
+    return { colaSinAsignar: enCola.length, colaTotal: ticketsRepository.findAll((ticket) => ticket.estado !== 'cerrado').length, usuariosTotal: usuariosRepository.findAll().length }
+  },
+}
+
+// GET /cuenta/contadores: los de la cabecera y del menú lateral, según el rol
+export function contadoresDe(cuenta) {
+  return CONTADORES_POR_ROL[cuenta.rol](cuenta.id)
+}
+
+const RESUMEN_DE_CUENTA_POR_ROL = {
+  usuario(usuarioId) {
+    const { tickets, pendientes } = actividadDelUsuario(usuarioId)
+    return {
+      ticketsReportados: tickets.length,
+      abiertosAhora: tickets.filter(esAbierto).length,
+      encuestaPendiente: pendientes[0] ?? null,
+    }
+  },
+  // técnico y supervisor solo muestran la fecha de creación de la cuenta
+  tecnico() {
+    return {}
+  },
+  supervisor() {
+    return {}
+  },
+}
+
+// GET /cuenta/resumen: el resumen de "Mi cuenta"
+export function resumenDeCuenta(usuario) {
+  return { ...RESUMEN_DE_CUENTA_POR_ROL[usuario.rol](usuario.id), cuentaCreada: usuario.creadoEn }
+}

@@ -8,6 +8,10 @@ describe('EncuestaPage (Vista 6.1)', () => {
     resetDb()
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renderiza el formulario de encuesta y el resumen del ticket a evaluar', async () => {
     renderApp('/usuario/encuestas/TCK-2026-00130/evaluar', { usuario: DEMO.usuario })
 
@@ -20,6 +24,9 @@ describe('EncuestaPage (Vista 6.1)', () => {
   })
 
   it('permite calificar un ticket pendiente y enviar la encuesta', async () => {
+    // TCK-2026-00131 se cerró el 28/09: se puede responder hasta el 05/10
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime('2026-10-01T15:00:00.000Z')
     const { user } = renderApp('/usuario/encuestas/TCK-2026-00131/evaluar', { usuario: DEMO.usuario })
 
     expect(await screen.findByText('¿Cómo fue la atención de tu ticket?')).toBeInTheDocument()
@@ -37,6 +44,18 @@ describe('EncuestaPage (Vista 6.1)', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 1, name: 'Mis encuestas' })).toBeInTheDocument()
     })
+    expect(await screen.findByText('TCK-2026-00131')).toBeInTheDocument()
+  })
+
+  it('después del plazo avisa que ya no se puede responder', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime('2026-10-06T15:00:00.000Z')
+    const { user } = renderApp('/usuario/encuestas/TCK-2026-00131/evaluar', { usuario: DEMO.usuario })
+
+    expect(await screen.findByText('¿Cómo fue la atención de tu ticket?')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Enviar encuesta' }))
+
+    expect(await screen.findByText('El plazo de 7 días para responder esta encuesta venció.')).toBeInTheDocument()
   })
 })
 
