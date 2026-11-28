@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { ROUTES } from '../../routes/routePaths.js'
 import { cambiarEstado, eliminar, listar } from '../../services/categorias.service.js'
@@ -82,7 +81,6 @@ function CatalogoContent({ status, total, onRetry, children }) {
 // Catálogo de categorías y subcategorías (HU-2).
 export default function CategoriasPage() {
   const consulta = useConsultaRefrescable(listar)
-  const { usuario } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
   const tablaRef = useRef(null)
@@ -120,7 +118,7 @@ export default function CategoriasPage() {
         confirm,
         operacion: (confirmado) => {
           setCambiandoId(elemento.id)
-          return cambiarEstado(elemento.id, activa, usuario.id, { confirmado })
+          return cambiarEstado(elemento.id, activa, { confirmado })
         },
       })
       // se recarga aunque se cancele, porque los tickets en curso pudieron cambiar
@@ -142,7 +140,7 @@ export default function CategoriasPage() {
       titulo: `¿Eliminar la ${tipo}?`,
       mensaje: `«${elemento.nombre}» se quitará del catálogo. Esta acción no se puede deshacer.`,
       confirmText: `Eliminar ${tipo}`,
-      eliminarEnServicio: () => eliminar(elemento.id, usuario.id),
+      eliminarEnServicio: () => eliminar(elemento.id),
       exito: `${nombreDeTipo(elemento.tipo, { mayuscula: true })} “${elemento.nombre}” eliminada correctamente.`,
     })
     // su botón desapareció, así que el foco pasa a la tabla

@@ -1,90 +1,41 @@
 import { describe, expect, it } from 'vitest'
 import { habilitacionesRepository } from '../repositories/catalogo.repository.js'
-import { readTable } from '../repositories/db.js'
-import { usuariosRepository } from '../repositories/usuarios.repository.js'
+import { espiarApi, ultimaPeticion } from '../test/espiarApi.js'
+import { DEMO, guardarSesion } from '../test/test-utils.jsx'
 import { guardarMatriz, obtenerMatriz } from './habilitaciones.service.js'
 
-const SUPERVISORA = 'usr-003'
-const JULIO = 'usr-002'
-const SANDRA = 'usr-010'
-
+// las reglas de la matriz se prueban en backend/test; aquí, las peticiones del navegador
 const fallo = (promise) => promise.catch((error) => error)
-const habilitadasDe = (tecnicoId) =>
-  habilitacionesRepository
-    .findAll({ tecnicoId })
-    .map(({ categoriaId }) => categoriaId)
-    .sort()
 
-describe('habilitaciones.service · obtenerMatriz', () => {
-  it('devuelve las categorías por nombre con sus tickets en curso', async () => {
-    const { categorias } = await obtenerMatriz()
+describe('habilitaciones.service', () => {
+  it('obtenerMatriz pide las categorías y los técnicos activos', async () => {
+    guardarSesion(DEMO.supervisor)
+    const fetch = espiarApi()
 
-    expect(categorias.map(({ nombre }) => nombre)).toEqual([
-      'Accesos y cerraduras',
-      'Audiovisuales',
-      'Climatización',
-      'Eléctrico',
-      'Limpieza',
-      'Mobiliario',
-      'Redes y conectividad',
-    ])
-    expect(categorias[1]).toEqual({ id: 'cat-01', nombre: 'Audiovisuales', activa: true, ticketsEnCurso: 2 })
+    const { categorias, tecnicos } = await obtenerMatriz()
+
+    expect(categorias).toHaveLength(7)
+    expect(tecnicos.map(({ id }) => id)).toEqual(['usr-009', 'usr-002', 'usr-008', 'usr-010'])
+    expect(ultimaPeticion(fetch)).toEqual({ ruta: '/habilitaciones', method: 'GET', token: 'Bearer prueba.usr-003' })
   })
 
-  it('devuelve los técnicos activos con su especialidad declarada, su carga y sus habilitaciones', async () => {
-    const { tecnicos } = await obtenerMatriz()
+  it('guardarMatriz manda con PUT solo los técnicos que cambiaron y devuelve la matriz nueva', async () => {
+    guardarSesion(DEMO.supervisor)
+    const fetch = espiarApi()
+    const cambios = { 'usr-002': ['cat-01', 'cat-06'] }
 
-    expect(tecnicos.map(({ id }) => id)).toEqual(['usr-009', JULIO, 'usr-008', SANDRA])
-    expect(tecnicos[1]).toEqual({
-      id: JULIO,
-      nombres: 'Julio César',
-      apellidos: 'Paredes Soto',
-      especialidades: ['cat-01', 'cat-02'],
-      carga: 2,
-      habilitadas: ['cat-07', 'cat-01', 'cat-02'],
-    })
-    expect(tecnicos[0]).toMatchObject({ especialidades: ['cat-07', 'cat-04'], carga: 0, habilitadas: ['cat-07', 'cat-04', 'cat-05'] })
-    expect(tecnicos[3]).toMatchObject({ carga: 1 })
+    const matriz = await guardarMatriz(cambios)
+
+    expect(ultimaPeticion(fetch)).toMatchObject({ ruta: '/habilitaciones', method: 'PUT', datos: cambios })
+    expect(matriz.tecnicos.find(({ id }) => id === 'usr-002').habilitadas).toEqual(['cat-01', 'cat-06'])
+    expect(habilitacionesRepository.findAll({ tecnicoId: 'usr-002' })).toHaveLength(2)
   })
 
-  it('no incluye a los técnicos bloqueados ni a los supervisores', async () => {
-    usuariosRepository.update('usr-008', { estado: 'bloqueado', motivoBloqueo: 'Prueba.' })
+  it('un técnico no puede ver ni guardar la matriz', async () => {
+    guardarSesion(DEMO.tecnico)
 
-    const { tecnicos } = await obtenerMatriz()
-
-    expect(tecnicos.map(({ id }) => id)).toEqual(['usr-009', JULIO, SANDRA])
-  })
-})
-
-describe('habilitaciones.service · guardarMatriz', () => {
-  it('deja a cada técnico enviado con las categorías indicadas y no toca a los demás', async () => {
-    const matriz = await guardarMatriz({ [JULIO]: ['cat-01', 'cat-06'], [SANDRA]: [] }, SUPERVISORA)
-
-    expect(habilitadasDe(JULIO)).toEqual(['cat-01', 'cat-06'])
-    expect(habilitadasDe(SANDRA)).toEqual([])
-    expect(habilitadasDe('usr-009')).toEqual(['cat-04', 'cat-05', 'cat-07'])
-    expect(matriz.tecnicos.find(({ id }) => id === JULIO).habilitadas).toEqual(['cat-01', 'cat-06'])
-    expect(readTable('habilitaciones').filter(({ tecnicoId }) => tecnicoId === JULIO)).toHaveLength(2)
-  })
-
-  it('no duplica una habilitación que ya existe', async () => {
-    await guardarMatriz({ [JULIO]: ['cat-01', 'cat-01', 'cat-02', 'cat-07'] }, SUPERVISORA)
-
-    expect(habilitacionesRepository.findAll({ tecnicoId: JULIO })).toHaveLength(3)
-    expect(readTable('habilitaciones')).toHaveLength(10)
-  })
-
-  it('rechaza técnicos que no están activos y categorías que no existen, sin guardar nada', async () => {
-    const usuario = await fallo(guardarMatriz({ 'usr-001': ['cat-01'] }, SUPERVISORA))
-    expect(usuario).toMatchObject({ status: 400, code: 'VALIDATION_ERROR' })
-
-    const categoria = await fallo(guardarMatriz({ [JULIO]: ['cat-01'], [SANDRA]: ['cat-99'] }, SUPERVISORA))
-    expect(categoria).toMatchObject({ status: 400, code: 'VALIDATION_ERROR' })
-    expect(habilitadasDe(JULIO)).toEqual(['cat-01', 'cat-02', 'cat-07'])
-  })
-
-  it('solo un supervisor activo puede guardar la matriz', async () => {
-    expect(await fallo(guardarMatriz({ [JULIO]: [] }, JULIO))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
-    expect(habilitadasDe(JULIO)).toHaveLength(3)
+    expect(await fallo(obtenerMatriz())).toMatchObject({ status: 403, code: 'FORBIDDEN' })
+    expect(await fallo(guardarMatriz({ 'usr-002': [] }))).toMatchObject({ status: 403 })
+    expect(habilitacionesRepository.findAll({ tecnicoId: 'usr-002' })).toHaveLength(3)
   })
 })

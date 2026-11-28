@@ -1,8 +1,11 @@
 import { usuariosRepository } from '../../repositories/usuarios.repository.js'
 import { ServiceError, errorInesperado } from '../../services/ServiceError.js'
 import * as auth from './auth.js'
+import * as categorias from './categorias.js'
+import * as habilitaciones from './habilitaciones.js'
 import * as invitaciones from './invitaciones.js'
 import * as solicitudesAcceso from './solicitudesAcceso.js'
+import * as ubicaciones from './ubicaciones.js'
 import * as usuarios from './usuarios.js'
 
 // el token de prueba lleva el id de la cuenta; la API real firma un JWT
@@ -16,8 +19,11 @@ function cuentaDelToken(headers) {
 }
 
 const TOKEN = '([^/]+)'
+const ID = '([^/]+)'
+// como permitirRoles('supervisor') del backend
+const SUPERVISOR = { sesion: true, roles: ['supervisor'] }
 
-// las mismas rutas de HU-1 que src/routes del repositorio del backend
+// las mismas rutas de HU-1 y HU-2 que src/routes del repositorio del backend
 const RUTAS = [
   ['POST', '/auth/login', async ({ body }) => {
     const { usuario } = await auth.iniciarSesion(body)
@@ -42,11 +48,33 @@ const RUTAS = [
   ['POST', `/invitaciones/${TOKEN}/rechazar`, ({ params }) => invitaciones.rechazar(params[0])],
   ['POST', '/solicitudes-acceso', ({ cuenta, body }) => solicitudesAcceso.solicitar(cuenta.id, body?.recurso),
     { sesion: true, status: 201 }],
-].map(([metodo, ruta, atender, { sesion = false, status = 200 } = {}]) => ({
+  // HU-2: /disponibles va antes de /categorias/:id
+  ['GET', '/categorias/disponibles', () => categorias.listarDisponibles(), { sesion: true }],
+  ['GET', '/categorias', () => categorias.listar(), SUPERVISOR],
+  ['POST', '/categorias', ({ body }) => categorias.crear(body), { ...SUPERVISOR, status: 201 }],
+  ['GET', `/categorias/${ID}`, ({ params }) => categorias.obtener(params[0]), SUPERVISOR],
+  ['PATCH', `/categorias/${ID}`, ({ params, body }) => categorias.actualizar(params[0], body), SUPERVISOR],
+  ['PATCH', `/categorias/${ID}/estado`, ({ params, body }) => categorias.cambiarEstado(params[0], body), SUPERVISOR],
+  ['DELETE', `/categorias/${ID}`, ({ params }) => categorias.eliminar(params[0]), SUPERVISOR],
+  ['GET', '/sedes', () => ubicaciones.listarSedes(), SUPERVISOR],
+  ['POST', '/sedes', ({ body }) => ubicaciones.crearSede(body), { ...SUPERVISOR, status: 201 }],
+  ['PATCH', `/sedes/${ID}`, ({ params, body }) => ubicaciones.actualizarSede(params[0], body), SUPERVISOR],
+  ['DELETE', `/sedes/${ID}`, ({ params }) => ubicaciones.eliminarSede(params[0]), SUPERVISOR],
+  ['POST', '/pabellones', ({ body }) => ubicaciones.crearPabellon(body), { ...SUPERVISOR, status: 201 }],
+  ['PATCH', `/pabellones/${ID}`, ({ params, body }) => ubicaciones.actualizarPabellon(params[0], body), SUPERVISOR],
+  ['DELETE', `/pabellones/${ID}`, ({ params }) => ubicaciones.eliminarPabellon(params[0]), SUPERVISOR],
+  ['GET', '/ambientes', () => ubicaciones.listarAmbientes(), { sesion: true }],
+  ['POST', '/ambientes', ({ body }) => ubicaciones.crearAmbiente(body), { ...SUPERVISOR, status: 201 }],
+  ['PATCH', `/ambientes/${ID}`, ({ params, body }) => ubicaciones.actualizarAmbiente(params[0], body), SUPERVISOR],
+  ['DELETE', `/ambientes/${ID}`, ({ params }) => ubicaciones.eliminarAmbiente(params[0]), SUPERVISOR],
+  ['GET', '/habilitaciones', () => habilitaciones.obtenerMatriz(), SUPERVISOR],
+  ['PUT', '/habilitaciones', ({ body }) => habilitaciones.guardarMatriz(body), SUPERVISOR],
+].map(([metodo, ruta, atender, { sesion = false, roles = null, status = 200 } = {}]) => ({
   metodo,
   patron: new RegExp(`^${ruta}$`),
   atender,
   sesion,
+  roles,
   status,
 }))
 
@@ -57,15 +85,18 @@ function responder(status, datos) {
   })
 }
 
-// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1 como la API, sobre los datos del navegador.
+// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1 y HU-2 como la API, sobre los datos del navegador.
 export async function fetchSimulado(url, { method = 'GET', headers, body } = {}) {
   const { pathname, searchParams } = new URL(url)
   const ruta = pathname.replace(/^\/api/, '')
   try {
-    for (const { metodo, patron, atender, sesion, status } of RUTAS) {
+    for (const { metodo, patron, atender, sesion, roles, status } of RUTAS) {
       const coincide = method === metodo && patron.exec(ruta)
       if (!coincide) continue
       const cuenta = sesion ? cuentaDelToken(headers) : null
+      if (roles && !roles.includes(cuenta.rol)) {
+        throw new ServiceError(403, 'FORBIDDEN', 'Tu rol no tiene permiso para realizar esta acción.')
+      }
       const params = coincide.slice(1).map(decodeURIComponent)
       const datos = await atender({ body: body === undefined ? undefined : JSON.parse(body), query: searchParams, params, cuenta })
       return responder(datos === null ? 204 : status, datos)

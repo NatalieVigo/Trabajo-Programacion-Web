@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
-import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { guardarMatriz, obtenerMatriz } from '../../services/habilitaciones.service.js'
 import { Alert, Button, Card, EmptyState, PageHeader, useConfirm, useToast } from '../../shared/components'
@@ -17,7 +16,6 @@ const invitarTecnico = <InvitarTecnicoButton />
 
 // se edita una copia local y al guardar solo se envían los técnicos que cambiaron
 function EditorDeMatriz({ matrizInicial }) {
-  const { usuario } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
   const [matriz, setMatriz] = useState(matrizInicial)
@@ -32,7 +30,7 @@ function EditorDeMatriz({ matrizInicial }) {
     setGuardando(true)
     try {
       const cambios = Object.fromEntries(cambiados.map((tecnicoId) => [tecnicoId, habilitadas[tecnicoId]]))
-      const actualizada = await guardarMatriz(cambios, usuario.id)
+      const actualizada = await guardarMatriz(cambios)
       setMatriz(actualizada)
       setHabilitadas(habilitadasDe(actualizada.tecnicos))
       toast.success(`Se guardaron las habilitaciones de ${pluralize(cambiados.length, 'técnico', 'técnicos')}.`)

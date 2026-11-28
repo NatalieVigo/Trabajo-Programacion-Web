@@ -1,7 +1,7 @@
-import { claveDeNombre } from '../utils/catalogoValidators.js'
-import { ServiceError } from './ServiceError.js'
+import { claveDeNombre } from '../../utils/catalogoValidators.js'
+import { ServiceError } from '../../services/ServiceError.js'
 
-// Helpers que comparten los servicios del catálogo (HU-2).
+// Helpers que comparten los simuladores del catálogo (HU-2).
 
 export function pick(objeto, campos) {
   return Object.fromEntries(campos.filter((campo) => Object.hasOwn(objeto, campo)).map((campo) => [campo, objeto[campo]]))

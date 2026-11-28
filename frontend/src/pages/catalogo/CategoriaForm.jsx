@@ -1,6 +1,5 @@
 import { useId, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { useForm } from '../../hooks/useForm.js'
 import { ROUTES } from '../../routes/routePaths.js'
@@ -60,7 +59,6 @@ export default function CategoriaForm({ categorias, elemento }) {
   const navigate = useNavigate()
   const toast = useToast()
   const confirm = useConfirm()
-  const { usuario } = useAuth()
   const asideId = useId()
   const form = useForm({ initialValues: valoresDe(elemento), validate: validateCategoria })
   const [envioIntentado, setEnvioIntentado] = useState(false)
@@ -81,7 +79,7 @@ export default function CategoriaForm({ categorias, elemento }) {
         desactiva: Boolean(elemento?.activa && !values.activa),
         confirm,
         operacion: (confirmado) =>
-          elemento ? actualizar(elemento.id, { ...values, confirmado }, usuario.id) : crear(values, usuario.id),
+          elemento ? actualizar(elemento.id, { ...values, confirmado }) : crear(values),
       })
       if (cancelado) return null
       const accion = elemento ? 'actualizada' : 'creada'

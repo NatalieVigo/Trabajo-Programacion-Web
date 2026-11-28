@@ -1,5 +1,4 @@
 import { useRef } from 'react'
-import { useAuth } from '../../hooks/useAuth.js'
 import { useForm } from '../../hooks/useForm.js'
 import { actualizarPabellon, crearPabellon } from '../../services/ubicaciones.service.js'
 import { FormField, SelectInput, TextInput, useToast } from '../../shared/components'
@@ -8,7 +7,6 @@ import FormularioModal from './FormularioModal.jsx'
 
 // Si se crea desde una sede, sedeId ya viene elegida.
 export default function PabellonModal({ pabellon, sedeId, sedes, onClose, onGuardado }) {
-  const { usuario } = useAuth()
   const toast = useToast()
   const nombreRef = useRef(null)
   const form = useForm({
@@ -19,8 +17,8 @@ export default function PabellonModal({ pabellon, sedeId, sedes, onClose, onGuar
   async function guardar(values) {
     try {
       const guardado = pabellon
-        ? await actualizarPabellon(pabellon.id, values, usuario.id)
-        : await crearPabellon(values, usuario.id)
+        ? await actualizarPabellon(pabellon.id, values)
+        : await crearPabellon(values)
       toast.success(`Pabellón “${guardado.nombre}” ${pabellon ? 'actualizado' : 'creado'} correctamente.`)
       onGuardado(guardado)
     } catch (error) {
