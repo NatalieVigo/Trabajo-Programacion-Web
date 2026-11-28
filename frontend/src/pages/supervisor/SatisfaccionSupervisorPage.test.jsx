@@ -60,6 +60,20 @@ describe('SatisfaccionSupervisorPage (Vista 6.3)', () => {
     expect(screen.getAllByText(/^«/)).toHaveLength(1)
   })
 
+  it('se acota por periodo; con una sola categoría la nota solo indica el aspecto peor calificado', async () => {
+    const { user } = renderApp('/supervisor/satisfaccion', { usuario: DEMO.supervisor })
+    expect(await screen.findByText(/^7 encuestas respondidas/)).toBeInTheDocument()
+
+    // el 01/09 y el 02/09 solo está la encuesta de Iván (Eléctrico): rapidez 4, trato 5 y solución 4
+    await user.click(screen.getByText(/^Periodo:/))
+    await user.clear(screen.getByLabelText('Desde'))
+    await user.type(screen.getByLabelText('Desde'), '2026-09-01')
+    await user.click(screen.getByRole('button', { name: 'Aplicar periodo' }))
+
+    expect(await screen.findByText('1 encuesta respondida · tasa de respuesta 100 % · promedio general 4.0 de 5')).toBeInTheDocument()
+    expect(screen.getByText('Rapidez es el aspecto peor calificado del área.')).toBeInTheDocument()
+  })
+
   it('un periodo sin encuestas muestra las tablas vacías', async () => {
     vi.setSystemTime('2026-11-28T15:00:00.000Z')
     renderApp('/supervisor/satisfaccion', { usuario: DEMO.supervisor })

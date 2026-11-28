@@ -4,7 +4,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { obtenerReporteSatisfaccionSupervisor } from '../../services/encuestas.service.js'
 import { rangoMetricasInicial } from '../../services/metricas.service.js'
 import { Button, Card, PageHeader, SelectInput } from '../../shared/components'
-import { formatDate } from '../../utils/format.js'
+import { formatDate, pluralize } from '../../utils/format.js'
 import PeriodoFiltro from './metricas/PeriodoFiltro.jsx'
 import './metricas/Metricas.css'
 import './SatisfaccionSupervisorPage.css'
@@ -20,12 +20,14 @@ function tonoDelPuntaje(puntaje) {
 
 const conUnDecimal = (valor) => (valor === null || valor === undefined ? '—' : Number(valor).toFixed(1))
 
-// la categoría con menor promedio y el aspecto peor calificado del periodo
+// la categoría con menor promedio (si hay más de una) y el aspecto peor calificado del periodo
 function notaDelPeriodo({ porCategoria, promedioPorAspecto }) {
   if (porCategoria.length === 0) return null
-  const [menor] = [...porCategoria].sort((a, b) => a.general - b.general || a.categoria.localeCompare(b.categoria))
   const [[aspecto]] = Object.entries(promedioPorAspecto).sort(([, a], [, b]) => a - b)
-  return `${menor.categoria} es la categoría con menor promedio (${conUnDecimal(menor.general)}). ${ASPECTOS[aspecto]} es el aspecto peor calificado del área.`
+  const peorAspecto = `${ASPECTOS[aspecto]} es el aspecto peor calificado del área.`
+  if (porCategoria.length === 1) return peorAspecto
+  const [menor] = [...porCategoria].sort((a, b) => a.general - b.general || a.categoria.localeCompare(b.categoria))
+  return `${menor.categoria} es la categoría con menor promedio (${conUnDecimal(menor.general)}). ${peorAspecto}`
 }
 
 function TablaPromedios({ titulo, columna, filas, nombre, secundaria }) {
@@ -82,7 +84,7 @@ export default function SatisfaccionSupervisorPage() {
   useDocumentTitle('Satisfacción por técnico y categoría')
 
   const subtitulo = reporte
-    ? `${reporte.totalRespondidas} encuestas respondidas · tasa de respuesta ${reporte.tasaRespuesta} % · promedio general ${reporte.totalRespondidas ? conUnDecimal(reporte.promedioGeneral) : '—'} de 5`
+    ? `${pluralize(reporte.totalRespondidas, 'encuesta respondida', 'encuestas respondidas')} · tasa de respuesta ${reporte.tasaRespuesta} % · promedio general ${reporte.totalRespondidas ? conUnDecimal(reporte.promedioGeneral) : '—'} de 5`
     : undefined
 
   return (
