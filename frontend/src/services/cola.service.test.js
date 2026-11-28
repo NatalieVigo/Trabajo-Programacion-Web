@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { historialRepository, bitacoraRepository } from '../repositories/atencion.repository.js'
 import { DB_STORAGE_KEY } from '../repositories/db.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
+import { guardarSesion } from '../test/test-utils.jsx'
 import { obtenerAtencion } from './atencion.service.js'
 import { asignarTickets, cambiarPrioridadTickets, devolverTickets, listarBandeja, listarCola } from './cola.service.js'
 
@@ -38,7 +39,9 @@ describe('cola.service · HU-4', () => {
     await cambiarPrioridadTickets(['tck-00141'], 'critica', 'Afecta a un evento institucional.', SUPERVISOR)
     expect(ticketsRepository.findById('tck-00141')).toMatchObject({ prioridad: 'critica', tiempoEsperadoHoras: 2 })
     expect(historialRepository.findAll({ ticketId: 'tck-00141' }).at(-1)).toMatchObject({ tipo: 'prioridad', prioridadNueva: 'critica', motivo: 'Afecta a un evento institucional.' })
-    expect((await obtenerAtencion('TCK-2026-00141', SUPERVISOR)).tiempos.esperadoHoras).toBe(2)
+    // la atención (HU-5) se pide a la API con la sesión del supervisor
+    guardarSesion(SUPERVISOR)
+    expect((await obtenerAtencion('TCK-2026-00141')).tiempos.esperadoHoras).toBe(2)
     await expect(cambiarPrioridadTickets([TICKET], 'baja', '', SUPERVISOR)).rejects.toMatchObject({ status: 400 })
   })
 

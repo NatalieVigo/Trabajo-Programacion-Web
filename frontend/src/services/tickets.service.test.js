@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { resetDb, readTable, writeTable } from '../repositories/db.js'
+import { guardarSesion } from '../test/test-utils.jsx'
 import { agregarEntrada, obtenerAtencion } from './atencion.service.js'
 import { listarCola } from './cola.service.js'
 import { ServiceError } from './ServiceError.js'
@@ -128,7 +129,9 @@ describe('tickets.service · existeTicketEnCurso', () => {
     expect((await listarCola('usr-003')).tickets).toContainEqual(
       expect.objectContaining({ codigo: ticket.codigo, ambiente: 'A-305' }),
     )
-    await expect(obtenerAtencion(ticket.codigo, 'usr-003')).resolves.toMatchObject({
+    // la atención (HU-5) se pide a la API con la sesión de quien consulta
+    guardarSesion('usr-003')
+    await expect(obtenerAtencion(ticket.codigo)).resolves.toMatchObject({
       ticket: { ambiente: { id: 'amb-02', codigo: 'A-305' } },
     })
   })
@@ -162,9 +165,11 @@ describe('tickets.service · cancelación y reapertura', () => {
 
   it('no permite agregar comentarios a un ticket cancelado', async () => {
     const cancelado = await cancelarTicket('tck-00147', USUARIO)
+    // la bitácora (HU-5) se escribe en la API con la sesión de quien reportó el ticket
+    guardarSesion(USUARIO)
 
     await expect(
-      agregarEntrada(cancelado.codigo, { tipo: 'publico', mensaje: 'Comentario después de cancelar.' }, USUARIO),
+      agregarEntrada(cancelado.codigo, { tipo: 'publico', mensaje: 'Comentario después de cancelar.' }),
     ).rejects.toMatchObject({ code: 'TICKET_CLOSED' })
   })
 
