@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
-import { bitacoraRepository } from '../../repositories/atencion.repository.js'
 import { readTable, resetDb, writeTable } from '../../repositories/db.js'
 import { listarCola } from '../../services/cola.service.js'
 import { DEMO, renderApp } from '../../test/test-utils.jsx'
@@ -102,17 +101,13 @@ describe('HU-3 · registro y seguimiento de tickets', () => {
     expect(screen.queryByRole('button', { name: 'TCK-2026-00144' })).not.toBeInTheDocument()
   })
 
-  it('guarda los comentarios del usuario en la bitácora compartida con atención', async () => {
-    const { user } = renderApp('/usuario/tickets/tck-00144', { usuario: DEMO.usuario })
+  it('avisa que los comentarios y la bitácora requieren conectar la API de HU-5', async () => {
+    renderApp('/usuario/tickets/tck-00144', { usuario: DEMO.usuario })
 
     await screen.findByRole('heading', { name: 'TCK-2026-00144' })
-    await user.type(screen.getByLabelText('AGREGAR INFORMACIÓN'), 'La falla continúa en este momento.')
-    await user.click(screen.getByRole('button', { name: 'Enviar comentario' }))
-
-    await waitFor(() => {
-      expect(bitacoraRepository.findAll().some((entry) => entry.mensaje === 'La falla continúa en este momento.')).toBe(true)
-    })
-    expect(await screen.findByText('La falla continúa en este momento.')).toBeInTheDocument()
+    expect(screen.getByText(/La bitácora y los comentarios estarán disponibles cuando se conecte el flujo de atención/))
+      .toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Enviar comentario' })).not.toBeInTheDocument()
   })
 
   it('no ofrece la encuesta mientras el ticket solo está resuelto', async () => {

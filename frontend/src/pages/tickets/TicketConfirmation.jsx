@@ -35,9 +35,9 @@ export const TicketConfirmation = ({ ticket }) => {
         }
     };
 
-    const ambiente = ambientesRepository.findById(ticket?.ambienteId);
-    const categoria = categoriasRepository.findById(ticket?.categoriaId);
-    const subcategoria = subcategoriasRepository.findById(ticket?.subcategoriaId);
+    const ambiente = ticket?.ambiente ?? ambientesRepository.findById(ticket?.ambienteId);
+    const categoria = ticket?.categoria ?? categoriasRepository.findById(ticket?.categoriaId);
+    const subcategoria = ticket?.subcategoria ?? subcategoriasRepository.findById(ticket?.subcategoriaId);
     const tiempoEsperado = ticket?.tiempoEsperadoHoras
         ? `${ticket.tiempoEsperadoHoras} h hábiles`
         : 'En evaluación';

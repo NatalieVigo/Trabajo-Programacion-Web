@@ -11,13 +11,14 @@ import {
     useConfirm,
 } from "../../shared/components";
 import { encuestaEvaluarPath, ROUTES } from "../../routes/routePaths";
-import { ticketsRepository } from "../../repositories/tickets.repository.js";
-import { agregarEntrada, obtenerAtencion } from "../../services/atencion.service.js";
 import {
     cancelarTicket,
+    reabrirTicket,
+    listarMisTickets,
+} from "../../services/tickets.api.js";
+import {
     DIAS_PLAZO_REAPERTURA,
     estaDentroDelPlazoDeReapertura,
-    reabrirTicket,
 } from "../../services/tickets.service.js";
 import { formatDateTime, getDisplayName } from "../../utils/format.js";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -31,34 +32,32 @@ export const TicketDetail = () => {
     const confirm = useConfirm();
 
     const [detalle, setDetalle] = useState(null);
-    const [nuevoComentario, setNuevoComentario] = useState('');
     const [errorCarga, setErrorCarga] = useState('');
-    const [errorComentario, setErrorComentario] = useState('');
-    const [guardandoComentario, setGuardandoComentario] = useState(false);
     const [guardandoAccion, setGuardandoAccion] = useState(false);
     const [errorAccion, setErrorAccion] = useState('');
     const [exitoAccion, setExitoAccion] = useState('');
     const [mostrarFormularioReapertura, setMostrarFormularioReapertura] = useState(false);
     const [motivoReapertura, setMotivoReapertura] = useState('');
-    const [usuarioId, setUsuarioId] = useState('');
 
     useEffect(() => {
         let activo = true;
-        Promise.resolve().then(() => {
+        Promise.resolve().then(async () => {
             if (!usuario) throw new Error('Inicia sesión con una cuenta activa para consultar este ticket.');
 
-            const ticketPropio = ticketsRepository.findOne(
-                (ticket) =>
-                    (ticket.id === id || ticket.codigo === id) &&
-                    ticket.usuarioId === usuario.id,
-            );
+            const tickets = await listarMisTickets();
+            const ticketPropio = tickets.find((ticket) => ticket.id === id || ticket.codigo === id);
             if (!ticketPropio) throw new Error('El ticket no existe o no pertenece a tu cuenta.');
 
-            return obtenerAtencion(ticketPropio.codigo, usuario.id);
+            return {
+                ticket: ticketPropio,
+                bitacora: [],
+                eventos: [],
+                permisos: { comentar: false },
+                tiempos: { esperadoHoras: ticketPropio.tiempoEsperadoHoras },
+            };
         }).then(
             (atencion) => {
                 if (activo) {
-                    setUsuarioId(usuario.id);
                     setDetalle(atencion);
                 }
             },
@@ -69,27 +68,6 @@ export const TicketDetail = () => {
 
         return () => { activo = false; };
     }, [id, usuario]);
-
-    const handleEnviarComentario = async (e) => {
-        e.preventDefault();
-        if (!nuevoComentario.trim() || !detalle || guardandoComentario) return;
-
-        setGuardandoComentario(true);
-        setErrorComentario('');
-        try {
-            const atencionActualizada = await agregarEntrada(
-                detalle.ticket.codigo,
-                { tipo: 'publico', mensaje: nuevoComentario },
-                usuarioId,
-            );
-            setDetalle(atencionActualizada);
-            setNuevoComentario('');
-        } catch (reason) {
-            setErrorComentario(reason.message || 'No se pudo guardar el comentario.');
-        } finally {
-            setGuardandoComentario(false);
-        }
-    };
 
     const handleVolver = () => {
         if (ROUTES?.usuarioTickets) {
@@ -119,7 +97,7 @@ export const TicketDetail = () => {
         );
     }
 
-    const { ticket, bitacora, eventos, permisos } = detalle;
+    const { ticket, bitacora, eventos } = detalle;
     const estado = ticket.estado || 'abierto';
     const prioridad = ticket.prioridad || 'baja';
     const fechaLimpia = formatDateTime(ticket.creadoEn) || '—';
@@ -130,14 +108,9 @@ export const TicketDetail = () => {
     const tecnicoNombre = ticket.tecnico ? getDisplayName(ticket.tecnico) : 'Pendiente';
     const asignacion = eventos.findLast((evento) => evento.tipo === 'asignacion');
     const supervisorNombre = asignacion?.autor ? getDisplayName(asignacion.autor) : 'El supervisor';
-    const puedeCancelar = !ticket.tecnico && ['abierto', 'reabierto'].includes(estado);
+    const puedeCancelar = !ticket.tecnico && !ticket.asignadoA && ['abierto', 'reabierto'].includes(estado);
     const puedeReabrir = estaDentroDelPlazoDeReapertura(ticket);
     const pasoDeAtencion = pasoResuelto ? 'hecho' : pasoAtencion ? 'en-curso' : 'pendiente';
-
-    const refrescarDetalle = async () => {
-        const actualizada = await obtenerAtencion(ticket.codigo, usuarioId);
-        setDetalle(actualizada);
-    };
 
     const handleCancelarTicket = async () => {
         const confirmado = await confirm({
@@ -153,8 +126,8 @@ export const TicketDetail = () => {
         setErrorAccion('');
         setExitoAccion('');
         try {
-            await cancelarTicket(ticket.id, usuarioId);
-            await refrescarDetalle();
+            const actualizado = await cancelarTicket(ticket.id);
+            setDetalle((actual) => ({ ...actual, ticket: { ...actual.ticket, ...actualizado } }));
             setExitoAccion('El ticket fue cancelado.');
         } catch (reason) {
             setErrorAccion(reason.message || 'No se pudo cancelar el ticket.');
@@ -171,8 +144,8 @@ export const TicketDetail = () => {
         setErrorAccion('');
         setExitoAccion('');
         try {
-            await reabrirTicket(ticket.id, motivoReapertura, usuarioId);
-            await refrescarDetalle();
+            const actualizado = await reabrirTicket(ticket.id, motivoReapertura);
+            setDetalle((actual) => ({ ...actual, ticket: { ...actual.ticket, ...actualizado } }));
             setMotivoReapertura('');
             setMostrarFormularioReapertura(false);
             setExitoAccion('El ticket fue reabierto y volvió a la cola de atención.');
@@ -203,11 +176,6 @@ export const TicketDetail = () => {
                     <p className="ticket-cabecera__asunto">{ticket.asunto}</p>
                 </div>
                 <div className="ticket-cabecera__acciones">
-                    {permisos.comentar && (
-                        <Button variant="secondary" onClick={() => document.getElementById('comentario-input')?.focus()}>
-                            Agregar información
-                        </Button>
-                    )}
                     {/* la encuesta se habilita al cerrar, no al resolver */}
                     {estado === 'cerrado' && (
                         <Button onClick={() => navigate(encuestaEvaluarPath(ticket.codigo))}>
@@ -272,37 +240,11 @@ export const TicketDetail = () => {
                     <h2 id="detalle-bitacora-titulo" className="bitacora-panel__titulo detalle-ticket__titulo">
                         Bitácora de la atención
                     </h2>
-                    {errorComentario && <Alert variant="error">{errorComentario}</Alert>}
                     {bitacora.length > 0 && <Bitacora entradas={bitacora} aria-label="Entradas de la bitácora" />}
 
-                    {permisos.comentar && estado !== 'cerrado' ? (
-                        <form className="detalle-ticket__formulario detalle-ticket__comentario" onSubmit={handleEnviarComentario}>
-                            <div className="field">
-                                <label className="field__label" htmlFor="comentario-input">AGREGAR INFORMACIÓN</label>
-                                <div className="control">
-                                    <textarea
-                                        id="comentario-input"
-                                        className="control__input detalle-ticket__texto"
-                                        rows={3}
-                                        maxLength={600}
-                                        placeholder="Escribe aquí si tienes un dato nuevo que ayude al técnico..."
-                                        value={nuevoComentario}
-                                        onChange={(e) => setNuevoComentario(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="detalle-ticket__envio">
-                                <Button type="submit" variant="primary" disabled={guardandoComentario || !nuevoComentario.trim()}>
-                                    {guardandoComentario ? 'Enviando…' : 'Enviar comentario'}
-                                </Button>
-                                <span className="detalle-ticket__nota">
-                                    Las notas internas del equipo técnico no se muestran aquí.
-                                </span>
-                            </div>
-                        </form>
-                    ) : (
-                        <p className="bitacora-panel__lectura">Este ticket ya no admite comentarios.</p>
-                    )}
+                    <p className="bitacora-panel__lectura">
+                        La bitácora y los comentarios estarán disponibles cuando se conecte el flujo de atención (HU-5).
+                    </p>
                 </Card>
 
                 <aside className="ticket-atencion__lateral" aria-label="Datos del ticket">
@@ -333,7 +275,7 @@ export const TicketDetail = () => {
                             </div>
                             <div className="ticket-datos__fila">
                                 <dt>Atención esperada</dt>
-                                <dd>{detalle.tiempos.esperadoHoras} h</dd>
+                                <dd>{detalle.tiempos.esperadoHoras ? `${detalle.tiempos.esperadoHoras} h` : '—'}</dd>
                             </div>
                         </dl>
                         {ticket.descripcion && <blockquote className="ticket-dato-card__cita">«{ticket.descripcion}»</blockquote>}
