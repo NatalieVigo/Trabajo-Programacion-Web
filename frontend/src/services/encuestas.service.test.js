@@ -6,6 +6,7 @@ import {
   DIAS_PLAZO_EDICION,
   obtenerEncuestaPorTicket,
   obtenerEncuestasUsuario,
+  obtenerReporteSatisfaccionSupervisor,
   registrarEncuesta,
 } from './encuestas.service.js'
 
@@ -78,6 +79,31 @@ describe('encuestas.service', () => {
       tecnicoNombre: 'Iván Zegarra Pinto',
       editable: false,
     })
+  })
+
+  it('genera el reporte de satisfacción del periodo para el supervisor y filtra comentarios', async () => {
+    guardarSesion(DEMO.supervisor)
+    const fetch = espiarApi()
+    const agosto = { desde: '2026-08-01', hasta: '2026-09-01' }
+
+    const reporte = await obtenerReporteSatisfaccionSupervisor({ ...agosto, filtroPuntajeComentario: 'todos' })
+
+    expect(ultimaPeticion(fetch).ruta).toBe('/encuestas/satisfaccion?desde=2026-08-01&hasta=2026-09-01&puntaje=todos')
+    expect(reporte).toMatchObject({ totalRespondidas: 7, promedioGeneral: 4.3, tasaRespuesta: 100 })
+    expect(reporte.tablaTecnicos).toHaveLength(4)
+    expect(reporte.porCategoria).toHaveLength(5)
+    expect(reporte.comentarios).toHaveLength(5)
+
+    const bajos = await obtenerReporteSatisfaccionSupervisor({ ...agosto, filtroPuntajeComentario: '1_3' })
+    expect(bajos.comentarios.map((c) => c.puntaje)).toEqual([3])
+    const altos = await obtenerReporteSatisfaccionSupervisor({ ...agosto, filtroPuntajeComentario: '4_5' })
+    expect(altos.comentarios.every((c) => c.puntaje >= 4)).toBe(true)
+  })
+
+  it('el reporte solo lo ve el supervisor', async () => {
+    await expect(
+      obtenerReporteSatisfaccionSupervisor({ desde: '2026-08-01', hasta: '2026-09-01' }),
+    ).rejects.toMatchObject({ status: 403 })
   })
 })
 
