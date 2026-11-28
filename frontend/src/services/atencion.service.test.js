@@ -4,15 +4,25 @@ import { readTable, writeTable } from '../repositories/db.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { ATENCION_MESSAGES } from '../utils/atencionValidators.js'
 import { HORA_MS, MINUTO_MS } from '../utils/duracion.js'
-import {
-  agregarEntrada,
-  cambiarEstado,
-  cerrarTicket,
-  listarAtendidos,
-  obtenerAtencion,
-  obtenerHistorial,
-} from './atencion.service.js'
+import { espiarApi, ultimaPeticion } from '../test/espiarApi.js'
+import { guardarSesion } from '../test/test-utils.jsx'
+import * as atencion from './atencion.service.js'
 import { obtenerContadores } from './resumen.service.js'
+
+// Las reglas viven en la API (backend/test/atencion.test.js) y aquí las responde el simulador. Como en el navegador
+// quien pide sale del token, cada llamada se hace con la sesión de la persona que va como último argumento.
+const conSesionDe =
+  (funcion) =>
+  (...args) => {
+    guardarSesion(args.at(-1))
+    return funcion(...args.slice(0, -1))
+  }
+const obtenerAtencion = conSesionDe(atencion.obtenerAtencion)
+const agregarEntrada = conSesionDe(atencion.agregarEntrada)
+const cambiarEstado = conSesionDe(atencion.cambiarEstado)
+const cerrarTicket = conSesionDe(atencion.cerrarTicket)
+const obtenerHistorial = conSesionDe(atencion.obtenerHistorial)
+const listarAtendidos = conSesionDe(atencion.listarAtendidos)
 
 const CAMILA = 'usr-001'
 const JULIO = 'usr-002'
@@ -230,7 +240,8 @@ describe('atencion.service · obtenerAtencion', () => {
   it('exige una cuenta activa', async () => {
     expect(await fallo(obtenerAtencion(EN_ATENCION, 'usr-999'))).toMatchObject({ status: 401, code: 'UNAUTHENTICATED' })
     expect(await fallo(obtenerAtencion(EN_ATENCION, undefined))).toMatchObject({ status: 401 })
-    expect(await fallo(obtenerAtencion(EN_ATENCION, BLOQUEADO))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
+    // con la API, la sesión de una cuenta bloqueada deja de servir
+    expect(await fallo(obtenerAtencion(EN_ATENCION, BLOQUEADO))).toMatchObject({ status: 401, code: 'UNAUTHENTICATED' })
   })
 
   it('responde 404 si el código no es de ningún ticket', async () => {
@@ -781,7 +792,8 @@ describe('atencion.service · obtenerHistorial', () => {
 
   it('exige una cuenta activa y un ticket que exista', async () => {
     expect(await fallo(obtenerHistorial(EN_ATENCION, 'usr-999'))).toMatchObject({ status: 401 })
-    expect(await fallo(obtenerHistorial(EN_ATENCION, BLOQUEADO))).toMatchObject({ status: 403 })
+    // con la API, la sesión de una cuenta bloqueada deja de servir
+    expect(await fallo(obtenerHistorial(EN_ATENCION, BLOQUEADO))).toMatchObject({ status: 401 })
     expect(await fallo(obtenerHistorial('TCK-2026-99999', JULIO))).toMatchObject({ status: 404, code: 'TICKET_NOT_FOUND' })
   })
 })
@@ -837,5 +849,60 @@ describe('atencion.service · listarAtendidos', () => {
     expect(await fallo(listarAtendidos(LUCIA))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
     expect(await fallo(listarAtendidos(CAMILA))).toMatchObject({ status: 403, code: 'FORBIDDEN' })
     expect(await fallo(listarAtendidos('usr-999'))).toMatchObject({ status: 401, code: 'UNAUTHENTICATED' })
+  })
+})
+
+describe('atencion.service · peticiones a la API', () => {
+  it('pide la atención y el historial con el código del ticket y el token de la sesión', async () => {
+    guardarSesion(JULIO)
+    const fetch = espiarApi()
+
+    await atencion.obtenerAtencion(' TCK-2026-00144 ')
+    expect(ultimaPeticion(fetch)).toEqual({ ruta: `/atencion/${EN_ATENCION}`, method: 'GET', token: 'Bearer prueba.usr-002' })
+
+    await atencion.obtenerHistorial(EN_ATENCION)
+    expect(ultimaPeticion(fetch)).toMatchObject({ ruta: `/atencion/${EN_ATENCION}/historial`, method: 'GET' })
+
+    await atencion.listarAtendidos()
+    expect(ultimaPeticion(fetch)).toMatchObject({ ruta: '/atencion', method: 'GET' })
+  })
+
+  it('escribe en la bitácora con POST y cambia el estado y cierra con PATCH', async () => {
+    guardarSesion(JULIO)
+    const fetch = espiarApi()
+
+    await atencion.agregarEntrada(EN_ATENCION, { tipo: 'publico', mensaje: 'Voy en camino.' })
+    expect(ultimaPeticion(fetch)).toMatchObject({
+      ruta: `/atencion/${EN_ATENCION}/bitacora`,
+      method: 'POST',
+      datos: { tipo: 'publico', mensaje: 'Voy en camino.' },
+    })
+
+    await atencion.cambiarEstado(EN_ATENCION, { estado: 'resuelto' })
+    expect(ultimaPeticion(fetch)).toMatchObject({ ruta: `/atencion/${EN_ATENCION}/estado`, method: 'PATCH', datos: { estado: 'resuelto' } })
+
+    await atencion.cerrarTicket(EN_ATENCION, { solucion: 'Se cambió el cable de red.' })
+    expect(ultimaPeticion(fetch)).toMatchObject({ ruta: `/atencion/${EN_ATENCION}/cierre`, method: 'PATCH' })
+  })
+
+  it('sin código no llama a la API, porque /atencion es la lista del técnico', async () => {
+    guardarSesion(JULIO)
+    const fetch = espiarApi()
+
+    expect(await fallo(atencion.obtenerAtencion('  '))).toMatchObject({ status: 404, code: 'TICKET_NOT_FOUND' })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('la encuesta (HU-6) recibe el ticket de quien lo reportó, o null si no es suyo', async () => {
+    guardarSesion(CAMILA)
+    expect(await atencion.obtenerTicketPorCodigo(CERRADO)).toMatchObject({
+      codigo: CERRADO,
+      usuarioId: CAMILA,
+      estado: 'cerrado',
+      tecnicoNombre: 'Julio César Paredes Soto',
+    })
+
+    guardarSesion(RENZO)
+    expect(await atencion.obtenerTicketPorCodigo(CERRADO)).toBeNull()
   })
 })
