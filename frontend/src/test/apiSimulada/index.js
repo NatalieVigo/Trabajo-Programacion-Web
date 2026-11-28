@@ -1,11 +1,13 @@
 import { usuariosRepository } from '../../repositories/usuarios.repository.js'
 import { ServiceError, errorInesperado } from '../../services/ServiceError.js'
+import * as administracionUsuarios from './administracionUsuarios.js'
 import * as atencion from './atencion.js'
 import * as auth from './auth.js'
 import * as categorias from './categorias.js'
 import * as cola from './cola.js'
 import * as habilitaciones from './habilitaciones.js'
 import * as invitaciones from './invitaciones.js'
+import * as metricas from './metricas.js'
 import * as solicitudesAcceso from './solicitudesAcceso.js'
 import { ambientesRepository, categoriasRepository, subcategoriasRepository } from '../../repositories/catalogo.repository.js'
 import { ticketsRepository } from '../../repositories/tickets.repository.js'
@@ -41,7 +43,7 @@ function incluirCatalogos(ticket) {
   }
 }
 
-// las mismas rutas de HU-1 a HU-5 que src/routes del repositorio del backend
+// las mismas rutas de HU-1 a HU-5 y HU-7 que src/routes del repositorio del backend
 const RUTAS = [
   ['POST', '/auth/login', async ({ body }) => {
     const { usuario } = await auth.iniciarSesion(body)
@@ -120,6 +122,11 @@ const RUTAS = [
     { sesion: true }],
   ['PATCH', `/atencion/${ID}/cierre`, ({ params, body, cuenta }) => atencion.cerrarTicket(params[0], body, cuenta),
     { sesion: true }],
+  // HU-7: el rango llega en la query, como ?desde=AAAA-MM-DD&hasta=AAAA-MM-DD
+  ['GET', '/metricas/tablero', ({ query, cuenta }) =>
+    metricas.obtenerTablero(cuenta.id, { desde: query.get('desde'), hasta: query.get('hasta') }), SUPERVISOR],
+  ['GET', '/metricas/carga-tecnicos', ({ query, cuenta }) =>
+    metricas.obtenerCargaTecnicos(cuenta.id, { desde: query.get('desde'), hasta: query.get('hasta') }), SUPERVISOR],
 ].map(([metodo, ruta, atender, { sesion = false, roles = null, status = 200 } = {}]) => ({
   metodo,
   patron: new RegExp(`^${ruta}$`),
@@ -136,7 +143,8 @@ function responder(status, datos) {
   })
 }
 
-// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1 a HU-5 como la API, sobre los datos del navegador.
+// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1 a HU-5 y HU-7 como la API, sobre los datos
+// del navegador.
 export async function fetchSimulado(url, { method = 'GET', headers, body } = {}) {
   const { pathname, searchParams } = new URL(url)
   const ruta = pathname.replace(/^\/api/, '')
