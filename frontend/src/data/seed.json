@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "usuarios": [
     {
       "id": "usr-001",
@@ -957,6 +957,10 @@
       "ticketId": "tck-00103",
       "usuarioId": "usr-001",
       "puntaje": 5,
+      "rapidez": 5,
+      "trato": 5,
+      "solucion": 5,
+      "comentario": "Bajó el ecran antes de que empezara la clase.",
       "respondidaEn": "2026-08-05T23:00:00.000Z"
     },
     {
@@ -964,6 +968,10 @@
       "ticketId": "tck-00109",
       "usuarioId": "usr-001",
       "puntaje": 4,
+      "rapidez": 3,
+      "trato": 5,
+      "solucion": 4,
+      "comentario": "Cambiaron la silla, pero tardaron casi un día en venir.",
       "respondidaEn": "2026-08-15T13:20:00.000Z"
     },
     {
@@ -971,6 +979,10 @@
       "ticketId": "tck-00114",
       "usuarioId": "usr-001",
       "puntaje": 4,
+      "rapidez": 4,
+      "trato": 4,
+      "solucion": 4,
+      "comentario": "",
       "respondidaEn": "2026-08-19T01:10:00.000Z"
     },
     {
@@ -978,6 +990,10 @@
       "ticketId": "tck-00118",
       "usuarioId": "usr-001",
       "puntaje": 5,
+      "rapidez": 5,
+      "trato": 5,
+      "solucion": 5,
+      "comentario": "Solucionó la proyección antes de que empezara la clase.",
       "respondidaEn": "2026-08-21T17:00:00.000Z"
     },
     {
@@ -985,6 +1001,10 @@
       "ticketId": "tck-00122",
       "usuarioId": "usr-001",
       "puntaje": 3,
+      "rapidez": 2,
+      "trato": 4,
+      "solucion": 3,
+      "comentario": "El aire recién funcionó al día siguiente. Nadie avisó que faltaba un repuesto.",
       "respondidaEn": "2026-08-28T14:35:00.000Z"
     },
     {
@@ -992,6 +1012,10 @@
       "ticketId": "tck-00126",
       "usuarioId": "usr-001",
       "puntaje": 5,
+      "rapidez": 5,
+      "trato": 5,
+      "solucion": 5,
+      "comentario": "",
       "respondidaEn": "2026-08-31T00:00:00.000Z"
     },
     {
@@ -999,6 +1023,10 @@
       "ticketId": "tck-00130",
       "usuarioId": "usr-001",
       "puntaje": 4,
+      "rapidez": 4,
+      "trato": 5,
+      "solucion": 4,
+      "comentario": "Cambió la extensión y explicó qué había pasado con el tomacorriente.",
       "respondidaEn": "2026-09-01T23:40:00.000Z"
     }
   ],
