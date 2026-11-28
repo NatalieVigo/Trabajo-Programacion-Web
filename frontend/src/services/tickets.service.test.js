@@ -89,6 +89,22 @@ describe('tickets.service · existeTicketEnCurso', () => {
     await expect(buscarTicketEnCurso({ categoriaId: 'cat-02', ambienteId: 'amb-01' }, USUARIO)).resolves.toBeNull()
   })
 
+  it('considera duplicado un ticket resuelto que aún no está cerrado', async () => {
+    writeTable(
+      'tickets',
+      readTable('tickets').map((ticket) =>
+        ticket.id === 'tck-00147' ? { ...ticket, estado: 'resuelto' } : ticket,
+      ),
+    )
+
+    await expect(buscarTicketEnCurso({ categoriaId: 'cat-01', ambienteId: 'amb-01' }, USUARIO)).resolves.toEqual({
+      propio: true,
+      codigo: 'TCK-2026-00147',
+      creadoEn: expect.any(String),
+    })
+    await expect(existeTicketEnCurso({ categoriaId: 'cat-01', ambienteId: 'amb-01' })).resolves.toBe(true)
+  })
+
   it('solo avisa si coinciden el ambiente y la categoría', async () => {
     expect(await existeTicketEnCurso({ categoriaId: 'cat-02', ambienteId: 'amb-01' })).toBe(false)
     expect(await existeTicketEnCurso({ categoriaId: 'cat-01', ambienteCodigo: 'a-201' })).toBe(true)

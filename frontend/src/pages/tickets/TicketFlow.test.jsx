@@ -70,13 +70,30 @@ describe('HU-3 · registro y seguimiento de tickets', () => {
     await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-01')
 
     const aviso = await screen.findByRole('alert')
-    expect(aviso).toHaveTextContent('Ya existe un ticket abierto para A-201 en Audiovisuales: TCK-2026-00147, registrado hace')
+    expect(aviso).toHaveTextContent('Ya existe un ticket relacionado para A-201 en Audiovisuales: TCK-2026-00147, registrado hace')
     expect(within(aviso).getByRole('link', { name: 'Ver ese ticket' })).toHaveAttribute(
       'href',
       '/usuario/tickets/TCK-2026-00147',
     )
     await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-02')
     await waitFor(() => expect(screen.queryByText(/Ya existe un ticket/)).not.toBeInTheDocument())
+  })
+
+  it('avisa si ya hay un ticket resuelto que todavía no está cerrado', async () => {
+    writeTable(
+      'tickets',
+      readTable('tickets').map((ticket) =>
+        ticket.id === 'tck-00147' ? { ...ticket, estado: 'resuelto' } : ticket,
+      ),
+    )
+    const { user } = renderApp('/usuario/tickets/nuevo', { usuario: DEMO.usuario })
+
+    await screen.findByRole('heading', { name: 'Registrar un ticket' })
+    await user.selectOptions(screen.getByLabelText('CATEGORÍA'), 'cat-01')
+
+    const aviso = await screen.findByRole('alert')
+    expect(aviso).toHaveTextContent('Ya existe un ticket relacionado para A-201 en Audiovisuales')
+    expect(aviso).toHaveTextContent('TCK-2026-00147')
   })
 
   it('si el ticket repetido es de otra persona solo avisa, sin mostrar su código', async () => {
@@ -89,7 +106,7 @@ describe('HU-3 · registro y seguimiento de tickets', () => {
     await user.type(screen.getByLabelText('AMBIENTE'), 'N-402')
 
     const aviso = await screen.findByRole('alert')
-    expect(aviso).toHaveTextContent('Ya existe un ticket abierto para N-402 en Eléctrico, reportado por otra persona.')
+    expect(aviso).toHaveTextContent('Ya existe un ticket relacionado para N-402 en Eléctrico, reportado por otra persona.')
     expect(aviso).not.toHaveTextContent('TCK-2026-00146')
     expect(within(aviso).queryByRole('link')).not.toBeInTheDocument()
   })

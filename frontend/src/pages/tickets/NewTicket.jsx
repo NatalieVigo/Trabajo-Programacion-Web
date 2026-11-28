@@ -240,13 +240,13 @@ export const NewTicket = () => {
                             </Button>
                         }
                     >
-                        Ya existe un ticket abierto para <span className="text-mono">{ambienteActual.codigo}</span> en{' '}
+                        Ya existe un ticket relacionado para <span className="text-mono">{ambienteActual.codigo}</span> en{' '}
                         {categoriaActual.nombre}: <span className="text-mono">{duplicado.codigo}</span>, registrado hace{' '}
                         {duplicado.hace}. Revísalo antes de crear otro.
                     </Alert>
                 ) : (
                     <Alert variant="warning">
-                        Ya existe un ticket abierto para <span className="text-mono">{ambienteActual.codigo}</span> en{' '}
+                        Ya existe un ticket relacionado para <span className="text-mono">{ambienteActual.codigo}</span> en{' '}
                         {categoriaActual.nombre}, reportado por otra persona. Revisa si es la misma falla antes de crear otro.
                     </Alert>
                 ))}
