@@ -2,7 +2,7 @@
 
 Proyecto del curso de Programación Web de la Universidad de Lima.
 
-Este repositorio tiene el front-end, hecho con React y Vite. HU-1 (cuenta y acceso), HU-2 (catálogo de servicios), HU-3 (registro de tickets), HU-4 (cola y asignación), HU-5 (atención y cierre) y HU-7 (métricas y usuarios) ya usan la API REST, que está en el repositorio [Trabajo-Programacion-Web-backend](https://github.com/NatalieVigo/Trabajo-Programacion-Web-backend); HU-6 (encuesta de satisfacción) sigue con los datos de prueba guardados en el navegador.
+Este repositorio tiene el front-end, hecho con React y Vite. Todas las historias, de HU-1 (cuenta y acceso) a HU-7 (métricas y usuarios), usan la API REST, que está en el repositorio [Trabajo-Programacion-Web-backend](https://github.com/NatalieVigo/Trabajo-Programacion-Web-backend).
 
 ## Integrantes
 
