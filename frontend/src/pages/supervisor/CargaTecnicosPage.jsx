@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import { useAuth } from '../../hooks/useAuth.js'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { obtenerCargaTecnicos, rangoMetricasInicial } from '../../services/metricas.service.js'
@@ -24,9 +23,8 @@ function TablaCarga({ filas }) {
 }
 
 export default function CargaTecnicosPage() {
-  const { usuario } = useAuth()
   const [rango, setRango] = useState(rangoMetricasInicial)
-  const cargar = useCallback(() => obtenerCargaTecnicos(usuario.id, rango), [usuario.id, rango])
+  const cargar = useCallback(() => obtenerCargaTecnicos(rango), [rango])
   const consulta = useAsyncData(cargar)
   const d = consulta.data
   useDocumentTitle('Carga por técnico')
