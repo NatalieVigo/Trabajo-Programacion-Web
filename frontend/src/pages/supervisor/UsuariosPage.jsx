@@ -21,7 +21,7 @@ const POR_PAGINA = 15
 
 export default function UsuariosPage() {
   const { usuario } = useAuth()
-  const cargar = useCallback(() => listarCuentas(usuario.id), [usuario.id])
+  const cargar = useCallback(() => listarCuentas(), [])
   const consulta = useAsyncData(cargar)
   const toast = useToast()
   const [filtros, setFiltros] = useState(FILTROS_CUENTAS)

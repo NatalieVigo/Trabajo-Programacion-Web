@@ -1,5 +1,4 @@
 import { useId, useState } from 'react'
-import { useAuth } from '../../../hooks/useAuth.js'
 import { bloquearCuenta } from '../../../services/administracionUsuarios.service.js'
 import { ROUTES } from '../../../routes/routePaths.js'
 import { pluralize } from '../../../utils/format.js'
@@ -7,7 +6,6 @@ import { Alert, Button, Checkbox, FormField, Modal, useToast } from '../../../sh
 import TextArea from '../../catalogo/TextArea.jsx'
 
 export default function BloquearCuentaModal({ cuenta, onClose, onBloqueada }) {
-  const { usuario } = useAuth()
   const toast = useToast()
   const formId = useId()
   const [motivo, setMotivo] = useState('')
@@ -19,7 +17,7 @@ export default function BloquearCuentaModal({ cuenta, onClose, onBloqueada }) {
     setGuardando(true)
     setError(null)
     try {
-      await bloquearCuenta(cuenta.id, { motivo, notificar }, usuario.id)
+      await bloquearCuenta(cuenta.id, { motivo, notificar })
       toast.success(`Cuenta bloqueada. ${cuenta.nombre} ya no puede iniciar sesión.`)
       onBloqueada()
       onClose()

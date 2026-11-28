@@ -127,6 +127,13 @@ const RUTAS = [
     metricas.obtenerTablero(cuenta.id, { desde: query.get('desde'), hasta: query.get('hasta') }), SUPERVISOR],
   ['GET', '/metricas/carga-tecnicos', ({ query, cuenta }) =>
     metricas.obtenerCargaTecnicos(cuenta.id, { desde: query.get('desde'), hasta: query.get('hasta') }), SUPERVISOR],
+  ['GET', '/usuarios', ({ cuenta }) => administracionUsuarios.listarCuentas(cuenta.id), SUPERVISOR],
+  ['GET', `/usuarios/${ID}`, ({ params, cuenta }) => administracionUsuarios.obtenerFichaCuenta(params[0], cuenta.id),
+    SUPERVISOR],
+  ['PATCH', `/usuarios/${ID}/bloqueo`, ({ params, body, cuenta }) =>
+    administracionUsuarios.bloquearCuenta(params[0], body ?? {}, cuenta.id), SUPERVISOR],
+  ['PATCH', `/usuarios/${ID}/desbloqueo`, ({ params, cuenta }) =>
+    administracionUsuarios.desbloquearCuenta(params[0], cuenta.id), SUPERVISOR],
 ].map(([metodo, ruta, atender, { sesion = false, roles = null, status = 200 } = {}]) => ({
   metodo,
   patron: new RegExp(`^${ruta}$`),
