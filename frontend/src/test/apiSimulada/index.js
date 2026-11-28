@@ -5,6 +5,9 @@ import * as categorias from './categorias.js'
 import * as habilitaciones from './habilitaciones.js'
 import * as invitaciones from './invitaciones.js'
 import * as solicitudesAcceso from './solicitudesAcceso.js'
+import { ambientesRepository, categoriasRepository, subcategoriasRepository } from '../../repositories/catalogo.repository.js'
+import { ticketsRepository } from '../../repositories/tickets.repository.js'
+import * as tickets from '../../services/tickets.service.js'
 import * as ubicaciones from './ubicaciones.js'
 import * as usuarios from './usuarios.js'
 
@@ -23,7 +26,19 @@ const ID = '([^/]+)'
 // como permitirRoles('supervisor') del backend
 const SUPERVISOR = { sesion: true, roles: ['supervisor'] }
 
-// las mismas rutas de HU-1 y HU-2 que src/routes del repositorio del backend
+function incluirCatalogos(ticket) {
+  const categoria = categoriasRepository.findById(ticket.categoriaId)
+  const subcategoria = subcategoriasRepository.findById(ticket.subcategoriaId)
+  const ambiente = ambientesRepository.findById(ticket.ambienteId)
+  return {
+    ...ticket,
+    categoria: categoria && { id: categoria.id, nombre: categoria.nombre },
+    subcategoria: subcategoria && { id: subcategoria.id, nombre: subcategoria.nombre },
+    ambiente: ambiente && { id: ambiente.id, codigo: ambiente.codigo, nombre: ambiente.nombre },
+  }
+}
+
+// las mismas rutas de HU-1, HU-2 y HU-3 que src/routes del repositorio del backend
 const RUTAS = [
   ['POST', '/auth/login', async ({ body }) => {
     const { usuario } = await auth.iniciarSesion(body)
@@ -67,6 +82,17 @@ const RUTAS = [
   ['POST', '/ambientes', ({ body }) => ubicaciones.crearAmbiente(body), { ...SUPERVISOR, status: 201 }],
   ['PATCH', `/ambientes/${ID}`, ({ params, body }) => ubicaciones.actualizarAmbiente(params[0], body), SUPERVISOR],
   ['DELETE', `/ambientes/${ID}`, ({ params }) => ubicaciones.eliminarAmbiente(params[0]), SUPERVISOR],
+  ['GET', '/tickets/duplicados', ({ query, cuenta }) => tickets.buscarTicketEnCurso({
+    categoriaId: query.get('categoriaId'),
+    ambienteId: query.get('ambienteId'),
+  }, cuenta.id), { sesion: true }],
+  ['GET', '/tickets', ({ cuenta }) => ticketsRepository.findAll({ usuarioId: cuenta.id }).map(incluirCatalogos), { sesion: true }],
+  ['POST', '/tickets', async ({ body, cuenta }) => incluirCatalogos(await tickets.crearTicket(body, cuenta.id)),
+    { sesion: true, status: 201 }],
+  ['PATCH', `/tickets/${ID}/cancelacion`, async ({ params, cuenta }) =>
+    incluirCatalogos(await tickets.cancelarTicket(params[0], cuenta.id)), { sesion: true }],
+  ['PATCH', `/tickets/${ID}/reapertura`, async ({ params, body, cuenta }) =>
+    incluirCatalogos(await tickets.reabrirTicket(params[0], body?.motivo, cuenta.id)), { sesion: true }],
   ['GET', '/habilitaciones', () => habilitaciones.obtenerMatriz(), SUPERVISOR],
   ['PUT', '/habilitaciones', ({ body }) => habilitaciones.guardarMatriz(body), SUPERVISOR],
 ].map(([metodo, ruta, atender, { sesion = false, roles = null, status = 200 } = {}]) => ({
@@ -85,7 +111,7 @@ function responder(status, datos) {
   })
 }
 
-// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1 y HU-2 como la API, sobre los datos del navegador.
+// Reemplaza a fetch en las pruebas del frontend: simula las rutas de HU-1, HU-2 y HU-3 sobre los datos del navegador.
 export async function fetchSimulado(url, { method = 'GET', headers, body } = {}) {
   const { pathname, searchParams } = new URL(url)
   const ruta = pathname.replace(/^\/api/, '')

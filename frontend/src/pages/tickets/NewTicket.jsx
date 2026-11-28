@@ -4,7 +4,7 @@ import { PageHeader, Alert, SelectInput, TextInput, Button, Card, PriorityBadge 
 import { TicketConfirmation } from "./TicketConfirmation";
 import { listarDisponibles } from "../../services/categorias.service.js";
 import { listarAmbientes } from "../../services/ubicaciones.service.js";
-import { buscarTicketEnCurso, crearTicket } from "../../services/tickets.service.js";
+import { buscarTicketEnCurso, crearTicket } from "../../services/tickets.api.js";
 import { ServiceError } from "../../services/ServiceError.js";
 import { usuarioTicketDetallePath } from "../../routes/routePaths";
 import { PRIORIDAD_LABELS } from "../../utils/format.js";
@@ -154,7 +154,7 @@ export const NewTicket = () => {
         if (!ambienteId || !categoriaId) return undefined;
 
         let activo = true;
-        buscarTicketEnCurso({ ambienteId, categoriaId }, usuarioId)
+        buscarTicketEnCurso({ ambienteId, categoriaId })
             .then((repetido) => {
                 if (!activo) return;
                 // el "hace X min" se calcula al recibir el aviso
@@ -182,8 +182,13 @@ export const NewTicket = () => {
         setGuardando(true);
         setErrorRegistro('');
         try {
-            const ticket = await crearTicket({ ...datosTicket, ambienteId: ambiente.id }, usuario?.id);
-            setTicketCreado(ticket);
+            const ticket = await crearTicket({ ...datosTicket, ambienteId: ambiente.id });
+            setTicketCreado({
+                ...ticket,
+                categoria: categoriaActual,
+                subcategoria: subcategoriaActual,
+                ambiente,
+            });
         } catch (error) {
             const detalleError = error instanceof ServiceError
                 ? Object.values(error.fieldErrors ?? {}).join(' ')

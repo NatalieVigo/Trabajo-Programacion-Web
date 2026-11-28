@@ -1,27 +1,43 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Alert, Button, PageHeader, PriorityBadge, SelectInput, StatusBadge, TextInput } from "../../shared/components";
 import { ROUTES, usuarioTicketDetallePath } from "../../routes/routePaths";
-import { ticketsRepository } from "../../repositories/tickets.repository.js";
-import { ambientesRepository, categoriasRepository, subcategoriasRepository } from "../../repositories/catalogo.repository.js";
+import { listarMisTickets } from "../../services/tickets.api.js";
 import { formatDate } from "../../utils/format.js";
 import { esTicketEnCurso } from "../../services/ticketsEnCurso.js";
-import { useAuth } from "../../hooks/useAuth.js";
 import Paginacion from "../catalogo/Paginacion.jsx";
 import './MyTickets.css';
 
 export const MyTickets = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { usuario } = useAuth();
 
-    const [tickets] = useState(() => {
-        return usuario?.id ? ticketsRepository.findAll({ usuarioId: usuario.id }) : [];
-    });
+    const [tickets, setTickets] = useState(null);
+    const [errorCarga, setErrorCarga] = useState('');
+    const [intentoCarga, setIntentoCarga] = useState(0);
 
+    useEffect(() => {
+        let activo = true;
+        listarMisTickets()
+            .then((resultado) => {
+                if (activo) setTickets(resultado);
+            })
+            .catch((error) => {
+                if (activo) setErrorCarga(error.message || 'No se pudieron cargar tus tickets.');
+            });
+
+        return () => { activo = false; };
+    }, [intentoCarga]);
+
+    const ticketsCargados = useMemo(() => tickets ?? [], [tickets]);
+    const cargando = tickets === null && !errorCarga;
     const opcionesCategorias = [
         { value: '', label: 'Categoría: todas' },
-        ...categoriasRepository.findAll().map(({ id, nombre }) => ({ value: id, label: nombre })),
+        ...Array.from(new Map(
+            ticketsCargados
+                .filter((ticket) => ticket.categoria)
+                .map((ticket) => [ticket.categoria.id, ticket.categoria]),
+        ).values()).map(({ id, nombre }) => ({ value: id, label: nombre })),
     ];
 
     const [busqueda, setBusqueda] = useState('');
@@ -35,19 +51,19 @@ export const MyTickets = () => {
     const [paginaActual, setPaginaActual] = useState(1);
     const registrosPorPagina = 8;
 
-    const totalTickets = tickets.length;
-    const ticketsEnCursoCount = useMemo(() => tickets.filter(esTicketEnCurso).length, [tickets]);
+    const totalTickets = ticketsCargados.length;
+    const ticketsEnCursoCount = useMemo(() => ticketsCargados.filter(esTicketEnCurso).length, [ticketsCargados]);
 
     const obtenerCategoriaTexto = (t) => {
-        const categoria = categoriasRepository.findById(t.categoriaId);
-        const subcategoria = subcategoriasRepository.findById(t.subcategoriaId);
+        const categoria = t.categoria;
+        const subcategoria = t.subcategoria;
         return [categoria?.nombre || t.categoriaNombre || t.categoria, subcategoria?.nombre || t.subcategoriaNombre]
             .filter(Boolean)
             .join(' · ') || 'General';
     };
 
     const obtenerAmbienteTexto = (t) => {
-        const ambiente = ambientesRepository.findById(t.ambienteId);
+        const ambiente = t.ambiente;
         return ambiente?.codigo || t.ambienteCodigo || t.ambiente || '-';
     };
 
@@ -71,7 +87,7 @@ export const MyTickets = () => {
     };
 
     const ticketsFiltrados = useMemo(() => {
-        return tickets.filter(ticket => {
+        return ticketsCargados.filter(ticket => {
             const codigo = ticket.codigo || '';
             const asunto = ticket.asunto || ticket.descripcion || '';
             const ambiente = obtenerAmbienteTexto(ticket);
@@ -113,7 +129,7 @@ export const MyTickets = () => {
 
             return coincideBusqueda && coincideEstado && coincideCategoria && coincideFecha;
         });
-    }, [tickets, busquedaActual, filtroEstado, filtroCategoria, fechaInicio, fechaFin]);
+    }, [ticketsCargados, busquedaActual, filtroEstado, filtroCategoria, fechaInicio, fechaFin]);
 
     const totalPaginas = Math.ceil(ticketsFiltrados.length / registrosPorPagina) || 1;
     const paginaVisible = Math.min(paginaActual, totalPaginas);
@@ -170,9 +186,22 @@ export const MyTickets = () => {
         <div className="mis-tickets">
             <PageHeader
                 title="Mis tickets"
-                subtitle={`${totalTickets} tickets registrados · ${ticketsEnCursoCount} en curso`}
+                subtitle={cargando ? 'Cargando tus tickets…' : `${totalTickets} tickets registrados · ${ticketsEnCursoCount} en curso`}
                 actions={<Button onClick={irANuevoTicket}>Registrar un ticket</Button>}
             />
+
+            {errorCarga && (
+                <Alert
+                    variant="error"
+                    actions={<Button variant="secondary" size="sm" onClick={() => {
+                        setTickets(null);
+                        setErrorCarga('');
+                        setIntentoCarga((actual) => actual + 1);
+                    }}>Reintentar</Button>}
+                >
+                    {errorCarga}
+                </Alert>
+            )}
 
             {codigoBuscado && (
                 <Alert variant="info" className="mis-tickets__aviso">
@@ -255,7 +284,11 @@ export const MyTickets = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {ticketsPaginados.length > 0 ? (
+                        {cargando ? (
+                            <tr>
+                                <td colSpan="7" className="mis-tickets__vacio">Cargando tus tickets…</td>
+                            </tr>
+                        ) : ticketsPaginados.length > 0 ? (
                             ticketsPaginados.map((ticket) => (
                                 <tr key={ticket.id || ticket.codigo}>
                                     <td>
@@ -288,7 +321,7 @@ export const MyTickets = () => {
                         ) : (
                             <tr>
                                 <td colSpan="7" className="mis-tickets__vacio">
-                                    No se encontraron tickets con los filtros aplicados.
+                                    {errorCarga ? 'No se pudo cargar la lista de tickets.' : 'No se encontraron tickets con los filtros aplicados.'}
                                 </td>
                             </tr>
                         )}
