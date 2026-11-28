@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import { bitacoraRepository } from '../../repositories/atencion.repository.js'
 import { readTable, resetDb, writeTable } from '../../repositories/db.js'
-import { listarCola } from '../../services/cola.service.js'
+import { listarCola } from '../../test/colaConSesion.js'
 import { DEMO, renderApp } from '../../test/test-utils.jsx'
 
 beforeEach(() => {

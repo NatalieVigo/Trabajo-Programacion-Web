@@ -3,7 +3,7 @@ import { historialRepository, bitacoraRepository } from '../repositories/atencio
 import { DB_STORAGE_KEY } from '../repositories/db.js'
 import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { obtenerAtencion } from './atencion.service.js'
-import { asignarTickets, cambiarPrioridadTickets, devolverTickets, listarBandeja, listarCola } from './cola.service.js'
+import { asignarTickets, cambiarPrioridadTickets, devolverTickets, listarBandeja, listarCola } from '../test/colaConSesion.js'
 
 const SUPERVISOR = 'usr-003'
 const JULIO = 'usr-002'

@@ -2,6 +2,7 @@ import { usuariosRepository } from '../../repositories/usuarios.repository.js'
 import { ServiceError, errorInesperado } from '../../services/ServiceError.js'
 import * as auth from './auth.js'
 import * as categorias from './categorias.js'
+import * as cola from './cola.js'
 import * as habilitaciones from './habilitaciones.js'
 import * as invitaciones from './invitaciones.js'
 import * as solicitudesAcceso from './solicitudesAcceso.js'
@@ -22,8 +23,9 @@ const TOKEN = '([^/]+)'
 const ID = '([^/]+)'
 // como permitirRoles('supervisor') del backend
 const SUPERVISOR = { sesion: true, roles: ['supervisor'] }
+const TECNICO = { sesion: true, roles: ['tecnico'] }
 
-// las mismas rutas de HU-1 y HU-2 que src/routes del repositorio del backend
+// las mismas rutas de HU-1, HU-2 y HU-4 que src/routes del repositorio del backend
 const RUTAS = [
   ['POST', '/auth/login', async ({ body }) => {
     const { usuario } = await auth.iniciarSesion(body)
@@ -69,6 +71,17 @@ const RUTAS = [
   ['DELETE', `/ambientes/${ID}`, ({ params }) => ubicaciones.eliminarAmbiente(params[0]), SUPERVISOR],
   ['GET', '/habilitaciones', () => habilitaciones.obtenerMatriz(), SUPERVISOR],
   ['PUT', '/habilitaciones', ({ body }) => habilitaciones.guardarMatriz(body), SUPERVISOR],
+  // HU-4
+  ['GET', '/cola', ({ cuenta }) => cola.listarCola(cuenta.id), SUPERVISOR],
+  ['GET', '/cola/bandeja', ({ cuenta }) => cola.listarBandeja(cuenta.id), TECNICO],
+  ['POST', '/cola/asignaciones', async ({ cuenta, body }) =>
+    ({ actualizados: await cola.asignarTickets(body?.ids, body?.tecnicoId, body?.nota ?? '', cuenta.id) }), SUPERVISOR],
+  ['PATCH', '/cola/prioridad', async ({ cuenta, body }) =>
+    ({ actualizados: await cola.cambiarPrioridadTickets(body?.ids, body?.prioridad, body?.motivo, cuenta.id) }), SUPERVISOR],
+  ['POST', '/cola/devoluciones', async ({ cuenta, body }) =>
+    ({ actualizados: await cola.devolverTickets(body?.ids, cuenta.id) }), SUPERVISOR],
+  ['POST', `/cola/${ID}/autoasignacion`, async ({ cuenta, params }) =>
+    ({ id: await cola.autoasignarTicket(params[0], cuenta.id) }), TECNICO],
 ].map(([metodo, ruta, atender, { sesion = false, roles = null, status = 200 } = {}]) => ({
   metodo,
   patron: new RegExp(`^${ruta}$`),
@@ -85,7 +98,7 @@ function responder(status, datos) {
   })
 }
 
-// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1 y HU-2 como la API, sobre los datos del navegador.
+// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1, HU-2 y HU-4 como la API, sobre los datos del navegador.
 export async function fetchSimulado(url, { method = 'GET', headers, body } = {}) {
   const { pathname, searchParams } = new URL(url)
   const ruta = pathname.replace(/^\/api/, '')
