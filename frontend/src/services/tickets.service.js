@@ -7,7 +7,6 @@ import { ticketsRepository } from '../repositories/tickets.repository.js'
 import { usuariosRepository } from '../repositories/usuarios.repository.js'
 import { updateTables } from '../repositories/db.js'
 import { nextId } from '../utils/ids.js'
-import { esTicketEnCurso } from './ticketsEnCurso.js'
 import { simulateRequest } from './request.js'
 import { ServiceError, validationError } from './ServiceError.js'
 
@@ -16,6 +15,7 @@ const AMBIENTE_REQUERIDO = 'Elige el aula o ambiente de la lista.'
 export const DIAS_PLAZO_REAPERTURA = 7
 export const PLAZO_REAPERTURA_MS = DIAS_PLAZO_REAPERTURA * 24 * 60 * 60 * 1000
 const ESTADOS_CANCELABLES = new Set(['abierto', 'reabierto'])
+const ESTADOS_DUPLICABLES = new Set(['abierto', 'reabierto', 'en_atencion', 'en_espera', 'resuelto'])
 
 function avisarCambio() {
   window.dispatchEvent(new Event('mesa-ayuda:datos-actualizados'))
@@ -75,13 +75,17 @@ function exigirUsuarioActivo(usuarioId) {
   return usuario
 }
 
-// mismo ambiente y misma categoría, todavía en curso
+// Coincide con los estados que el backend considera para el aviso de duplicados.
 function ticketsRepetidos({ ambienteId, ambienteCodigo, categoriaId }) {
   const ambiente = buscarAmbienteCatalogo(ambienteId || ambienteCodigo)
   if (!ambiente || !categoriaId) return []
   return ticketsRepository
     .findAll()
-    .filter((ticket) => ticket.categoriaId === categoriaId && esTicketEnCurso(ticket) && esDelAmbiente(ticket, ambiente))
+    .filter((ticket) =>
+      ticket.categoriaId === categoriaId &&
+      ESTADOS_DUPLICABLES.has(ticket.estado) &&
+      esDelAmbiente(ticket, ambiente),
+    )
 }
 
 function exigirTicketPropio(ticketId, usuarioId) {
