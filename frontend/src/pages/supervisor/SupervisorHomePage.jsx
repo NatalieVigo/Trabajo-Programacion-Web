@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import { useAuth } from '../../hooks/useAuth.js'
 import { useAsyncData } from '../../hooks/useAsyncData.js'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js'
 import { obtenerTablero, rangoMetricasInicial } from '../../services/metricas.service.js'
@@ -17,9 +16,8 @@ function Indicador({ titulo, valor, detalle, peligro = false, variacion = false 
 }
 
 export default function SupervisorHomePage() {
-  const { usuario } = useAuth()
   const [rango, setRango] = useState(rangoMetricasInicial)
-  const cargar = useCallback(() => obtenerTablero(usuario.id, rango), [usuario.id, rango])
+  const cargar = useCallback(() => obtenerTablero(rango), [rango])
   const consulta = useAsyncData(cargar)
   const toast = useToast()
   useDocumentTitle('Tablero de métricas')

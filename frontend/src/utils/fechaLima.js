@@ -28,3 +28,9 @@ export function esFechaDeCalendario(value) {
 export function finDelDiaEnLima(fecha) {
   return new Date(`${fecha}T23:59:59.000${DESFASE_LIMA}`).toISOString()
 }
+
+// suma días a una fecha 'AAAA-MM-DD' (con días negativos, resta); solo cuenta días del calendario
+export function sumarDiasAFecha(fecha, dias) {
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  return new Date(Date.UTC(anio, mes - 1, dia + dias)).toISOString().slice(0, 10)
+}
