@@ -1,5 +1,6 @@
 import { usuariosRepository } from '../../repositories/usuarios.repository.js'
 import { ServiceError, errorInesperado } from '../../services/ServiceError.js'
+import * as atencion from './atencion.js'
 import * as auth from './auth.js'
 import * as categorias from './categorias.js'
 import * as habilitaciones from './habilitaciones.js'
@@ -38,7 +39,7 @@ function incluirCatalogos(ticket) {
   }
 }
 
-// las mismas rutas de HU-1, HU-2 y HU-3 que src/routes del repositorio del backend
+// las mismas rutas de HU-1, HU-2, HU-3 y HU-5 que src/routes del repositorio del backend
 const RUTAS = [
   ['POST', '/auth/login', async ({ body }) => {
     const { usuario } = await auth.iniciarSesion(body)
@@ -95,6 +96,17 @@ const RUTAS = [
     incluirCatalogos(await tickets.reabrirTicket(params[0], body?.motivo, cuenta.id)), { sesion: true }],
   ['GET', '/habilitaciones', () => habilitaciones.obtenerMatriz(), SUPERVISOR],
   ['PUT', '/habilitaciones', ({ body }) => habilitaciones.guardarMatriz(body), SUPERVISOR],
+  // HU-5: quién puede ver o cambiar cada ticket lo revisa atencion.js, como el servicio del backend
+  ['GET', '/atencion', ({ cuenta }) => atencion.listarAtendidos(cuenta), { sesion: true, roles: ['tecnico'] }],
+  ['GET', `/atencion/${ID}`, ({ params, cuenta }) => atencion.obtenerAtencion(params[0], cuenta), { sesion: true }],
+  ['GET', `/atencion/${ID}/historial`, ({ params, cuenta }) => atencion.obtenerHistorial(params[0], cuenta),
+    { sesion: true }],
+  ['POST', `/atencion/${ID}/bitacora`, ({ params, body, cuenta }) => atencion.agregarEntrada(params[0], body, cuenta),
+    { sesion: true, status: 201 }],
+  ['PATCH', `/atencion/${ID}/estado`, ({ params, body, cuenta }) => atencion.cambiarEstado(params[0], body, cuenta),
+    { sesion: true }],
+  ['PATCH', `/atencion/${ID}/cierre`, ({ params, body, cuenta }) => atencion.cerrarTicket(params[0], body, cuenta),
+    { sesion: true }],
 ].map(([metodo, ruta, atender, { sesion = false, roles = null, status = 200 } = {}]) => ({
   metodo,
   patron: new RegExp(`^${ruta}$`),
