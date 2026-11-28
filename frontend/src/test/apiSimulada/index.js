@@ -5,6 +5,7 @@ import * as atencion from './atencion.js'
 import * as auth from './auth.js'
 import * as categorias from './categorias.js'
 import * as cola from './cola.js'
+import * as encuestas from './encuestas.js'
 import * as habilitaciones from './habilitaciones.js'
 import * as invitaciones from './invitaciones.js'
 import * as metricas from './metricas.js'
@@ -43,7 +44,7 @@ function incluirCatalogos(ticket) {
   }
 }
 
-// las mismas rutas de HU-1 a HU-5 y HU-7 que src/routes del repositorio del backend
+// las mismas rutas de HU-1 a HU-7 que src/routes del repositorio del backend
 const RUTAS = [
   ['POST', '/auth/login', async ({ body }) => {
     const { usuario } = await auth.iniciarSesion(body)
@@ -122,6 +123,16 @@ const RUTAS = [
     { sesion: true }],
   ['PATCH', `/atencion/${ID}/cierre`, ({ params, body, cuenta }) => atencion.cerrarTicket(params[0], body, cuenta),
     { sesion: true }],
+  // HU-6: /satisfaccion va antes de /encuestas/:codigo
+  ['GET', '/encuestas', ({ cuenta }) => encuestas.listarMisEncuestas(cuenta), { sesion: true }],
+  ['GET', '/encuestas/satisfaccion', ({ query }) => encuestas.reporteSatisfaccion({
+    desde: query.get('desde'),
+    hasta: query.get('hasta'),
+    puntaje: query.get('puntaje') ?? undefined,
+  }), SUPERVISOR],
+  ['GET', `/encuestas/${ID}`, ({ params, cuenta }) => encuestas.obtenerEncuesta(params[0], cuenta), { sesion: true }],
+  ['PUT', `/encuestas/${ID}`, ({ params, body, cuenta }) => encuestas.responderEncuesta(params[0], body ?? {}, cuenta),
+    { sesion: true }],
   // HU-7: el rango llega en la query, como ?desde=AAAA-MM-DD&hasta=AAAA-MM-DD
   ['GET', '/metricas/tablero', ({ query, cuenta }) =>
     metricas.obtenerTablero(cuenta.id, { desde: query.get('desde'), hasta: query.get('hasta') }), SUPERVISOR],
@@ -150,7 +161,7 @@ function responder(status, datos) {
   })
 }
 
-// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1 a HU-5 y HU-7 como la API, sobre los datos
+// Reemplaza a fetch en las pruebas del frontend: responde las rutas de HU-1 a HU-7 como la API, sobre los datos
 // del navegador.
 export async function fetchSimulado(url, { method = 'GET', headers, body } = {}) {
   const { pathname, searchParams } = new URL(url)

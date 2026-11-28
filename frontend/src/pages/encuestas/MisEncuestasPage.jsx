@@ -17,7 +17,7 @@ export default function MisEncuestasPage() {
     async function cargar() {
       if (currentUser?.id) {
         try {
-          const res = await obtenerEncuestasUsuario(currentUser.id)
+          const res = await obtenerEncuestasUsuario()
           setData(res)
         } finally {
           setCargando(false)
@@ -43,7 +43,7 @@ export default function MisEncuestasPage() {
 
   return (
     <div className="mis-encuestas">
-      <PageHeader title="Mis encuestas" subtitle={`${respondidas} · promedio que diste: ${data.promedioGeneral} de 5`} />
+      <PageHeader title="Mis encuestas" subtitle={`${respondidas} · promedio que diste: ${Number(data.promedioGeneral).toFixed(1)} de 5`} />
 
       {data.encuestas.length === 0 ? (
         <Card>
